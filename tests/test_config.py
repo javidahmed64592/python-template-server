@@ -52,16 +52,16 @@ class TestLoadConfig:
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
         mock_sys_exit: MagicMock,
-        mock_app_config: TemplateServerConfig,
+        mock_template_server_config: TemplateServerConfig,
     ) -> None:
         """Test successful loading of config."""
         mock_exists.return_value = True
-        mock_open_file.return_value.read.return_value = json.dumps(mock_app_config.model_dump())
+        mock_open_file.return_value.read.return_value = json.dumps(mock_template_server_config.model_dump())
 
         config = load_config(CONFIG_FILE_NAME)
 
         assert isinstance(config, TemplateServerConfig)
-        assert config == mock_app_config
+        assert config == mock_template_server_config
         mock_sys_exit.assert_not_called()
 
     def test_load_config_file_not_found(

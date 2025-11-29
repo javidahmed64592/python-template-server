@@ -50,9 +50,9 @@ def mock_timestamp() -> Generator[str, None, None]:
 
 
 @pytest.fixture
-def mock_template_server(mock_app_config: TemplateServerConfig) -> MockTemplateServer:
+def mock_template_server(mock_template_server_config: TemplateServerConfig) -> MockTemplateServer:
     """Provide a MockTemplateServer instance for testing."""
-    return MockTemplateServer(mock_app_config)
+    return MockTemplateServer(mock_template_server_config)
 
 
 class MockTemplateServer(TemplateServer):
@@ -239,34 +239,34 @@ class TestRateLimiting:
         assert json.loads(response.body.decode()) == {"detail": "Rate limit exceeded"}
         assert response.headers.get("Retry-After") == str(exc.retry_after)
 
-    def test_setup_rate_limiting_enabled(self, mock_app_config: TemplateServerConfig) -> None:
+    def test_setup_rate_limiting_enabled(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test rate limiting setup when enabled."""
-        mock_app_config.rate_limit.enabled = True
+        mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer(mock_app_config)
+        server = MockTemplateServer(mock_template_server_config)
 
         assert server.limiter is not None
         assert server.app.state.limiter is not None
 
-    def test_setup_rate_limiting_disabled(self, mock_app_config: TemplateServerConfig) -> None:
+    def test_setup_rate_limiting_disabled(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test rate limiting setup when disabled."""
-        server = MockTemplateServer(mock_app_config)
+        server = MockTemplateServer(mock_template_server_config)
 
         assert server.limiter is None
 
-    def test_limit_route_with_limiter_enabled(self, mock_app_config: TemplateServerConfig) -> None:
+    def test_limit_route_with_limiter_enabled(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test _limit_route when rate limiting is enabled."""
-        mock_app_config.rate_limit.enabled = True
+        mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer(mock_app_config)
+        server = MockTemplateServer(mock_template_server_config)
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route != server.mock_unprotected_method
         assert hasattr(limited_route, "__wrapped__")
 
-    def test_limit_route_with_limiter_disabled(self, mock_app_config: TemplateServerConfig) -> None:
+    def test_limit_route_with_limiter_disabled(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test _limit_route when rate limiting is disabled."""
-        server = MockTemplateServer(mock_app_config)
+        server = MockTemplateServer(mock_template_server_config)
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route == server.mock_unprotected_method

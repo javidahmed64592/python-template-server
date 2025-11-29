@@ -12,10 +12,10 @@ TEST_PORT = 443
 
 
 @pytest.fixture
-def mock_load_config(mock_app_config: TemplateServerConfig) -> Generator[MagicMock, None, None]:
+def mock_load_config(mock_template_server_config: TemplateServerConfig) -> Generator[MagicMock, None, None]:
     """Mock the load_config function."""
     with patch("python_template_server.main.load_config") as mock_config:
-        mock_config.return_value = mock_app_config
+        mock_config.return_value = mock_template_server_config
         yield mock_config
 
 
