@@ -1,9 +1,37 @@
-"""Unit tests for the example.main module."""
+"""Unit tests for the python_template_server.main module."""
 
-from example.main import example_function
+from collections.abc import Generator
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from python_template_server.main import run
+from python_template_server.models import TemplateServerConfig
+
+TEST_PORT = 443
 
 
-def test_example_function() -> None:
-    """Test the example_function."""
-    result = example_function()
-    assert result == "This is an example function."
+@pytest.fixture
+def mock_load_config(mock_template_server_config: TemplateServerConfig) -> Generator[MagicMock, None, None]:
+    """Mock the load_config function."""
+    with patch("python_template_server.main.load_config") as mock_config:
+        mock_config.return_value = mock_template_server_config
+        yield mock_config
+
+
+@pytest.fixture
+def mock_template_server_class() -> Generator[MagicMock, None, None]:
+    """Mock TemplateServer class."""
+    with patch("python_template_server.main.ExampleServer") as mock_server:
+        yield mock_server
+
+
+class TestRun:
+    """Unit tests for the run function."""
+
+    def test_run(self, mock_load_config: MagicMock, mock_template_server_class: MagicMock) -> None:
+        """Test successful server run."""
+        run()
+
+        mock_load_config.assert_called_once()
+        mock_template_server_class.return_value.run.assert_called_once()

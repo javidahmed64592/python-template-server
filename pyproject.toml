@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "example"
+name = "python-template-server"
 version = "0.1.0"
-description = "An example pyproject.toml."
+description = "A template FastAPI server with authentication, rate limiting and Prometheus metrics."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
@@ -18,7 +18,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "numpy",
+    "cryptography>=46.0.3",
+    "fastapi>=0.121.3",
+    "httpx>=0.28.1",
+    "prometheus-fastapi-instrumentator>=7.1.0",
+    "pydantic>=2.12.4",
+    "pyhere>=1.0.3",
+    "python-dotenv>=1.2.1",
+    "slowapi>=0.1.9",
+    "uvicorn[standard]>=0.38.0",
 ]
 
 [project.optional-dependencies]
@@ -26,12 +34,27 @@ dev = [
     "ruff",
     "mypy",
     "pytest",
+    "pytest-asyncio",
     "pytest-cov",
     "validate-pyproject",
 ]
 
 [project.urls]
-repository = "https://github.com/javidahmed64592/template-python"
+repository = "https://github.com/javidahmed64592/python-template-server"
+
+[project.scripts]
+python-template-server = "python_template_server.main:run"
+generate-certificate = "python_template_server.certificate_handler:generate_self_signed_certificate"
+generate-new-token = "python_template_server.authentication_handler:generate_new_token"
+
+[tool.hatch.build]
+include = [
+  "configuration/**",
+  "python_template_server/**",
+  ".here",
+  "LICENSE",
+  "README.md",
+]
 
 [tool.pytest.ini_options]
 addopts = [
@@ -140,6 +163,6 @@ pretty = true
 
 [[tool.mypy.overrides]]
 module = [
-    "numpy.*",
+    "pyhere.*"
 ]
 ignore_missing_imports = true
