@@ -22,7 +22,7 @@ def mock_load_config(mock_template_server_config: TemplateServerConfig) -> Gener
 @pytest.fixture
 def mock_template_server_class() -> Generator[MagicMock, None, None]:
     """Mock TemplateServer class."""
-    with patch("python_template_server.main.TemplateServer") as mock_server:
+    with patch("python_template_server.main.ExampleServer") as mock_server:
         yield mock_server
 
 
