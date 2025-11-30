@@ -37,7 +37,7 @@ class TemplateServer(ABC):
     This class provides a template for building FastAPI servers with common features
     such as request logging, security headers, rate limiting, and Prometheus metrics.
 
-    Ensure you implement the `setup_routes` and `load_config` methods in subclasses.
+    Ensure you implement the `setup_routes` and `validate_config` methods in subclasses.
     """
 
     def __init__(
@@ -75,6 +75,15 @@ class TemplateServer(ABC):
         yield
 
     @abstractmethod
+    def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
+        """Validate configuration data against the TemplateServerConfig model.
+
+        :param dict config_data: The configuration data to validate
+        :return TemplateServerConfig: The validated configuration model
+        :raise ValidationError: If the configuration data is invalid
+        """
+        return TemplateServerConfig.model_validate(config_data)
+
     def load_config(self, config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
         """Load configuration from the specified json file.
 
@@ -99,7 +108,7 @@ class TemplateServer(ABC):
             sys.exit(1)
 
         try:
-            return TemplateServerConfig.model_validate(config_data)
+            return self.validate_config(config_data)
         except ValidationError:
             logger.exception("Invalid configuration in: %s", config_path)
             sys.exit(1)

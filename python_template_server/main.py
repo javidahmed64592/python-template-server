@@ -1,5 +1,7 @@
 """FastAPI template server using uvicorn."""
 
+from typing import Any
+
 from python_template_server.models import TemplateServerConfig
 from python_template_server.template_server import TemplateServer
 
@@ -14,12 +16,12 @@ class ExampleServer(TemplateServer):
         """
         super().__init__()
 
-    def load_config(self) -> TemplateServerConfig:
-        """Load configuration from the config.json file.
+    def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
+        """Validate configuration from the config.json file.
 
         :return TemplateServerConfig: Loaded configuration
         """
-        return super().load_config()
+        return super().validate_config(config_data)
 
     def setup_routes(self) -> None:
         """Set up API routes."""

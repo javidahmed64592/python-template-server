@@ -6,6 +6,7 @@ import asyncio
 import json
 from collections.abc import Generator
 from importlib.metadata import PackageMetadata
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -16,7 +17,7 @@ from fastapi.testclient import TestClient
 from slowapi.errors import RateLimitExceeded
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
-from python_template_server.constants import API_PREFIX, CONFIG_FILE_NAME
+from python_template_server.constants import API_PREFIX
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
     BaseResponse,
@@ -86,13 +87,13 @@ class MockTemplateServer(TemplateServer):
             code=ResponseCode.OK, message="protected endpoint", timestamp=BaseResponse.current_timestamp()
         )
 
-    def load_config(self, config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
-        """Load configuration from the config.json file.
+    def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
+        """Validate configuration from the config.json file.
 
-        :param str config_file: Configuration file name
+        :param dict config_data: Configuration data
         :return TemplateServerConfig: Loaded configuration
         """
-        return super().load_config(config_file)
+        return super().validate_config(config_data)
 
     def setup_routes(self) -> None:
         """Set up mock routes for testing."""
