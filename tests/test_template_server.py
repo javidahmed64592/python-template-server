@@ -6,6 +6,7 @@ import asyncio
 import json
 from collections.abc import Generator
 from importlib.metadata import PackageMetadata
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -127,7 +128,18 @@ class TestTemplateServer:
 class TestLoadConfig:
     """Tests for the load_config function."""
 
-    def test_load_config_success(
+    def test_load_config_with_filepath_success(self, mock_template_server_config: TemplateServerConfig) -> None:
+        """Test that load_config is called with the specified filepath when config is None."""
+        with patch.object(
+            MockTemplateServer, "load_config", return_value=mock_template_server_config
+        ) as mock_load_config:
+            custom_filepath = Path("/custom/config.json")
+            server = MockTemplateServer(config_filepath=custom_filepath)
+
+            mock_load_config.assert_called_once_with(custom_filepath)
+            assert server.config == mock_template_server_config
+
+    def test_load_config_with_no_filepath_success(
         self,
         mock_exists: MagicMock,
         mock_open_file: MagicMock,

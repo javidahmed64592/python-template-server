@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from importlib.metadata import metadata
+from pathlib import Path
 from typing import Any
 
 import uvicorn
@@ -41,12 +42,17 @@ class TemplateServer(ABC):
     """
 
     def __init__(
-        self, package_name: str = PACKAGE_NAME, api_prefix: str = API_PREFIX, config: TemplateServerConfig | None = None
+        self,
+        package_name: str = PACKAGE_NAME,
+        api_prefix: str = API_PREFIX,
+        config_filepath: str = CONFIG_DIR / CONFIG_FILE_NAME,
+        config: TemplateServerConfig | None = None,
     ) -> None:
         """Initialize the TemplateServer.
 
         :param str package_name: The package name for metadata retrieval
         :param str api_prefix: The API prefix for the server
+        :param str config_filepath: Path to the configuration file
         :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
         self.api_prefix = api_prefix
@@ -60,7 +66,7 @@ class TemplateServer(ABC):
         )
         self.api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
 
-        self.config = config or self.load_config()
+        self.config = config or self.load_config(config_filepath)
         self.hashed_token = load_hashed_token()
         self._setup_request_logging()
         self._setup_security_headers()
@@ -84,33 +90,32 @@ class TemplateServer(ABC):
         """
         return TemplateServerConfig.model_validate(config_data)
 
-    def load_config(self, config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
+    def load_config(self, config_filepath: Path) -> TemplateServerConfig:
         """Load configuration from the specified json file.
 
-        :param str config_file: Name of the configuration file
+        :param Path config_filepath: Path to the configuration file
         :return TemplateServerConfig: The validated configuration model
         :raise SystemExit: If configuration file is missing, invalid JSON, or fails validation
         """
-        config_path = CONFIG_DIR / config_file
-        if not config_path.exists():
-            logger.error("Configuration file not found: %s", config_path)
+        if not config_filepath.exists():
+            logger.error("Configuration file not found: %s", config_filepath)
             sys.exit(1)
 
         config_data = {}
         try:
-            with config_path.open() as f:
+            with config_filepath.open() as f:
                 config_data = json.load(f)
         except json.JSONDecodeError:
-            logger.exception("JSON parsing error: %s", config_path)
+            logger.exception("JSON parsing error: %s", config_filepath)
             sys.exit(1)
         except OSError:
-            logger.exception("JSON read error: %s", config_path)
+            logger.exception("JSON read error: %s", config_filepath)
             sys.exit(1)
 
         try:
             return self.validate_config(config_data)
         except ValidationError:
-            logger.exception("Invalid configuration in: %s", config_path)
+            logger.exception("Invalid configuration in: %s", config_filepath)
             sys.exit(1)
 
     async def _verify_api_key(
