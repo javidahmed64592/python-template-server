@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import Generator
+from importlib.metadata import PackageMetadata
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -24,6 +25,21 @@ from python_template_server.models import (
     TemplateServerConfig,
 )
 from python_template_server.template_server import TemplateServer
+
+
+@pytest.fixture(autouse=True)
+def mock_package_metadata() -> Generator[MagicMock, None, None]:
+    """Mock importlib.metadata.metadata to return a mock PackageMetadata."""
+    with patch("python_template_server.template_server.metadata") as mock_metadata:
+        mock_pkg_metadata = MagicMock(spec=PackageMetadata)
+        metadata_dict = {
+            "Name": "python-template-server",
+            "Version": "0.1.0",
+            "Summary": "A template FastAPI server with authentication, rate limiting and Prometheus metrics.",
+        }
+        mock_pkg_metadata.__getitem__.side_effect = lambda key: metadata_dict[key]
+        mock_metadata.return_value = mock_pkg_metadata
+        yield mock_metadata
 
 
 @pytest.fixture
@@ -52,9 +68,7 @@ def mock_timestamp() -> Generator[str, None, None]:
 @pytest.fixture
 def mock_template_server(mock_template_server_config: TemplateServerConfig) -> MockTemplateServer:
     """Provide a MockTemplateServer instance for testing."""
-    server = MockTemplateServer()
-    server.config = mock_template_server_config
-    return server
+    return MockTemplateServer(config=mock_template_server_config)
 
 
 class MockTemplateServer(TemplateServer):
@@ -332,14 +346,14 @@ class TestRateLimiting:
         """Test rate limiting setup when enabled."""
         mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer()
+        server = MockTemplateServer(config=mock_template_server_config)
 
         assert server.limiter is not None
         assert server.app.state.limiter is not None
 
     def test_setup_rate_limiting_disabled(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test rate limiting setup when disabled."""
-        server = MockTemplateServer()
+        server = MockTemplateServer(config=mock_template_server_config)
 
         assert server.limiter is None
 
@@ -347,7 +361,7 @@ class TestRateLimiting:
         """Test _limit_route when rate limiting is enabled."""
         mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer()
+        server = MockTemplateServer(config=mock_template_server_config)
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route != server.mock_unprotected_method
@@ -355,7 +369,7 @@ class TestRateLimiting:
 
     def test_limit_route_with_limiter_disabled(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test _limit_route when rate limiting is disabled."""
-        server = MockTemplateServer()
+        server = MockTemplateServer(config=mock_template_server_config)
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route == server.mock_unprotected_method

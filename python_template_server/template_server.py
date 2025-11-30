@@ -38,11 +38,14 @@ class TemplateServer(ABC):
     Ensure you implement the `setup_routes` and `load_config` methods in subclasses.
     """
 
-    def __init__(self, package_name: str = PACKAGE_NAME, api_prefix: str = API_PREFIX) -> None:
+    def __init__(
+        self, package_name: str = PACKAGE_NAME, api_prefix: str = API_PREFIX, config: TemplateServerConfig | None = None
+    ) -> None:
         """Initialize the TemplateServer.
 
         :param str package_name: The package name for metadata retrieval
         :param str api_prefix: The API prefix for the server
+        :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
         package_metadata = metadata(package_name)
         self.app = FastAPI(
@@ -54,7 +57,7 @@ class TemplateServer(ABC):
         )
         self.api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
 
-        self.config = self.load_config()
+        self.config = config or self.load_config()
         self.hashed_token = load_hashed_token()
         self._setup_request_logging()
         self._setup_security_headers()

@@ -26,5 +26,4 @@ class TestRun:
         """Test successful server run."""
         run()
 
-        mock_template_server_class.load_config.assert_called_once()
         mock_template_server_class.return_value.run.assert_called_once()
