@@ -18,10 +18,15 @@ RSA_KEY_SIZE = 4096
 
 
 @pytest.fixture
-def mock_load_config() -> Generator[MagicMock, None, None]:
-    """Mock the load_config function."""
-    with patch("python_template_server.certificate_handler.load_config") as mock_config:
-        yield mock_config
+def mock_example_server(
+    tmp_path: Path, mock_template_server_config: TemplateServerConfig
+) -> Generator[MagicMock, None, None]:
+    """Mock the ExampleServer class."""
+    with patch("python_template_server.certificate_handler.ExampleServer") as mock_server:
+        cert_dir = tmp_path / "certs"
+        mock_template_server_config.certificate.directory = str(cert_dir)
+        mock_server.return_value.config = mock_template_server_config
+        yield mock_server
 
 
 class TestCertificateHandler:
@@ -163,22 +168,14 @@ class TestGenerateSelfSignedCertificate:
     """Unit tests for the generate_self_signed_certificate function."""
 
     def test_generate_self_signed_certificate_success(
-        self, mock_load_config: MagicMock, mock_template_server_config: TemplateServerConfig, tmp_path: Path
+        self, mock_example_server: MagicMock, mock_template_server_config: TemplateServerConfig, tmp_path: Path
     ) -> None:
         """Test successful certificate generation via wrapper function."""
-        # Use tmp_path for certificate directory to avoid permission issues
-        cert_dir = tmp_path / "certs"
-        mock_template_server_config.certificate.directory = str(cert_dir)
-        mock_load_config.return_value = mock_template_server_config
-
         with (
             patch.object(CertificateHandler, "write_to_key_file") as mock_write_key,
             patch.object(CertificateHandler, "write_to_cert_file") as mock_write_cert,
         ):
             generate_self_signed_certificate()
-
-            # Verify config was loaded
-            mock_load_config.assert_called_once()
 
             # Verify write methods were called with PEM-encoded data
             mock_write_key.assert_called_once()
@@ -191,17 +188,12 @@ class TestGenerateSelfSignedCertificate:
 
     def test_generate_self_signed_certificate_os_error(
         self,
-        mock_load_config: MagicMock,
+        mock_example_server: MagicMock,
         mock_template_server_config: TemplateServerConfig,
         mock_sys_exit: MagicMock,
         tmp_path: Path,
     ) -> None:
         """Test certificate generation wrapper handles OSError."""
-        # Use tmp_path for certificate directory
-        cert_dir = tmp_path / "certs"
-        mock_template_server_config.certificate.directory = str(cert_dir)
-        mock_load_config.return_value = mock_template_server_config
-
         with patch(
             "python_template_server.certificate_handler.CertificateHandler.generate_self_signed_cert",
             side_effect=OSError("Disk error"),
@@ -213,17 +205,12 @@ class TestGenerateSelfSignedCertificate:
 
     def test_generate_self_signed_certificate_permission_error(
         self,
-        mock_load_config: MagicMock,
+        mock_example_server: MagicMock,
         mock_template_server_config: TemplateServerConfig,
         mock_sys_exit: MagicMock,
         tmp_path: Path,
     ) -> None:
         """Test certificate generation wrapper handles PermissionError."""
-        # Use tmp_path for certificate directory
-        cert_dir = tmp_path / "certs"
-        mock_template_server_config.certificate.directory = str(cert_dir)
-        mock_load_config.return_value = mock_template_server_config
-
         with patch(
             "python_template_server.certificate_handler.CertificateHandler.generate_self_signed_cert",
             side_effect=PermissionError("No permission"),
@@ -235,17 +222,12 @@ class TestGenerateSelfSignedCertificate:
 
     def test_generate_self_signed_certificate_unexpected_error(
         self,
-        mock_load_config: MagicMock,
+        mock_example_server: MagicMock,
         mock_template_server_config: TemplateServerConfig,
         mock_sys_exit: MagicMock,
         tmp_path: Path,
     ) -> None:
         """Test certificate generation wrapper handles unexpected exceptions."""
-        # Use tmp_path for certificate directory
-        cert_dir = tmp_path / "certs"
-        mock_template_server_config.certificate.directory = str(cert_dir)
-        mock_load_config.return_value = mock_template_server_config
-
         with patch(
             "python_template_server.certificate_handler.CertificateHandler.generate_self_signed_cert",
             side_effect=RuntimeError("Unexpected error"),

@@ -34,10 +34,6 @@ class TestServerConfigModel:
         """Test the url property."""
         assert mock_server_config.url == "https://localhost:8080"
 
-    def test_full_url_property(self, mock_server_config: ServerConfigModel) -> None:
-        """Test the full_url property."""
-        assert mock_server_config.full_url == "https://localhost:8080/api"
-
     @pytest.mark.parametrize("port", [0, 70000])
     def test_port_field(self, mock_server_config_dict: dict, port: int) -> None:
         """Test the port field validation."""

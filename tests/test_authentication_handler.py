@@ -13,8 +13,7 @@ from python_template_server.authentication_handler import (
     save_hashed_token,
     verify_token,
 )
-from python_template_server.config import ROOT_DIR
-from python_template_server.constants import ENV_FILE_NAME, ENV_VAR_NAME, TOKEN_LENGTH
+from python_template_server.constants import ENV_FILE_PATH, ENV_VAR_NAME, TOKEN_LENGTH
 
 
 @pytest.fixture
@@ -60,7 +59,7 @@ class TestAuthenticationHandler:
         """Test the save_hashed_token function."""
         mock_exists.return_value = True
         save_hashed_token("testtoken")
-        mock_set_key.assert_called_once_with(ROOT_DIR / ENV_FILE_NAME, ENV_VAR_NAME, mock_hash_token.return_value)
+        mock_set_key.assert_called_once_with(ENV_FILE_PATH, ENV_VAR_NAME, mock_hash_token.return_value)
 
     def test_save_hashed_token_file_creation(
         self, mock_hash_token: MagicMock, mock_exists: MagicMock, mock_touch: MagicMock, mock_set_key: MagicMock
@@ -69,7 +68,7 @@ class TestAuthenticationHandler:
         mock_exists.return_value = False
         save_hashed_token("testtoken")
         mock_touch.assert_called_once()
-        mock_set_key.assert_called_once_with(ROOT_DIR / ENV_FILE_NAME, ENV_VAR_NAME, mock_hash_token.return_value)
+        mock_set_key.assert_called_once_with(ENV_FILE_PATH, ENV_VAR_NAME, mock_hash_token.return_value)
 
     @pytest.mark.parametrize(
         ("token", "expected"),

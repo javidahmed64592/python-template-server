@@ -11,9 +11,11 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
-from python_template_server.config import load_config, parse_args
+from python_template_server.logging_setup import setup_logging
+from python_template_server.main import ExampleServer
 from python_template_server.models import CertificateConfigModel
 
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -136,8 +138,7 @@ def generate_self_signed_certificate() -> None:
     :raise SystemExit: If certificate generation fails
     """
     try:
-        args = parse_args()
-        config = load_config(args.config_file)
+        config = ExampleServer().config
         handler = CertificateHandler(config.certificate)
         handler.generate_self_signed_cert()
     except (OSError, PermissionError):

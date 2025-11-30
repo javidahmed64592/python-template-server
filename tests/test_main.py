@@ -12,26 +12,18 @@ TEST_PORT = 443
 
 
 @pytest.fixture
-def mock_load_config(mock_template_server_config: TemplateServerConfig) -> Generator[MagicMock, None, None]:
-    """Mock the load_config function."""
-    with patch("python_template_server.main.load_config") as mock_config:
-        mock_config.return_value = mock_template_server_config
-        yield mock_config
-
-
-@pytest.fixture
-def mock_template_server_class() -> Generator[MagicMock, None, None]:
+def mock_template_server_class(mock_template_server_config: TemplateServerConfig) -> Generator[MagicMock, None, None]:
     """Mock TemplateServer class."""
     with patch("python_template_server.main.ExampleServer") as mock_server:
+        mock_server.load_config.return_value = mock_template_server_config
         yield mock_server
 
 
 class TestRun:
     """Unit tests for the run function."""
 
-    def test_run(self, mock_load_config: MagicMock, mock_template_server_class: MagicMock) -> None:
+    def test_run(self, mock_template_server_class: MagicMock) -> None:
         """Test successful server run."""
         run()
 
-        mock_load_config.assert_called_once()
         mock_template_server_class.return_value.run.assert_called_once()

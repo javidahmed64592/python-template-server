@@ -7,12 +7,11 @@ import secrets
 
 import dotenv
 
-from python_template_server.config import ROOT_DIR
-from python_template_server.constants import ENV_FILE_NAME, ENV_VAR_NAME, TOKEN_LENGTH
+from python_template_server.constants import ENV_FILE_PATH, ENV_VAR_NAME, TOKEN_LENGTH
+from python_template_server.logging_setup import setup_logging
 
+setup_logging()
 logger = logging.getLogger(__name__)
-
-ENV_FILE = ROOT_DIR / ENV_FILE_NAME
 
 
 def generate_token() -> str:
@@ -39,10 +38,10 @@ def save_hashed_token(token: str) -> None:
     """
     hashed = hash_token(token)
 
-    if not ENV_FILE.exists():
-        ENV_FILE.touch()
+    if not ENV_FILE_PATH.exists():
+        ENV_FILE_PATH.touch()
 
-    dotenv.set_key(ENV_FILE, ENV_VAR_NAME, hashed)
+    dotenv.set_key(ENV_FILE_PATH, ENV_VAR_NAME, hashed)
 
 
 def load_hashed_token() -> str:
@@ -50,7 +49,7 @@ def load_hashed_token() -> str:
 
     :return str: The hashed token string, or an empty string if not found
     """
-    dotenv.load_dotenv(ENV_FILE)
+    dotenv.load_dotenv(ENV_FILE_PATH)
     return os.getenv(ENV_VAR_NAME, "")
 
 
