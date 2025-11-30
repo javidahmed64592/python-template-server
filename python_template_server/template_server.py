@@ -49,12 +49,13 @@ class TemplateServer(ABC):
         :param str api_prefix: The API prefix for the server
         :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
+        self.api_prefix = api_prefix
         package_metadata = metadata(package_name)
         self.app = FastAPI(
             title=package_metadata["Name"],
             description=package_metadata["Summary"],
             version=package_metadata["Version"],
-            root_path=api_prefix,
+            root_path=self.api_prefix,
             lifespan=self.lifespan,
         )
         self.api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
@@ -245,7 +246,7 @@ class TemplateServer(ABC):
                 logger.error("SSL certificate files are missing. Expected: '%s' and '%s'", cert_file, key_file)
                 sys.exit(1)
 
-            logger.info("Starting server: %s", self.config.server.full_url)
+            logger.info("Starting server: %s%s", self.config.server.url, self.api_prefix)
             uvicorn.run(
                 self.app,
                 host=self.config.server.host,
