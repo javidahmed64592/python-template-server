@@ -69,6 +69,14 @@ class TemplateServerConfig(BaseModel):
     rate_limit: RateLimitConfigModel = Field(default_factory=RateLimitConfigModel)
     certificate: CertificateConfigModel = Field(default_factory=CertificateConfigModel)
 
+    def save_to_file(self, filepath: Path) -> None:
+        """Save the configuration to a JSON file.
+
+        :param Path filepath: Path to the configuration file
+        """
+        with filepath.open("w", encoding="utf-8") as config_file:
+            config_file.write(self.model_dump_json(indent=2))
+
 
 # API Response Models
 class ResponseCode(IntEnum):
