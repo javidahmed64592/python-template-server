@@ -34,26 +34,29 @@ class TemplateServer(ABC):
     Ensure you implement the `setup_routes` method in subclasses to define API endpoints.
     """
 
-    def __init__(self, config: TemplateServerConfig) -> None:
+    def __init__(
+        self, config: TemplateServerConfig, package_name: str = PACKAGE_NAME, api_prefix: str = API_PREFIX
+    ) -> None:
         """Initialize the TemplateServer.
 
         :param TemplateServerConfig config: Template server configuration
+        :param str package_name: The package name for metadata retrieval
+        :param str api_prefix: The API prefix for the server
         """
         self.config = config
-        self.logger = logging.getLogger(__name__)
-        self.hashed_token = load_hashed_token()
 
-        package_metadata = metadata(PACKAGE_NAME)
-
+        package_metadata = metadata(package_name)
         self.app = FastAPI(
             title=package_metadata["Name"],
             description=package_metadata["Summary"],
             version=package_metadata["Version"],
-            root_path=API_PREFIX,
+            root_path=api_prefix,
             lifespan=self.lifespan,
         )
         self.api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
 
+        self.logger = logging.getLogger(__name__)
+        self.hashed_token = load_hashed_token()
         self._setup_request_logging()
         self._setup_security_headers()
         self._setup_rate_limiting()

@@ -1,6 +1,5 @@
 """Configuration handling for the server."""
 
-import argparse
 import json
 import logging
 import sys
@@ -67,7 +66,7 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-def load_config(config_file: str) -> TemplateServerConfig:
+def load_config(config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
     """Load configuration from the config.json file.
 
     :param str config_file: Name of the configuration file
@@ -95,18 +94,3 @@ def load_config(config_file: str) -> TemplateServerConfig:
     except ValidationError:
         logger.exception("Invalid configuration in: %s", config_path)
         sys.exit(1)
-
-
-def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments.
-
-    :return argparse.Namespace: Parsed arguments
-    """
-    parser = argparse.ArgumentParser(description="Python Template Server")
-    parser.add_argument(
-        "--config-file",
-        type=str,
-        default=CONFIG_FILE_NAME,
-        help="Path to the configuration file (default: config.json)",
-    )
-    return parser.parse_known_args()[0]
