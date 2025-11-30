@@ -1,6 +1,6 @@
 """FastAPI template server using uvicorn."""
 
-from python_template_server.constants import API_PREFIX, CONFIG_FILE_NAME, PACKAGE_NAME
+from python_template_server.constants import CONFIG_FILE_NAME
 from python_template_server.logging_setup import setup_logging
 from python_template_server.models import TemplateServerConfig
 from python_template_server.template_server import TemplateServer
@@ -14,7 +14,7 @@ class ExampleServer(TemplateServer):
 
         :param TemplateServerConfig config: Example server configuration
         """
-        super().__init__(package_name=PACKAGE_NAME, api_prefix=API_PREFIX)
+        super().__init__()
 
     def load_config(self, config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
         """Load configuration from the config.json file.
