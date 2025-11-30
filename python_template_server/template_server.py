@@ -22,8 +22,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from python_template_server.authentication_handler import load_hashed_token, verify_token
-from python_template_server.config import CONFIG_DIR
-from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_FILE_NAME, PACKAGE_NAME
+from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_DIR, CONFIG_FILE_NAME, PACKAGE_NAME
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import GetHealthResponse, ResponseCode, ServerHealthStatus, TemplateServerConfig
 
@@ -39,17 +38,12 @@ class TemplateServer(ABC):
     Ensure you implement the `setup_routes` and `load_config` methods in subclasses.
     """
 
-    def __init__(
-        self, config: TemplateServerConfig, package_name: str = PACKAGE_NAME, api_prefix: str = API_PREFIX
-    ) -> None:
+    def __init__(self, package_name: str = PACKAGE_NAME, api_prefix: str = API_PREFIX) -> None:
         """Initialize the TemplateServer.
 
-        :param TemplateServerConfig config: Template server configuration
         :param str package_name: The package name for metadata retrieval
         :param str api_prefix: The API prefix for the server
         """
-        self.config = config
-
         package_metadata = metadata(package_name)
         self.app = FastAPI(
             title=package_metadata["Name"],
@@ -60,6 +54,7 @@ class TemplateServer(ABC):
         )
         self.api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
 
+        self.config = self.load_config()
         self.hashed_token = load_hashed_token()
         self._setup_request_logging()
         self._setup_security_headers()
@@ -73,9 +68,8 @@ class TemplateServer(ABC):
         """Handle application lifespan events."""
         yield
 
-    @staticmethod
     @abstractmethod
-    def load_config(config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
+    def load_config(self, config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
         """Load configuration from the specified json file.
 
         :param str config_file: Name of the configuration file

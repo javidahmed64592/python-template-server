@@ -4,22 +4,15 @@ import logging
 import sys
 from logging.handlers import RotatingFileHandler
 
-from pyhere import here
-
 from python_template_server.constants import (
     LOG_BACKUP_COUNT,
     LOG_DATE_FORMAT,
-    LOG_DIR_NAME,
-    LOG_FILE_NAME,
+    LOG_DIR,
+    LOG_FILE_PATH,
     LOG_FORMAT,
     LOG_LEVEL,
     LOG_MAX_BYTES,
 )
-
-ROOT_DIR = here()
-CONFIG_DIR = ROOT_DIR / "configuration"
-LOG_DIR = ROOT_DIR / LOG_DIR_NAME
-LOG_FILE_PATH = LOG_DIR / LOG_FILE_NAME
 
 
 def setup_logging() -> None:

@@ -1,6 +1,6 @@
 """FastAPI template server using uvicorn."""
 
-from python_template_server.constants import CONFIG_FILE_NAME
+from python_template_server.constants import API_PREFIX, CONFIG_FILE_NAME, PACKAGE_NAME
 from python_template_server.models import TemplateServerConfig
 from python_template_server.template_server import TemplateServer
 
@@ -8,15 +8,14 @@ from python_template_server.template_server import TemplateServer
 class ExampleServer(TemplateServer):
     """Example server inheriting from TemplateServer."""
 
-    def __init__(self, config: TemplateServerConfig) -> None:
+    def __init__(self) -> None:
         """Initialize the ExampleServer by delegating to the template server.
 
         :param TemplateServerConfig config: Example server configuration
         """
-        super().__init__(config)
+        super().__init__(package_name=PACKAGE_NAME, api_prefix=API_PREFIX)
 
-    @staticmethod
-    def load_config(config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
+    def load_config(self, config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
         """Load configuration from the config.json file.
 
         :param str config_file: Configuration file name
@@ -34,6 +33,5 @@ def run() -> None:
 
     :raise SystemExit: If configuration fails to load or SSL certificate files are missing
     """
-    config = ExampleServer.load_config()
-    server = ExampleServer(config)
+    server = ExampleServer()
     server.run()

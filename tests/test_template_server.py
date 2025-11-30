@@ -52,7 +52,9 @@ def mock_timestamp() -> Generator[str, None, None]:
 @pytest.fixture
 def mock_template_server(mock_template_server_config: TemplateServerConfig) -> MockTemplateServer:
     """Provide a MockTemplateServer instance for testing."""
-    return MockTemplateServer(mock_template_server_config)
+    server = MockTemplateServer()
+    server.config = mock_template_server_config
+    return server
 
 
 class MockTemplateServer(TemplateServer):
@@ -70,8 +72,7 @@ class MockTemplateServer(TemplateServer):
             code=ResponseCode.OK, message="protected endpoint", timestamp=BaseResponse.current_timestamp()
         )
 
-    @staticmethod
-    def load_config(config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
+    def load_config(self, config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
         """Load configuration from the config.json file.
 
         :param str config_file: Configuration file name
@@ -122,7 +123,7 @@ class TestLoadConfig:
         mock_exists.return_value = True
         mock_open_file.return_value.read.return_value = json.dumps(mock_template_server_config.model_dump())
 
-        config = TemplateServer.load_config()
+        config = MockTemplateServer().config
 
         assert isinstance(config, TemplateServerConfig)
         assert config == mock_template_server_config
@@ -137,7 +138,7 @@ class TestLoadConfig:
         mock_exists.return_value = False
 
         with pytest.raises(SystemExit):
-            TemplateServer.load_config()
+            MockTemplateServer()
 
         mock_sys_exit.assert_called_once_with(1)
 
@@ -152,7 +153,7 @@ class TestLoadConfig:
         mock_open_file.return_value.read.return_value = "invalid json"
 
         with pytest.raises(SystemExit):
-            TemplateServer.load_config()
+            MockTemplateServer()
 
         mock_sys_exit.assert_called_with(1)
 
@@ -167,7 +168,7 @@ class TestLoadConfig:
         mock_open_file.side_effect = OSError("File read error")
 
         with pytest.raises(SystemExit):
-            TemplateServer.load_config()
+            MockTemplateServer()
 
         mock_sys_exit.assert_called_with(1)
 
@@ -182,7 +183,7 @@ class TestLoadConfig:
         mock_open_file.return_value.read.return_value = json.dumps({"server": {"host": "localhost", "port": 999999}})
 
         with pytest.raises(SystemExit):
-            TemplateServer.load_config()
+            MockTemplateServer()
 
         mock_sys_exit.assert_called_once_with(1)
 
@@ -331,14 +332,14 @@ class TestRateLimiting:
         """Test rate limiting setup when enabled."""
         mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer(mock_template_server_config)
+        server = MockTemplateServer()
 
         assert server.limiter is not None
         assert server.app.state.limiter is not None
 
     def test_setup_rate_limiting_disabled(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test rate limiting setup when disabled."""
-        server = MockTemplateServer(mock_template_server_config)
+        server = MockTemplateServer()
 
         assert server.limiter is None
 
@@ -346,7 +347,7 @@ class TestRateLimiting:
         """Test _limit_route when rate limiting is enabled."""
         mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer(mock_template_server_config)
+        server = MockTemplateServer()
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route != server.mock_unprotected_method
@@ -354,7 +355,7 @@ class TestRateLimiting:
 
     def test_limit_route_with_limiter_disabled(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test _limit_route when rate limiting is disabled."""
-        server = MockTemplateServer(mock_template_server_config)
+        server = MockTemplateServer()
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route == server.mock_unprotected_method
