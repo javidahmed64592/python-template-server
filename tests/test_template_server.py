@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from slowapi.errors import RateLimitExceeded
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
-from python_template_server.constants import API_PREFIX
+from python_template_server.constants import API_PREFIX, CONFIG_FILE_NAME
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
     BaseResponse,
@@ -70,6 +70,15 @@ class MockTemplateServer(TemplateServer):
             code=ResponseCode.OK, message="protected endpoint", timestamp=BaseResponse.current_timestamp()
         )
 
+    @staticmethod
+    def load_config(config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
+        """Load configuration from the config.json file.
+
+        :param str config_file: Configuration file name
+        :return TemplateServerConfig: Loaded configuration
+        """
+        return super().load_config(config_file)
+
     def setup_routes(self) -> None:
         """Set up mock routes for testing."""
         super().setup_routes()
@@ -97,6 +106,85 @@ class TestTemplateServer:
         middlewares = [middleware.cls for middleware in mock_template_server.app.user_middleware]
         assert RequestLoggingMiddleware in middlewares
         assert SecurityHeadersMiddleware in middlewares
+
+
+class TestLoadConfig:
+    """Tests for the load_config function."""
+
+    def test_load_config_success(
+        self,
+        mock_exists: MagicMock,
+        mock_open_file: MagicMock,
+        mock_sys_exit: MagicMock,
+        mock_template_server_config: TemplateServerConfig,
+    ) -> None:
+        """Test successful loading of config."""
+        mock_exists.return_value = True
+        mock_open_file.return_value.read.return_value = json.dumps(mock_template_server_config.model_dump())
+
+        config = TemplateServer.load_config()
+
+        assert isinstance(config, TemplateServerConfig)
+        assert config == mock_template_server_config
+        mock_sys_exit.assert_not_called()
+
+    def test_load_config_file_not_found(
+        self,
+        mock_exists: MagicMock,
+        mock_sys_exit: MagicMock,
+    ) -> None:
+        """Test loading config when the file does not exist."""
+        mock_exists.return_value = False
+
+        with pytest.raises(SystemExit):
+            TemplateServer.load_config()
+
+        mock_sys_exit.assert_called_once_with(1)
+
+    def test_load_config_invalid_json(
+        self,
+        mock_exists: MagicMock,
+        mock_open_file: MagicMock,
+        mock_sys_exit: MagicMock,
+    ) -> None:
+        """Test loading config with invalid JSON content."""
+        mock_exists.return_value = True
+        mock_open_file.return_value.read.return_value = "invalid json"
+
+        with pytest.raises(SystemExit):
+            TemplateServer.load_config()
+
+        mock_sys_exit.assert_called_with(1)
+
+    def test_load_config_os_error(
+        self,
+        mock_exists: MagicMock,
+        mock_open_file: MagicMock,
+        mock_sys_exit: MagicMock,
+    ) -> None:
+        """Test loading config that raises an OSError."""
+        mock_exists.return_value = True
+        mock_open_file.side_effect = OSError("File read error")
+
+        with pytest.raises(SystemExit):
+            TemplateServer.load_config()
+
+        mock_sys_exit.assert_called_with(1)
+
+    def test_load_config_validation_error(
+        self,
+        mock_exists: MagicMock,
+        mock_open_file: MagicMock,
+        mock_sys_exit: MagicMock,
+    ) -> None:
+        """Test loading config that fails validation."""
+        mock_exists.return_value = True
+        mock_open_file.return_value.read.return_value = json.dumps({"server": {"host": "localhost", "port": 999999}})
+
+        with pytest.raises(SystemExit):
+            TemplateServer.load_config()
+
+        mock_sys_exit.assert_called_once_with(1)
 
 
 class TestVerifyApiKey:

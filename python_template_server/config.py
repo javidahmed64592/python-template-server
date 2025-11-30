@@ -1,15 +1,12 @@
 """Configuration handling for the server."""
 
-import json
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
 
-from pydantic import ValidationError
 from pyhere import here
 
 from python_template_server.constants import (
-    CONFIG_FILE_NAME,
     LOG_BACKUP_COUNT,
     LOG_DATE_FORMAT,
     LOG_DIR_NAME,
@@ -18,7 +15,6 @@ from python_template_server.constants import (
     LOG_LEVEL,
     LOG_MAX_BYTES,
 )
-from python_template_server.models import TemplateServerConfig
 
 ROOT_DIR = here()
 CONFIG_DIR = ROOT_DIR / "configuration"
@@ -63,34 +59,3 @@ def setup_logging() -> None:
 
 # Setup logging on module import
 setup_logging()
-logger = logging.getLogger(__name__)
-
-
-def load_config(config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
-    """Load configuration from the config.json file.
-
-    :param str config_file: Name of the configuration file
-    :return TemplateServerConfig: The validated configuration model
-    :raise SystemExit: If configuration file is missing, invalid JSON, or fails validation
-    """
-    config_path = CONFIG_DIR / config_file
-    if not config_path.exists():
-        logger.error("Configuration file not found: %s", config_path)
-        sys.exit(1)
-
-    config_data = {}
-    try:
-        with config_path.open() as f:
-            config_data = json.load(f)
-    except json.JSONDecodeError:
-        logger.exception("JSON parsing error: %s", config_path)
-        sys.exit(1)
-    except OSError:
-        logger.exception("JSON read error: %s", config_path)
-        sys.exit(1)
-
-    try:
-        return TemplateServerConfig.model_validate(config_data)
-    except ValidationError:
-        logger.exception("Invalid configuration in: %s", config_path)
-        sys.exit(1)

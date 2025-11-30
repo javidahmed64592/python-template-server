@@ -20,7 +20,7 @@ RSA_KEY_SIZE = 4096
 @pytest.fixture
 def mock_load_config() -> Generator[MagicMock, None, None]:
     """Mock the load_config function."""
-    with patch("python_template_server.certificate_handler.load_config") as mock_config:
+    with patch("python_template_server.certificate_handler.TemplateServer.load_config") as mock_config:
         yield mock_config
 
 

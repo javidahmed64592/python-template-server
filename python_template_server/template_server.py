@@ -1,5 +1,6 @@
 """Template FastAPI server module."""
 
+import json
 import logging
 import sys
 from abc import ABC, abstractmethod
@@ -15,14 +16,18 @@ from fastapi.security import APIKeyHeader
 from prometheus_client import Counter, Gauge
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
+from pydantic_core import ValidationError
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from python_template_server.authentication_handler import load_hashed_token, verify_token
-from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, PACKAGE_NAME
+from python_template_server.config import CONFIG_DIR
+from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_FILE_NAME, PACKAGE_NAME
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import GetHealthResponse, ResponseCode, ServerHealthStatus, TemplateServerConfig
+
+logger = logging.getLogger(__name__)
 
 
 class TemplateServer(ABC):
@@ -31,7 +36,7 @@ class TemplateServer(ABC):
     This class provides a template for building FastAPI servers with common features
     such as request logging, security headers, rate limiting, and Prometheus metrics.
 
-    Ensure you implement the `setup_routes` method in subclasses to define API endpoints.
+    Ensure you implement the `setup_routes` and `load_config` methods in subclasses.
     """
 
     def __init__(
@@ -55,7 +60,6 @@ class TemplateServer(ABC):
         )
         self.api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
 
-        self.logger = logging.getLogger(__name__)
         self.hashed_token = load_hashed_token()
         self._setup_request_logging()
         self._setup_security_headers()
@@ -69,6 +73,37 @@ class TemplateServer(ABC):
         """Handle application lifespan events."""
         yield
 
+    @staticmethod
+    @abstractmethod
+    def load_config(config_file: str = CONFIG_FILE_NAME) -> TemplateServerConfig:
+        """Load configuration from the specified json file.
+
+        :param str config_file: Name of the configuration file
+        :return TemplateServerConfig: The validated configuration model
+        :raise SystemExit: If configuration file is missing, invalid JSON, or fails validation
+        """
+        config_path = CONFIG_DIR / config_file
+        if not config_path.exists():
+            logger.error("Configuration file not found: %s", config_path)
+            sys.exit(1)
+
+        config_data = {}
+        try:
+            with config_path.open() as f:
+                config_data = json.load(f)
+        except json.JSONDecodeError:
+            logger.exception("JSON parsing error: %s", config_path)
+            sys.exit(1)
+        except OSError:
+            logger.exception("JSON read error: %s", config_path)
+            sys.exit(1)
+
+        try:
+            return TemplateServerConfig.model_validate(config_data)
+        except ValidationError:
+            logger.exception("Invalid configuration in: %s", config_path)
+            sys.exit(1)
+
     async def _verify_api_key(
         self, api_key: str | None = Security(APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False))
     ) -> None:
@@ -78,7 +113,7 @@ class TemplateServer(ABC):
         :raise HTTPException: If the API key is missing or invalid
         """
         if api_key is None:
-            self.logger.warning("Missing API key in request!")
+            logger.warning("Missing API key in request!")
             self.auth_failure_counter.labels(reason="missing").inc()
             raise HTTPException(
                 status_code=ResponseCode.UNAUTHORIZED,
@@ -87,16 +122,16 @@ class TemplateServer(ABC):
 
         try:
             if not verify_token(api_key, self.hashed_token):
-                self.logger.warning("Invalid API key attempt!")
+                logger.warning("Invalid API key attempt!")
                 self.auth_failure_counter.labels(reason="invalid").inc()
                 raise HTTPException(
                     status_code=ResponseCode.UNAUTHORIZED,
                     detail="Invalid API key",
                 )
-            self.logger.debug("API key validated successfully.")
+            logger.debug("API key validated successfully.")
             self.auth_success_counter.inc()
         except ValueError as e:
-            self.logger.exception("Error verifying API key!")
+            logger.exception("Error verifying API key!")
             self.auth_failure_counter.labels(reason="error").inc()
             raise HTTPException(
                 status_code=ResponseCode.UNAUTHORIZED,
@@ -106,7 +141,7 @@ class TemplateServer(ABC):
     def _setup_request_logging(self) -> None:
         """Set up request logging middleware."""
         self.app.add_middleware(RequestLoggingMiddleware)
-        self.logger.info("Request logging enabled")
+        logger.info("Request logging enabled")
 
     def _setup_security_headers(self) -> None:
         """Set up security headers middleware."""
@@ -116,7 +151,7 @@ class TemplateServer(ABC):
             csp=self.config.security.content_security_policy,
         )
 
-        self.logger.info(
+        logger.info(
             "Security headers enabled: HSTS max-age=%s, CSP=%s",
             self.config.security.hsts_max_age,
             self.config.security.content_security_policy,
@@ -141,7 +176,7 @@ class TemplateServer(ABC):
     def _setup_rate_limiting(self) -> None:
         """Set up rate limiting middleware."""
         if not self.config.rate_limit.enabled:
-            self.logger.info("Rate limiting is disabled")
+            logger.info("Rate limiting is disabled")
             self.limiter = None
             return
 
@@ -153,7 +188,7 @@ class TemplateServer(ABC):
         self.app.state.limiter = self.limiter
         self.app.add_exception_handler(RateLimitExceeded, self._rate_limit_exception_handler)  # type: ignore[arg-type]
 
-        self.logger.info(
+        logger.info(
             "Rate limiting enabled: rate=%s, storage=%s",
             self.config.rate_limit.rate_limit,
             self.config.rate_limit.storage_uri or "in-memory",
@@ -196,7 +231,7 @@ class TemplateServer(ABC):
             ["endpoint"],
         )
 
-        self.logger.info("Prometheus metrics enabled.")
+        logger.info("Prometheus metrics enabled.")
 
     def run(self) -> None:
         """Run the server using uvicorn.
@@ -208,10 +243,10 @@ class TemplateServer(ABC):
             key_file = self.config.certificate.ssl_key_file_path
 
             if not (cert_file.exists() and key_file.exists()):
-                self.logger.error("SSL certificate files are missing. Expected: '%s' and '%s'", cert_file, key_file)
+                logger.error("SSL certificate files are missing. Expected: '%s' and '%s'", cert_file, key_file)
                 sys.exit(1)
 
-            self.logger.info("Starting server: %s", self.config.server.full_url)
+            logger.info("Starting server: %s", self.config.server.full_url)
             uvicorn.run(
                 self.app,
                 host=self.config.server.host,
@@ -219,9 +254,9 @@ class TemplateServer(ABC):
                 ssl_keyfile=str(key_file),
                 ssl_certfile=str(cert_file),
             )
-            self.logger.info("Server stopped.")
+            logger.info("Server stopped.")
         except OSError:
-            self.logger.exception("Failed to start - ran into an OSError!")
+            logger.exception("Failed to start - ran into an OSError!")
             sys.exit(1)
 
     def add_unauthenticated_route(
