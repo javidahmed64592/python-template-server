@@ -45,6 +45,7 @@ class TemplateServer(ABC):
         self,
         package_name: str = PACKAGE_NAME,
         api_prefix: str = API_PREFIX,
+        api_key_header_name: str = API_KEY_HEADER_NAME,
         config_filepath: Path = CONFIG_DIR / CONFIG_FILE_NAME,
         config: TemplateServerConfig | None = None,
     ) -> None:
@@ -52,21 +53,26 @@ class TemplateServer(ABC):
 
         :param str package_name: The package name for metadata retrieval
         :param str api_prefix: The API prefix for the server
+        :param str api_key_header_name: The API key header name
         :param Path config_filepath: Path to the configuration file
         :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
+        self.package_name = package_name
         self.api_prefix = api_prefix
-        package_metadata = metadata(package_name)
+        self.api_key_header_name = api_key_header_name
+        self.config_filepath = config_filepath
+        self.config = config or self.load_config(config_filepath)
+
+        self.package_metadata = metadata(self.package_name)
         self.app = FastAPI(
-            title=package_metadata["Name"],
-            description=package_metadata["Summary"],
-            version=package_metadata["Version"],
+            title=self.package_metadata["Name"],
+            description=self.package_metadata["Summary"],
+            version=self.package_metadata["Version"],
             root_path=self.api_prefix,
             lifespan=self.lifespan,
         )
-        self.api_key_header = APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False)
+        self.api_key_header = APIKeyHeader(name=self.api_key_header_name, auto_error=False)
 
-        self.config = config or self.load_config(config_filepath)
         self.hashed_token = load_hashed_token()
         self._setup_request_logging()
         self._setup_security_headers()
