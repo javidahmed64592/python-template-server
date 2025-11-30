@@ -45,14 +45,14 @@ class TemplateServer(ABC):
         self,
         package_name: str = PACKAGE_NAME,
         api_prefix: str = API_PREFIX,
-        config_filepath: str = CONFIG_DIR / CONFIG_FILE_NAME,
+        config_filepath: Path = CONFIG_DIR / CONFIG_FILE_NAME,
         config: TemplateServerConfig | None = None,
     ) -> None:
         """Initialize the TemplateServer.
 
         :param str package_name: The package name for metadata retrieval
         :param str api_prefix: The API prefix for the server
-        :param str config_filepath: Path to the configuration file
+        :param Path config_filepath: Path to the configuration file
         :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
         self.api_prefix = api_prefix
