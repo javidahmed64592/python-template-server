@@ -1,9 +1,9 @@
-"""Unit tests for the python_template_server.config module."""
+"""Unit tests for the python_template_server.logging_setup module."""
 
 import logging
 from unittest.mock import MagicMock
 
-from python_template_server.config import setup_logging
+from python_template_server.logging_setup import setup_logging
 
 
 class TestSetupLogging:

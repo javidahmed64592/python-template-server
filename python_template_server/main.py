@@ -1,6 +1,7 @@
 """FastAPI template server using uvicorn."""
 
 from python_template_server.constants import API_PREFIX, CONFIG_FILE_NAME, PACKAGE_NAME
+from python_template_server.logging_setup import setup_logging
 from python_template_server.models import TemplateServerConfig
 from python_template_server.template_server import TemplateServer
 
@@ -33,5 +34,6 @@ def run() -> None:
 
     :raise SystemExit: If configuration fails to load or SSL certificate files are missing
     """
+    setup_logging()
     server = ExampleServer()
     server.run()

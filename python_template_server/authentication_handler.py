@@ -8,7 +8,9 @@ import secrets
 import dotenv
 
 from python_template_server.constants import ENV_FILE_PATH, ENV_VAR_NAME, TOKEN_LENGTH
+from python_template_server.logging_setup import setup_logging
 
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
