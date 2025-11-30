@@ -8,8 +8,6 @@ import pytest
 from python_template_server.main import run
 from python_template_server.models import TemplateServerConfig
 
-TEST_PORT = 443
-
 
 @pytest.fixture
 def mock_template_server_class(mock_template_server_config: TemplateServerConfig) -> Generator[MagicMock, None, None]:
