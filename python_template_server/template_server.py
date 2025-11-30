@@ -23,9 +23,11 @@ from slowapi.util import get_remote_address
 
 from python_template_server.authentication_handler import load_hashed_token, verify_token
 from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_DIR, CONFIG_FILE_NAME, PACKAGE_NAME
+from python_template_server.logging_setup import setup_logging
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import GetHealthResponse, ResponseCode, ServerHealthStatus, TemplateServerConfig
 
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
