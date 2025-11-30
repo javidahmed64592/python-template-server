@@ -274,34 +274,36 @@ class TemplateServer(ABC):
             sys.exit(1)
 
     def add_unauthenticated_route(
-        self, endpoint: str, handler_function: Callable, response_model: type[BaseModel]
+        self, endpoint: str, handler_function: Callable, response_model: type[BaseModel], methods: list[str]
     ) -> None:
         """Add an unauthenticated API route.
 
         :param str endpoint: The API endpoint path
         :param Callable handler_function: The handler function for the endpoint
         :param BaseModel response_model: The Pydantic model for the response
+        :param list[str] methods: The HTTP methods for the endpoint
         """
         self.app.add_api_route(
             endpoint,
             self._limit_route(handler_function),
-            methods=["GET"],
+            methods=methods,
             response_model=response_model,
         )
 
     def add_authenticated_route(
-        self, endpoint: str, handler_function: Callable, response_model: type[BaseModel]
+        self, endpoint: str, handler_function: Callable, response_model: type[BaseModel], methods: list[str]
     ) -> None:
         """Add an authenticated API route.
 
         :param str endpoint: The API endpoint path
         :param Callable handler_function: The handler function for the endpoint
         :param BaseModel response_model: The Pydantic model for the response
+        :param list[str] methods: The HTTP methods for the endpoint
         """
         self.app.add_api_route(
             endpoint,
             self._limit_route(handler_function),
-            methods=["GET"],
+            methods=methods,
             response_model=response_model,
             dependencies=[Security(self._verify_api_key)],
         )
@@ -314,12 +316,12 @@ class TemplateServer(ABC):
 
         Examples:
         ```python
-        self.add_unauthenticated_route("/unprotected-endpoint", self.unprotected_endpoint, PublicResponseModel)
-        self.add_authenticated_route("/protected-endpoint", self.protected_endpoint, PrivateResponseModel)
+        self.add_unauthenticated_route("/unprotected-endpoint", self.unprotected_endpoint, PublicResponseModel, ["GET"])
+        self.add_authenticated_route("/protected-endpoint", self.protected_endpoint, PrivateResponseModel, ["POST"])
         ```
 
         """
-        self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse)
+        self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse, ["GET"])
 
     async def get_health(self, request: Request) -> GetHealthResponse:
         """Get server health.

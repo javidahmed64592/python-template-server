@@ -99,8 +99,8 @@ class MockTemplateServer(TemplateServer):
     def setup_routes(self) -> None:
         """Set up mock routes for testing."""
         super().setup_routes()
-        self.add_unauthenticated_route("/unauthenticated-endpoint", self.mock_unprotected_method, BaseResponse)
-        self.add_authenticated_route("/authenticated-endpoint", self.mock_protected_method, BaseResponse)
+        self.add_unauthenticated_route("/unauthenticated-endpoint", self.mock_unprotected_method, BaseResponse, ["GET"])
+        self.add_authenticated_route("/authenticated-endpoint", self.mock_protected_method, BaseResponse, ["POST"])
 
 
 class TestTemplateServer:
@@ -464,7 +464,7 @@ class TestTemplateServerRoutes:
         assert dependency.dependency == mock_template_server._verify_api_key
 
         # Verify method and response model
-        assert "GET" in test_route.methods
+        assert "POST" in test_route.methods
         assert test_route.response_model == BaseResponse
 
     def test_setup_routes(self, mock_template_server: MockTemplateServer) -> None:
