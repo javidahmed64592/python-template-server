@@ -1,7 +1,9 @@
 """FastAPI template server using uvicorn."""
 
+from pathlib import Path
 from typing import Any
 
+from python_template_server.constants import CONFIG_FILE_PATH
 from python_template_server.models import TemplateServerConfig
 from python_template_server.template_server import TemplateServer
 
@@ -9,12 +11,12 @@ from python_template_server.template_server import TemplateServer
 class ExampleServer(TemplateServer):
     """Example server inheriting from TemplateServer."""
 
-    def __init__(self) -> None:
+    def __init__(self, config_filepath: Path = CONFIG_FILE_PATH) -> None:
         """Initialize the ExampleServer by delegating to the template server.
 
-        :param TemplateServerConfig config: Example server configuration
+        :param Path config_filepath: Configuration filepath
         """
-        super().__init__()
+        super().__init__(config_filepath=config_filepath)
 
     def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
         """Validate configuration from the config.json file.
