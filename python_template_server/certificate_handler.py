@@ -147,10 +147,10 @@ def generate_self_signed_certificate() -> None:
         help="Path to the configuration file (default: configuration/config.json)",
     )
     args = parser.parse_args()
-    config_path = Path(args.config)
+    config_filepath = Path(args.config)
 
     try:
-        server = ExampleServer(config_path=config_path)
+        server = ExampleServer(config_filepath=config_filepath)
         handler = CertificateHandler(server.config.certificate)
         handler.generate_self_signed_cert()
     except (OSError, PermissionError):
