@@ -134,20 +134,27 @@ class CertificateHandler:
             raise
 
 
-def generate_self_signed_certificate() -> None:
-    """Generate self-signed certificates for local development.
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for certificate generation.
 
-    :raise SystemExit: If certificate generation fails
+    :return argparse.Namespace: Parsed arguments
     """
     parser = argparse.ArgumentParser(description="Generate self-signed certificates for local development.")
     parser.add_argument(
         "--config",
         type=str,
         default=str(CONFIG_FILE_PATH),
-        required=False,
         help="Path to the configuration file (default: configuration/config.json)",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def generate_self_signed_certificate() -> None:
+    """Generate self-signed certificates for local development.
+
+    :raise SystemExit: If certificate generation fails
+    """
+    args = parse_args()
     config_filepath = Path(args.config)
 
     try:
