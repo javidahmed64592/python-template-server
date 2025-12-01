@@ -144,6 +144,7 @@ def generate_self_signed_certificate() -> None:
         "--config",
         type=str,
         default=str(CONFIG_FILE_PATH),
+        required=False,
         help="Path to the configuration file (default: configuration/config.json)",
     )
     args = parser.parse_args()
