@@ -1,5 +1,6 @@
 """Generate self-signed SSL certificate for local development."""
 
+import argparse
 import ipaddress
 import logging
 import sys
@@ -11,6 +12,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
+from python_template_server.constants import CONFIG_FILE_PATH
 from python_template_server.logging_setup import setup_logging
 from python_template_server.main import ExampleServer
 from python_template_server.models import CertificateConfigModel
@@ -137,9 +139,19 @@ def generate_self_signed_certificate() -> None:
 
     :raise SystemExit: If certificate generation fails
     """
+    parser = argparse.ArgumentParser(description="Generate self-signed certificates for local development.")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=str(CONFIG_FILE_PATH),
+        help="Path to the configuration file (default: configuration/config.json)",
+    )
+    args = parser.parse_args()
+    config_path = Path(args.config)
+
     try:
-        config = ExampleServer().config
-        handler = CertificateHandler(config.certificate)
+        server = ExampleServer(config_path=config_path)
+        handler = CertificateHandler(server.config.certificate)
         handler.generate_self_signed_cert()
     except (OSError, PermissionError):
         logger.exception("Failed to generate certificates!")
