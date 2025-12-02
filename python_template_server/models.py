@@ -1,9 +1,12 @@
 """Pydantic models for the server."""
 
+import json
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 from pathlib import Path
+from typing import Any
 
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 
@@ -61,6 +64,15 @@ class CertificateConfigModel(BaseModel):
         return Path(self.directory) / self.ssl_certfile
 
 
+class JSONResponseConfigModel(BaseModel):
+    """JSON response rendering configuration model."""
+
+    ensure_ascii: bool = Field(default=False, description="Whether to escape non-ASCII characters")
+    allow_nan: bool = Field(default=False, description="Whether to allow NaN values in JSON")
+    indent: int | None = Field(default=None, description="Indentation level for pretty-printing (None for compact)")
+    media_type: str = Field(default="application/json; charset=utf-8", description="Media type for JSON responses")
+
+
 class TemplateServerConfig(BaseModel):
     """Template server configuration."""
 
@@ -68,6 +80,7 @@ class TemplateServerConfig(BaseModel):
     security: SecurityConfigModel = Field(default_factory=SecurityConfigModel)
     rate_limit: RateLimitConfigModel = Field(default_factory=RateLimitConfigModel)
     certificate: CertificateConfigModel = Field(default_factory=CertificateConfigModel)
+    json_response: JSONResponseConfigModel = Field(default_factory=JSONResponseConfigModel)
 
     def save_to_file(self, filepath: Path) -> None:
         """Save the configuration to a JSON file.
@@ -79,6 +92,32 @@ class TemplateServerConfig(BaseModel):
 
 
 # API Response Models
+class CustomJSONResponse(JSONResponse):
+    """Custom JSONResponse with configurable rendering options."""
+
+    _ensure_ascii: bool = False
+    _allow_nan: bool = False
+    _indent: int | None = None
+
+    @classmethod
+    def configure(cls, json_response_config: JSONResponseConfigModel) -> None:
+        """Configure class-level JSON rendering options."""
+        cls._ensure_ascii = json_response_config.ensure_ascii
+        cls._allow_nan = json_response_config.allow_nan
+        cls._indent = json_response_config.indent
+        cls.media_type = json_response_config.media_type
+
+    def render(self, content: Any) -> bytes:  # noqa: ANN401
+        """Render content to JSON with configured options."""
+        return json.dumps(
+            content,
+            ensure_ascii=self._ensure_ascii,
+            allow_nan=self._allow_nan,
+            indent=self._indent,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+
 class ResponseCode(IntEnum):
     """HTTP response codes for API endpoints."""
 

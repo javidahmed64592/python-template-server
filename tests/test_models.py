@@ -8,7 +8,9 @@ from pydantic import ValidationError
 from python_template_server.models import (
     BaseResponse,
     CertificateConfigModel,
+    CustomJSONResponse,
     GetHealthResponse,
+    JSONResponseConfigModel,
     RateLimitConfigModel,
     ResponseCode,
     SecurityConfigModel,
@@ -87,6 +89,16 @@ class TestCertificateConfigModel:
             CertificateConfigModel(**invalid_config_data)
 
 
+class TestJSONResponseConfigModel:
+    """Unit tests for the JSONResponseConfigModel class."""
+
+    def test_model_dump(
+        self, mock_json_response_config_dict: dict, mock_json_response_config: JSONResponseConfigModel
+    ) -> None:
+        """Test the model_dump method."""
+        assert mock_json_response_config.model_dump() == mock_json_response_config_dict
+
+
 class TestTemplateServerConfig:
     """Unit tests for the TemplateServerConfig class."""
 
@@ -97,6 +109,7 @@ class TestTemplateServerConfig:
         mock_security_config_dict: dict,
         mock_rate_limit_config_dict: dict,
         mock_certificate_config_dict: dict,
+        mock_json_response_config_dict: dict,
     ) -> None:
         """Test the model_dump method."""
         expected_dict = {
@@ -104,6 +117,7 @@ class TestTemplateServerConfig:
             "security": mock_security_config_dict,
             "rate_limit": mock_rate_limit_config_dict,
             "certificate": mock_certificate_config_dict,
+            "json_response": mock_json_response_config_dict,
         }
         assert mock_template_server_config.model_dump() == expected_dict
 
@@ -119,6 +133,59 @@ class TestTemplateServerConfig:
 
 
 # API Response Models
+class TestCustomJSONResponse:
+    """Unit tests for the CustomJSONResponse class."""
+
+    def test_configure_method(self, mock_json_response_config: JSONResponseConfigModel) -> None:
+        """Test the configure class method."""
+        CustomJSONResponse.configure(mock_json_response_config)
+
+        assert CustomJSONResponse._ensure_ascii == mock_json_response_config.ensure_ascii
+        assert CustomJSONResponse._allow_nan == mock_json_response_config.allow_nan
+        assert CustomJSONResponse._indent == mock_json_response_config.indent
+        assert CustomJSONResponse.media_type == mock_json_response_config.media_type
+
+    def test_render_with_unicode(self, mock_json_response_config: JSONResponseConfigModel) -> None:
+        """Test rendering JSON with Unicode characters (emojis)."""
+        CustomJSONResponse.configure(mock_json_response_config)
+        response = CustomJSONResponse(content={"message": "Hello 👋 World 🌍"})
+
+        rendered = response.render({"message": "Hello 👋 World 🌍"})
+        assert b"Hello \\ud83d\\udc4b World" not in rendered  # Should NOT be escaped
+        assert "👋".encode() in rendered  # Should preserve emoji
+        assert "🌍".encode() in rendered
+
+    def test_render_with_ensure_ascii_true(self) -> None:
+        """Test rendering with ensure_ascii=True."""
+        config = JSONResponseConfigModel(ensure_ascii=True)
+        CustomJSONResponse.configure(config)
+        response = CustomJSONResponse(content={"message": "Hello 👋"})
+
+        rendered = response.render({"message": "Hello 👋"})
+        # With ensure_ascii=True, Unicode should be escaped
+        assert b"\\ud83d\\udc4b" in rendered or b"\\u" in rendered
+
+    def test_render_with_indent(self) -> None:
+        """Test rendering with indentation."""
+        config = JSONResponseConfigModel(indent=2)
+        CustomJSONResponse.configure(config)
+        response = CustomJSONResponse(content={"key": "value"})
+
+        rendered = response.render({"key": "value"})
+        # With indent, output should have newlines and spaces
+        assert b"\n" in rendered
+        assert b"  " in rendered
+
+    def test_render_compact(self, mock_json_response_config: JSONResponseConfigModel) -> None:
+        """Test rendering in compact mode (no indent)."""
+        CustomJSONResponse.configure(mock_json_response_config)
+        response = CustomJSONResponse(content={"key": "value", "number": 42})
+
+        rendered = response.render({"key": "value", "number": 42})
+        # Compact mode should use "," separator without spaces after
+        assert rendered == b'{"key":"value","number":42}'
+
+
 class TestResponseCode:
     """Unit tests for the ResponseCode enum."""
 
