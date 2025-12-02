@@ -22,6 +22,7 @@ from python_template_server.constants import API_PREFIX
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
     BaseResponse,
+    CustomJSONResponse,
     ResponseCode,
     ServerHealthStatus,
     TemplateServerConfig,
@@ -123,6 +124,24 @@ class TestTemplateServer:
         middlewares = [middleware.cls for middleware in mock_template_server.app.user_middleware]
         assert RequestLoggingMiddleware in middlewares
         assert SecurityHeadersMiddleware in middlewares
+
+    def test_json_response_configured(
+        self, mock_template_server: TemplateServer, mock_template_server_config: TemplateServerConfig
+    ) -> None:
+        """Test that CustomJSONResponse is properly configured during initialization."""
+        # Verify CustomJSONResponse class variables are set correctly
+        assert CustomJSONResponse._ensure_ascii == mock_template_server_config.json_response.ensure_ascii
+        assert CustomJSONResponse._allow_nan == mock_template_server_config.json_response.allow_nan
+        assert CustomJSONResponse._indent == mock_template_server_config.json_response.indent
+        assert CustomJSONResponse.media_type == mock_template_server_config.json_response.media_type
+
+        # Test that CustomJSONResponse renders correctly with configured settings
+        response = CustomJSONResponse(content={"test": "data", "emoji": "👋"})
+        rendered = response.render({"test": "data", "emoji": "👋"})
+
+        # With ensure_ascii=False, emojis should be preserved
+        assert "👋".encode() in rendered
+        assert b'"test":"data"' in rendered  # Compact format (no spaces)
 
 
 class TestLoadConfig:

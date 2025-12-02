@@ -12,7 +12,6 @@ from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Security
-from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from prometheus_client import Counter, Gauge
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -26,7 +25,13 @@ from python_template_server.authentication_handler import load_hashed_token, ver
 from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_FILE_PATH, PACKAGE_NAME
 from python_template_server.logging_setup import setup_logging
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
-from python_template_server.models import GetHealthResponse, ResponseCode, ServerHealthStatus, TemplateServerConfig
+from python_template_server.models import (
+    CustomJSONResponse,
+    GetHealthResponse,
+    ResponseCode,
+    ServerHealthStatus,
+    TemplateServerConfig,
+)
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -63,6 +68,8 @@ class TemplateServer(ABC):
         self.config_filepath = config_filepath
         self.config = config or self.load_config(config_filepath)
 
+        CustomJSONResponse.configure(self.config.json_response)
+
         self.package_metadata = metadata(self.package_name)
         self.app = FastAPI(
             title=self.package_metadata["Name"],
@@ -70,6 +77,7 @@ class TemplateServer(ABC):
             version=self.package_metadata["Version"],
             root_path=self.api_prefix,
             lifespan=self.lifespan,
+            default_response_class=CustomJSONResponse,
         )
         self.api_key_header = APIKeyHeader(name=self.api_key_header_name, auto_error=False)
 
@@ -177,7 +185,7 @@ class TemplateServer(ABC):
             self.config.security.content_security_policy,
         )
 
-    async def _rate_limit_exception_handler(self, request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    async def _rate_limit_exception_handler(self, request: Request, exc: RateLimitExceeded) -> CustomJSONResponse:
         """Handle rate limit exceeded exceptions and track metrics.
 
         :param Request request: The incoming HTTP request
@@ -187,7 +195,7 @@ class TemplateServer(ABC):
         self.rate_limit_exceeded_counter.labels(endpoint=request.url.path).inc()
 
         # Return JSON response with 429 status
-        return JSONResponse(
+        return CustomJSONResponse(
             status_code=429,
             content={"detail": "Rate limit exceeded"},
             headers={"Retry-After": str(exc.retry_after)} if hasattr(exc, "retry_after") else {},
