@@ -47,6 +47,9 @@ python-template-server = "python_template_server.main:run"
 generate-certificate = "python_template_server.certificate_handler:generate_self_signed_certificate"
 generate-new-token = "python_template_server.authentication_handler:generate_new_token"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.build]
 include = [
   "configuration/**",
