@@ -102,7 +102,6 @@ To create your own server:
    - `setup_routes()`: Define your API endpoints
 3. **Add custom routes** using FastAPI decorators on `self.app`
 4. **Configure** via `configuration/config.json`
-5. **Run** with `uv run python-template-server`
 
 See the [Software Maintenance Guide](./docs/SMG.md) for detailed setup instructions.
 
