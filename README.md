@@ -126,3 +126,7 @@ docker compose logs -f python-template-server
 - **[Software Maintenance Guide](./docs/SMG.md)**: Development setup, configuration
 - **[Docker Deployment Guide](./docs/DOCKER_DEPLOYMENT.md)**: Container orchestration
 - **[Workflows](./docs/WORKFLOWS.md)**: CI/CD pipeline details
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
