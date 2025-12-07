@@ -3,14 +3,18 @@
 from pathlib import Path
 
 import pytest
+from prometheus_client import Counter, Gauge
 from pydantic import ValidationError
 
 from python_template_server.models import (
+    BaseMetricNames,
     BaseResponse,
     CertificateConfigModel,
     CustomJSONResponse,
     GetHealthResponse,
     JSONResponseConfigModel,
+    MetricConfig,
+    MetricTypes,
     RateLimitConfigModel,
     ResponseCode,
     SecurityConfigModel,
@@ -130,6 +134,62 @@ class TestTemplateServerConfig:
         config_file = tmp_path / "config.json"
         mock_template_server_config.save_to_file(config_file)
         assert config_file.read_text(encoding="utf-8") == mock_template_server_config.model_dump_json(indent=2)
+
+
+# Prometheus Metric Models
+class TestBaseMetricNames:
+    """Unit tests for the BaseMetricNames enum."""
+
+    @pytest.mark.parametrize(
+        ("metric_name", "value"),
+        [
+            (BaseMetricNames.TOKEN_CONFIGURED, "token_configured"),
+            (BaseMetricNames.AUTH_SUCCESS_TOTAL, "auth_success_total"),
+            (BaseMetricNames.AUTH_FAILURE_TOTAL, "auth_failure_total"),
+            (BaseMetricNames.RATE_LIMIT_EXCEEDED_TOTAL, "rate_limit_exceeded_total"),
+        ],
+    )
+    def test_enum_values(self, metric_name: BaseMetricNames, value: str) -> None:
+        """Test the enum values."""
+        assert metric_name.value == value
+
+
+class TestMetricTypes:
+    """Unit tests for the MetricTypes enum."""
+
+    @pytest.mark.parametrize(
+        ("metric_type", "value"),
+        [
+            (MetricTypes.COUNTER, "counter"),
+            (MetricTypes.GAUGE, "gauge"),
+        ],
+    )
+    def test_enum_values(self, metric_type: MetricTypes, value: str) -> None:
+        """Test the enum values."""
+        assert metric_type.value == value
+
+    def test_prometheus_class_property(self) -> None:
+        """Test the prometheus_class property."""
+        assert MetricTypes.COUNTER.prometheus_class == Counter
+        assert MetricTypes.GAUGE.prometheus_class == Gauge
+
+
+class TestMetricConfig:
+    """Unit tests for the MetricConfig dataclass."""
+
+    def test_metric_config_initialization(self) -> None:
+        """Test initialization of MetricConfig."""
+        metric_config = MetricConfig(
+            name=BaseMetricNames.AUTH_SUCCESS_TOTAL,
+            metric_type=MetricTypes.COUNTER,
+            description="Total number of successful authentication attempts",
+            labels=["user_id"],
+        )
+
+        assert metric_config.name == BaseMetricNames.AUTH_SUCCESS_TOTAL
+        assert metric_config.metric_type == MetricTypes.COUNTER
+        assert metric_config.description == "Total number of successful authentication attempts"
+        assert metric_config.labels == ["user_id"]
 
 
 # API Response Models

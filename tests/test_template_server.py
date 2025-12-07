@@ -21,12 +21,14 @@ from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 from python_template_server.constants import API_PREFIX
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
+    BaseMetricNames,
     BaseResponse,
     CustomJSONResponse,
     ResponseCode,
     ServerHealthStatus,
     TemplateServerConfig,
 )
+from python_template_server.prometheus_handler import PrometheusHandler
 from python_template_server.template_server import TemplateServer
 
 
@@ -274,76 +276,72 @@ class TestVerifyApiKey:
         assert exc_info.value.status_code == ResponseCode.UNAUTHORIZED
         assert "No stored token hash found" in exc_info.value.detail
 
-
-class TestPrometheusMetrics:
-    """Unit tests for Prometheus metrics functionality."""
-
-    def test_metrics_endpoint_exists(self, mock_template_server: TemplateServer) -> None:
-        """Test that /metrics endpoint is exposed."""
-        api_routes = [route for route in mock_template_server.app.routes if isinstance(route, APIRoute)]
-        routes = [route.path for route in api_routes]
-        assert "/metrics" in routes
-
-    def test_metrics_setup(self, mock_template_server: TemplateServer) -> None:
-        """Test that Prometheus metrics are properly initialized."""
-        assert mock_template_server.token_configured_gauge is not None
-        assert mock_template_server.auth_success_counter is not None
-        assert mock_template_server.auth_failure_counter is not None
-        assert mock_template_server.rate_limit_exceeded_counter is not None
-
-    def test_set_token_configured_gauge(self, mock_template_server: TemplateServer) -> None:
-        """Test that token_configured_gauge is set correctly."""
-        # Initially, the token is configured in the mock_template_server fixture
-        assert mock_template_server.token_configured_gauge._value.get() == 1
-
-        # Simulate token not configured
-        mock_template_server.hashed_token = ""
-        asyncio.run(mock_template_server.get_health(MagicMock()))
-        assert mock_template_server.token_configured_gauge._value.get() == 0
-
     def test_auth_success_metric_incremented(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock
     ) -> None:
         """Test that auth_success_counter is incremented on successful authentication."""
         mock_verify_token.return_value = True
-        initial_value = mock_template_server.auth_success_counter._value.get()
+        auth_success_counter = mock_template_server.prometheus_handler.get_metric(BaseMetricNames.AUTH_SUCCESS_TOTAL)
+        assert auth_success_counter is not None
+        initial_value = auth_success_counter._value.get()
 
         asyncio.run(mock_template_server._verify_api_key(api_key="valid_token"))
 
-        assert mock_template_server.auth_success_counter._value.get() == initial_value + 1
+        assert auth_success_counter._value.get() == initial_value + 1
 
     def test_auth_failure_missing_metric_incremented(self, mock_template_server: TemplateServer) -> None:
         """Test that auth_failure_counter is incremented when API key is missing."""
-        initial_value = mock_template_server.auth_failure_counter.labels(reason="missing")._value.get()
+        auth_failure_counter = mock_template_server.prometheus_handler.get_metric(BaseMetricNames.AUTH_FAILURE_TOTAL)
+        assert auth_failure_counter is not None
+        initial_value = auth_failure_counter.labels(reason="missing")._value.get()
 
         with pytest.raises(HTTPException):
             asyncio.run(mock_template_server._verify_api_key(api_key=None))
 
-        assert mock_template_server.auth_failure_counter.labels(reason="missing")._value.get() == initial_value + 1
+        assert auth_failure_counter.labels(reason="missing")._value.get() == initial_value + 1
 
     def test_auth_failure_invalid_metric_incremented(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock
     ) -> None:
         """Test that auth_failure_counter is incremented when API key is invalid."""
         mock_verify_token.return_value = False
-        initial_value = mock_template_server.auth_failure_counter.labels(reason="invalid")._value.get()
+        auth_failure_counter = mock_template_server.prometheus_handler.get_metric(BaseMetricNames.AUTH_FAILURE_TOTAL)
+        assert auth_failure_counter is not None
+        initial_value = auth_failure_counter.labels(reason="invalid")._value.get()
 
         with pytest.raises(HTTPException):
             asyncio.run(mock_template_server._verify_api_key(api_key="invalid_token"))
 
-        assert mock_template_server.auth_failure_counter.labels(reason="invalid")._value.get() == initial_value + 1
+        assert auth_failure_counter.labels(reason="invalid")._value.get() == initial_value + 1
 
     def test_auth_failure_error_metric_incremented(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock
     ) -> None:
         """Test that auth_failure_counter is incremented when verification raises ValueError."""
         mock_verify_token.side_effect = ValueError("Verification error")
-        initial_value = mock_template_server.auth_failure_counter.labels(reason="error")._value.get()
+        auth_failure_counter = mock_template_server.prometheus_handler.get_metric(BaseMetricNames.AUTH_FAILURE_TOTAL)
+        assert auth_failure_counter is not None
+        initial_value = auth_failure_counter.labels(reason="error")._value.get()
 
         with pytest.raises(HTTPException):
             asyncio.run(mock_template_server._verify_api_key(api_key="error_token"))
 
-        assert mock_template_server.auth_failure_counter.labels(reason="error")._value.get() == initial_value + 1
+        assert auth_failure_counter.labels(reason="error")._value.get() == initial_value + 1
+
+
+class TestPrometheusMetrics:
+    """Unit tests for Prometheus metrics functionality."""
+
+    def test_metrics_setup(self, mock_template_server: TemplateServer) -> None:
+        """Test that Prometheus metrics are properly initialized."""
+        assert isinstance(mock_template_server.prometheus_handler, PrometheusHandler)
+        assert mock_template_server.prometheus_handler.get_metric(BaseMetricNames.TOKEN_CONFIGURED)._value.get() == 1
+
+    def test_metrics_endpoint_exists(self, mock_template_server: TemplateServer) -> None:
+        """Test that /metrics endpoint is exposed."""
+        api_routes = [route for route in mock_template_server.app.routes if isinstance(route, APIRoute)]
+        routes = [route.path for route in api_routes]
+        assert "/metrics" in routes
 
 
 class TestRateLimiting:
@@ -357,16 +355,17 @@ class TestRateLimiting:
         exc = MagicMock(spec=RateLimitExceeded)
         exc.retry_after = 42
 
-        initial_value = mock_template_server.rate_limit_exceeded_counter.labels(endpoint=request.url.path)._value.get()
+        rate_limit_counter = mock_template_server.prometheus_handler.get_metric(
+            BaseMetricNames.RATE_LIMIT_EXCEEDED_TOTAL
+        )
+        assert rate_limit_counter is not None
+        initial_value = rate_limit_counter.labels(endpoint=request.url.path)._value.get()
 
         # Call the handler
         response = asyncio.run(mock_template_server._rate_limit_exception_handler(request, exc))
 
         # Verify counter incremented
-        assert (
-            mock_template_server.rate_limit_exceeded_counter.labels(endpoint=request.url.path)._value.get()
-            == initial_value + 1
-        )
+        assert rate_limit_counter.labels(endpoint=request.url.path)._value.get() == initial_value + 1
 
         # Verify JSONResponse status and content
         assert response.status_code == HTTP_429_TOO_MANY_REQUESTS
@@ -506,7 +505,9 @@ class TestHealthEndpoint:
         assert response.code == ResponseCode.OK
         assert response.message == "Server is healthy"
         assert response.status == ServerHealthStatus.HEALTHY
-        assert mock_template_server.token_configured_gauge._value.get() == 1
+        token_gauge = mock_template_server.prometheus_handler.get_metric(BaseMetricNames.TOKEN_CONFIGURED)
+        assert token_gauge is not None
+        assert token_gauge._value.get() == 1
 
     def test_get_health_token_not_configured(self, mock_template_server: TemplateServer) -> None:
         """Test the /health endpoint method when token is not configured."""
@@ -518,7 +519,9 @@ class TestHealthEndpoint:
         assert response.code == ResponseCode.INTERNAL_SERVER_ERROR
         assert response.message == "Server token is not configured"
         assert response.status == ServerHealthStatus.UNHEALTHY
-        assert mock_template_server.token_configured_gauge._value.get() == 0
+        token_gauge = mock_template_server.prometheus_handler.get_metric(BaseMetricNames.TOKEN_CONFIGURED)
+        assert token_gauge is not None
+        assert token_gauge._value.get() == 0
 
     def test_health_endpoint(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock, mock_timestamp: str
