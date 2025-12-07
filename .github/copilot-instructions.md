@@ -158,6 +158,8 @@ All PRs must pass:
 - `template_server.py` - Base TemplateServer class with middleware/metrics/auth setup
 - `main.py` - ExampleServer implementation showing how to extend TemplateServer
 - `authentication_handler.py` - Token generation, hashing, verification
+- `prometheus_handler.py` - Prometheus metrics setup and custom metric definitions
+- `certificate_handler.py` - Self-signed SSL certificate generation and loading
 - `logging_setup.py` - Logging configuration (executed on import)
 - `models.py` - All Pydantic models (config + responses)
 - `constants.py` - Project constants, logging config

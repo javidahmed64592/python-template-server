@@ -35,6 +35,7 @@ python_template_server/
 ├── logging_setup.py                   # Logging configuration
 ├── main.py                            # Application entry point with ExampleServer
 ├── models.py                          # Pydantic models (config + API responses)
+├── prometheus_handler.py              # Prometheus metrics handler
 └── template_server.py                 # TemplateServer base class (reusable foundation)
 ```
 
