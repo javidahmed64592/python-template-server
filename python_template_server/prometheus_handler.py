@@ -43,7 +43,7 @@ class PrometheusHandler:
         self.instrumentator = Instrumentator()
         self.instrumentator.instrument(app).expose(app, endpoint="/metrics")
 
-        self.metrics = {}
+        self.metrics: dict[BaseMetricNames, Counter | Gauge] = {}
         self._initialize_metrics()
 
     def _initialize_metrics(self) -> None:

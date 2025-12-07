@@ -117,9 +117,6 @@ class MetricTypes(StrEnum):
                 return Counter
             case MetricTypes.GAUGE:
                 return Gauge
-            case _:
-                msg = f"Unsupported metric type: {self}"
-                raise ValueError(msg)
 
 
 @dataclass
