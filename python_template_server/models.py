@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from fastapi.responses import JSONResponse
+from prometheus_client import Counter, Gauge
 from pydantic import BaseModel, Field
+from pydantic.dataclasses import dataclass
 
 
 # Template Server Configuration Models
@@ -89,6 +91,45 @@ class TemplateServerConfig(BaseModel):
         """
         with filepath.open("w", encoding="utf-8") as config_file:
             config_file.write(self.model_dump_json(indent=2))
+
+
+# Prometheus Metric Models
+class BaseMetricNames(StrEnum):
+    """Base metric names."""
+
+    TOKEN_CONFIGURED = "token_configured"  # noqa: S105
+    AUTH_SUCCESS_TOTAL = "auth_success_total"
+    AUTH_FAILURE_TOTAL = "auth_failure_total"
+    RATE_LIMIT_EXCEEDED_TOTAL = "rate_limit_exceeded_total"
+
+
+class MetricTypes(StrEnum):
+    """Metric types."""
+
+    COUNTER = auto()
+    GAUGE = auto()
+
+    @property
+    def prometheus_class(self) -> type:
+        """Get the corresponding Prometheus metric class."""
+        match self:
+            case MetricTypes.COUNTER:
+                return Counter
+            case MetricTypes.GAUGE:
+                return Gauge
+            case _:
+                msg = f"Unsupported metric type: {self}"
+                raise ValueError(msg)
+
+
+@dataclass
+class MetricConfig:
+    """Metric configuration."""
+
+    name: BaseMetricNames
+    metric_type: MetricTypes
+    description: str
+    labels: list[str] | None = None
 
 
 # API Response Models
