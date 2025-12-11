@@ -31,11 +31,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "ruff",
+    "bandit>=1.9.2",
     "mypy",
+    "pip-audit>=2.10.0",
+    "pre-commit>=4.5.0",
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
+    "ruff",
     "validate-pyproject",
 ]
 
@@ -52,8 +55,8 @@ allow-direct-references = true
 
 [tool.hatch.build]
 include = [
-  "configuration/**",
   "python_template_server/**",
+  "configuration/**",
   ".here",
   "LICENSE",
   "README.md",
@@ -66,6 +69,15 @@ addopts = [
     "--cov-report",
     "term-missing",
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["cyber_query_ai"]
+
+[tool.coverage.report]
+fail_under = 80
+skip_covered = false
+show_missing = true
 
 [tool.ruff]
 target-version = "py313"
@@ -153,6 +165,9 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.mypy]
 warn_unused_configs = true
