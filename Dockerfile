@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Python Template Server
 # Stage 1: Build stage - build wheel using uv
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /build
 
@@ -16,7 +16,7 @@ COPY pyproject.toml .here LICENSE README.md ./
 RUN uv build --wheel
 
 # Stage 2: Runtime stage
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Build arguments for environment-specific config
 ARG ENV=dev

@@ -17,21 +17,21 @@ from python_template_server.constants import ENV_FILE_PATH, ENV_VAR_NAME, TOKEN_
 
 
 @pytest.fixture
-def mock_generate_token() -> Generator[MagicMock, None, None]:
+def mock_generate_token() -> Generator[MagicMock]:
     """Mock the generate_token function."""
     with patch("python_template_server.authentication_handler.generate_token") as mock_generate:
         yield mock_generate
 
 
 @pytest.fixture
-def mock_hash_token() -> Generator[MagicMock, None, None]:
+def mock_hash_token() -> Generator[MagicMock]:
     """Mock the hash_token function."""
     with patch("python_template_server.authentication_handler.hash_token") as mock_hash:
         yield mock_hash
 
 
 @pytest.fixture
-def mock_saved_hashed_token() -> Generator[MagicMock, None, None]:
+def mock_saved_hashed_token() -> Generator[MagicMock]:
     """Mock the save_hashed_token function."""
     with patch("python_template_server.authentication_handler.save_hashed_token") as mock_save:
         yield mock_save
@@ -99,7 +99,7 @@ class TestAuthenticationHandler:
 
     def test_verify_token_no_stored_hash(self) -> None:
         """Test the verify_token function when no stored hash is provided."""
-        with pytest.raises(ValueError, match="No stored token hash found for verification."):
+        with pytest.raises(ValueError, match=r"No stored token hash found for verification."):
             verify_token("sometoken", "")
 
     def test_generate_new_token(

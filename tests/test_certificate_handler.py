@@ -20,7 +20,7 @@ RSA_KEY_SIZE = 4096
 @pytest.fixture(autouse=True)
 def mock_parse_args(
     tmp_path: Path,
-) -> Generator[MagicMock, None, None]:
+) -> Generator[MagicMock]:
     """Mock argparse.ArgumentParser.parse_args to return a test config path."""
     test_config_path = tmp_path / "config.json"
     with patch(
@@ -33,7 +33,7 @@ def mock_parse_args(
 @pytest.fixture
 def mock_example_server(
     tmp_path: Path, mock_template_server_config: TemplateServerConfig
-) -> Generator[MagicMock, None, None]:
+) -> Generator[MagicMock]:
     """Mock the ExampleServer class."""
     with patch("python_template_server.certificate_handler.ExampleServer") as mock_server:
         cert_dir = tmp_path / "certs"

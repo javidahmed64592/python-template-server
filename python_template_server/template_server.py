@@ -89,7 +89,7 @@ class TemplateServer(ABC):
 
     @staticmethod
     @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         """Handle application lifespan events."""
         yield
 

@@ -17,7 +17,7 @@ This document outlines how to configure and setup a development environment to w
 
 ## Backend (Python)
 
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=ffd343)](https://docs.python.org/3.12/)
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=ffd343)](https://docs.python.org/3.13/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=flat-square)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -79,6 +79,12 @@ To include development dependencies:
 uv sync --extra dev
 ```
 
+After installing dev dependencies, set up pre-commit hooks:
+
+```sh
+    uv run pre-commit install
+```
+
 ### Setting Up Certificates and Authentication
 
 Before running the server, you need to generate SSL certificates and an API authentication token.
@@ -138,7 +144,10 @@ curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/your-endpoint
 
 ### Testing, Linting, and Type Checking
 
-- **Run tests:** `uv run pytest`
+- **Run all pre-commit checks:** `uv run pre-commit run --all-files`
 - **Lint code:** `uv run ruff check .`
 - **Format code:** `uv run ruff format .`
 - **Type check:** `uv run mypy .`
+- **Run tests:** `uv run pytest`
+- **Security scan:** `uv run bandit -r example/`
+- **Audit dependencies:** `uv run pip-audit`
