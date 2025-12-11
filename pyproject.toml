@@ -7,14 +7,14 @@ name = "python-template-server"
 version = "0.1.0"
 description = "A template FastAPI server with authentication, rate limiting and Prometheus metrics."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 license = { file = "LICENSE" }
 authors = [
     { name = "Javid Ahmed", email = "javidahmed@icloud.com" }
 ]
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [

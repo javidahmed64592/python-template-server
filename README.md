@@ -1,4 +1,4 @@
-[![python](https://img.shields.io/badge/Python-3.12-3776AB.svg?style=flat&logo=python&logoColor=ffd343)](https://docs.python.org/3.12/)
+[![python](https://img.shields.io/badge/Python-3.13-3776AB.svg?style=flat&logo=python&logoColor=ffd343)](https://docs.python.org/3.13/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -21,6 +21,7 @@ A production-ready FastAPI server template with built-in authentication, rate li
 - [Using as a Template](#using-as-a-template)
 - [Docker Deployment](#docker-deployment)
 - [Documentation](#documentation)
+- [License](#license)
 
 ## Features
 
@@ -46,7 +47,7 @@ This project uses a **`TemplateServer` base class** that encapsulates cross-cutt
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.13+
 - [uv](https://docs.astral.sh/uv/) package manager
 
 Install `uv`:
