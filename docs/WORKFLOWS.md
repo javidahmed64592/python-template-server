@@ -10,29 +10,42 @@ It consists of the following jobs:
 
 ### validate-pyproject
 - Checkout code
-- Install uv with caching
-- Set up Python from `.python-version`
-- Install dependencies with `uv sync --extra dev`
-- Validate `pyproject.toml` using `uv run validate-pyproject pyproject.toml`
+- Setup Python environment with dev dependencies (via custom action)
+- Validate `pyproject.toml` structure using `validate-pyproject`
 
 ### ruff
 - Checkout code
-- Run Ruff linter using `chartboost/ruff-action@v1`
+- Setup Python environment with dev dependencies (via custom action)
+- Run Ruff linter with `uv run -m ruff check`
 
 ### mypy
 - Checkout code
-- Install uv with caching
-- Set up Python from `.python-version`
-- Install dependencies with `uv sync --extra dev`
+- Setup Python environment with dev dependencies (via custom action)
 - Run mypy type checking with `uv run -m mypy .`
 
 ### test
 - Checkout code
-- Install uv with caching
-- Set up Python from `.python-version`
-- Install dependencies with `uv sync --extra dev`
-- Run pytest with coverage report using `uv run -m pytest --cov-report html`
-- Upload coverage report as artifact
+- Setup Python environment with dev dependencies (via custom action)
+- Run pytest with coverage (HTML and terminal reports) using `uv run -m pytest --cov-report html --cov-report term`
+- Fails if coverage drops below 80% (configured in `pyproject.toml`)
+- Upload HTML coverage report as artifact
+
+### bandit
+- Checkout code
+- Setup Python environment with dev dependencies (via custom action)
+- Run security scanning with bandit on `example/` directory
+- Generate JSON report for artifacts
+- Fail if security vulnerabilities are found
+
+### pip-audit
+- Checkout code
+- Setup Python environment with dev dependencies (via custom action)
+- Audit dependencies for known CVEs using `pip-audit --desc`
+
+### version-check
+- Checkout code
+- Setup Python environment with dev dependencies (via custom action)
+- Check version consistency across `pyproject.toml` and `uv.lock`
 
 ## Docker Workflow
 
