@@ -79,6 +79,12 @@ To include development dependencies:
 uv sync --extra dev
 ```
 
+After installing dev dependencies, set up pre-commit hooks:
+
+```sh
+    uv run pre-commit install
+```
+
 ### Setting Up Certificates and Authentication
 
 Before running the server, you need to generate SSL certificates and an API authentication token.
@@ -138,7 +144,10 @@ curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/your-endpoint
 
 ### Testing, Linting, and Type Checking
 
-- **Run tests:** `uv run pytest`
+- **Run all pre-commit checks:** `uv run pre-commit run --all-files`
 - **Lint code:** `uv run ruff check .`
 - **Format code:** `uv run ruff format .`
 - **Type check:** `uv run mypy .`
+- **Run tests:** `uv run pytest`
+- **Security scan:** `uv run bandit -r example/`
+- **Audit dependencies:** `uv run pip-audit`
