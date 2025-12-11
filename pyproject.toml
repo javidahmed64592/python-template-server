@@ -72,7 +72,7 @@ addopts = [
 
 [tool.coverage.run]
 branch = true
-source = ["cyber_query_ai"]
+source = ["python_template_server"]
 
 [tool.coverage.report]
 fail_under = 80
