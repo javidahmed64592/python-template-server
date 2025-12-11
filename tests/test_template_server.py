@@ -33,7 +33,7 @@ from python_template_server.template_server import TemplateServer
 
 
 @pytest.fixture(autouse=True)
-def mock_package_metadata() -> Generator[MagicMock, None, None]:
+def mock_package_metadata() -> Generator[MagicMock]:
     """Mock importlib.metadata.metadata to return a mock PackageMetadata."""
     with patch("python_template_server.template_server.metadata") as mock_metadata:
         mock_pkg_metadata = MagicMock(spec=PackageMetadata)
@@ -48,14 +48,14 @@ def mock_package_metadata() -> Generator[MagicMock, None, None]:
 
 
 @pytest.fixture
-def mock_verify_token() -> Generator[MagicMock, None, None]:
+def mock_verify_token() -> Generator[MagicMock]:
     """Mock the verify_token function."""
     with patch("python_template_server.template_server.verify_token") as mock_verify:
         yield mock_verify
 
 
 @pytest.fixture(autouse=True)
-def mock_load_hashed_token() -> Generator[MagicMock, None, None]:
+def mock_load_hashed_token() -> Generator[MagicMock]:
     """Mock the load_hashed_token function."""
     with patch("python_template_server.template_server.load_hashed_token") as mock_load:
         mock_load.return_value = "mock_hashed_token"
@@ -63,7 +63,7 @@ def mock_load_hashed_token() -> Generator[MagicMock, None, None]:
 
 
 @pytest.fixture
-def mock_timestamp() -> Generator[str, None, None]:
+def mock_timestamp() -> Generator[str]:
     """Mock the current_timestamp method to return a fixed timestamp."""
     fixed_timestamp = "2025-11-22T12:00:00.000000Z"
     with patch("python_template_server.models.BaseResponse.current_timestamp", return_value=fixed_timestamp):
