@@ -91,6 +91,7 @@ class TemplateServerConfig(BaseModel):
         """
         with filepath.open("w", encoding="utf-8") as config_file:
             config_file.write(self.model_dump_json(indent=2))
+            config_file.write("\n")
 
 
 # Prometheus Metric Models
