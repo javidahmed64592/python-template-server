@@ -91,6 +91,18 @@ class MockTemplateServer(TemplateServer):
             code=ResponseCode.OK, message="protected endpoint", timestamp=BaseResponse.current_timestamp()
         )
 
+    def mock_unlimited_unprotected_method(self, request: Request) -> BaseResponse:
+        """Mock unlimited unprotected method."""
+        return BaseResponse(
+            code=ResponseCode.OK, message="unlimited unprotected endpoint", timestamp=BaseResponse.current_timestamp()
+        )
+
+    def mock_unlimited_protected_method(self, request: Request) -> BaseResponse:
+        """Mock unlimited protected method."""
+        return BaseResponse(
+            code=ResponseCode.OK, message="unlimited protected endpoint", timestamp=BaseResponse.current_timestamp()
+        )
+
     def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
         """Validate configuration from the config.json file.
 
@@ -104,6 +116,20 @@ class MockTemplateServer(TemplateServer):
         super().setup_routes()
         self.add_unauthenticated_route("/unauthenticated-endpoint", self.mock_unprotected_method, BaseResponse, ["GET"])
         self.add_authenticated_route("/authenticated-endpoint", self.mock_protected_method, BaseResponse, ["POST"])
+        self.add_unauthenticated_route(
+            "/unlimited-unauthenticated-endpoint",
+            self.mock_unlimited_unprotected_method,
+            BaseResponse,
+            ["GET"],
+            limited=False,
+        )
+        self.add_authenticated_route(
+            "/unlimited-authenticated-endpoint",
+            self.mock_unlimited_protected_method,
+            BaseResponse,
+            ["POST"],
+            limited=False,
+        )
 
 
 class TestTemplateServer:
@@ -485,11 +511,64 @@ class TestTemplateServerRoutes:
         assert "POST" in test_route.methods
         assert test_route.response_model == BaseResponse
 
+    def test_limited_parameter_with_rate_limiting_enabled(
+        self, mock_template_server_config: TemplateServerConfig
+    ) -> None:
+        """Test that limited=True applies rate limiting when limiter is enabled."""
+        mock_template_server_config.rate_limit.enabled = True
+        server = MockTemplateServer(config=mock_template_server_config)
+
+        # Get the limited routes
+        api_routes = [route for route in server.app.routes if isinstance(route, APIRoute)]
+        limited_route = next((route for route in api_routes if route.path == "/unauthenticated-endpoint"), None)
+        unlimited_route = next(
+            (route for route in api_routes if route.path == "/unlimited-unauthenticated-endpoint"), None
+        )
+
+        assert limited_route is not None
+        assert unlimited_route is not None
+
+        # Limited route should have the limiter wrapper
+        assert hasattr(limited_route.endpoint, "__wrapped__")
+        # Unlimited route should not have the limiter wrapper
+        assert not hasattr(unlimited_route.endpoint, "__wrapped__")
+
+    def test_authenticated_route_limited_parameter(self, mock_template_server_config: TemplateServerConfig) -> None:
+        """Test that limited parameter works correctly for authenticated routes."""
+        mock_template_server_config.rate_limit.enabled = True
+        server = MockTemplateServer(config=mock_template_server_config)
+
+        # Get the authenticated routes
+        api_routes = [route for route in server.app.routes if isinstance(route, APIRoute)]
+        limited_route = next((route for route in api_routes if route.path == "/authenticated-endpoint"), None)
+        unlimited_route = next(
+            (route for route in api_routes if route.path == "/unlimited-authenticated-endpoint"), None
+        )
+
+        assert limited_route is not None
+        assert unlimited_route is not None
+
+        # Both routes should have authentication dependencies
+        assert len(limited_route.dependencies) > 0
+        assert len(unlimited_route.dependencies) > 0
+
+        # Limited route should have the limiter wrapper
+        assert hasattr(limited_route.endpoint, "__wrapped__")
+        # Unlimited route should not have the limiter wrapper
+        assert not hasattr(unlimited_route.endpoint, "__wrapped__")
+
     def test_setup_routes(self, mock_template_server: MockTemplateServer) -> None:
         """Test that routes are set up correctly."""
         api_routes = [route for route in mock_template_server.app.routes if isinstance(route, APIRoute)]
         routes = [route.path for route in api_routes]
-        expected_endpoints = ["/health", "/metrics", "/unauthenticated-endpoint", "/authenticated-endpoint"]
+        expected_endpoints = [
+            "/health",
+            "/metrics",
+            "/unauthenticated-endpoint",
+            "/authenticated-endpoint",
+            "/unlimited-unauthenticated-endpoint",
+            "/unlimited-authenticated-endpoint",
+        ]
         for endpoint in expected_endpoints:
             assert endpoint in routes
 

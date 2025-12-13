@@ -268,7 +268,12 @@ class TemplateServer(ABC):
             sys.exit(1)
 
     def add_unauthenticated_route(
-        self, endpoint: str, handler_function: Callable, response_model: type[BaseModel], methods: list[str]
+        self,
+        endpoint: str,
+        handler_function: Callable,
+        response_model: type[BaseModel],
+        methods: list[str],
+        limited: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Add an unauthenticated API route.
 
@@ -276,16 +281,22 @@ class TemplateServer(ABC):
         :param Callable handler_function: The handler function for the endpoint
         :param BaseModel response_model: The Pydantic model for the response
         :param list[str] methods: The HTTP methods for the endpoint
+        :param bool limited: Whether to apply rate limiting to this route
         """
         self.app.add_api_route(
             endpoint,
-            self._limit_route(handler_function),
+            self._limit_route(handler_function) if limited else handler_function,
             methods=methods,
             response_model=response_model,
         )
 
     def add_authenticated_route(
-        self, endpoint: str, handler_function: Callable, response_model: type[BaseModel], methods: list[str]
+        self,
+        endpoint: str,
+        handler_function: Callable,
+        response_model: type[BaseModel],
+        methods: list[str],
+        limited: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Add an authenticated API route.
 
@@ -293,10 +304,11 @@ class TemplateServer(ABC):
         :param Callable handler_function: The handler function for the endpoint
         :param BaseModel response_model: The Pydantic model for the response
         :param list[str] methods: The HTTP methods for the endpoint
+        :param bool limited: Whether to apply rate limiting to this route
         """
         self.app.add_api_route(
             endpoint,
-            self._limit_route(handler_function),
+            self._limit_route(handler_function) if limited else handler_function,
             methods=methods,
             response_model=response_model,
             dependencies=[Security(self._verify_api_key)],
@@ -315,7 +327,7 @@ class TemplateServer(ABC):
         ```
 
         """
-        self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse, ["GET"])
+        self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse, ["GET"], limited=False)
 
     async def get_health(self, request: Request) -> GetHealthResponse:
         """Get server health.
