@@ -133,7 +133,7 @@ class TestTemplateServerConfig:
         """Test the save_to_file method."""
         config_file = tmp_path / "config.json"
         mock_template_server_config.save_to_file(config_file)
-        assert config_file.read_text(encoding="utf-8") == mock_template_server_config.model_dump_json(indent=2)
+        assert config_file.read_text(encoding="utf-8") == mock_template_server_config.model_dump_json(indent=2) + "\n"
 
 
 # Prometheus Metric Models
