@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "cryptography>=46.0.3",
-    "fastapi>=0.121.3",
+    "fastapi>=0.125.0",
     "httpx>=0.28.1",
     "prometheus-fastapi-instrumentator>=7.1.0",
     "pydantic>=2.12.4",
@@ -32,14 +32,14 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "bandit>=1.9.2",
-    "mypy",
+    "mypy>=1.19.1",
     "pip-audit>=2.10.0",
-    "pre-commit>=4.5.0",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-cov",
-    "ruff",
-    "validate-pyproject",
+    "pre-commit>=4.5.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.2",
+    "validate-pyproject>=0.24.1",
 ]
 
 [project.urls]
