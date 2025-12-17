@@ -1,0 +1,108 @@
+name: Build
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    build_wheel:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: ./.github/actions/setup-python-dev
+            - name: Download frontend build
+              uses: actions/download-artifact@v4
+              with:
+                  name: cyber_query_ai_frontend
+                  path: static
+            - name: Create wheel
+              run: |
+                  uv build
+            - name: Inspect wheel contents
+              run: |
+                  echo "Wheel contents:"
+                  unzip -l dist/python_template_server-*-py3-none-any.whl
+            - name: Upload wheel
+              uses: actions/upload-artifact@v4
+              with:
+                  name: python_template_server_wheel
+                  path: dist/python_template_server-*-py3-none-any.whl
+
+    verify_structure:
+        runs-on: ubuntu-latest
+        needs: build_wheel
+        steps:
+            - uses: actions/checkout@v4
+            - uses: ./.github/actions/setup-python-core
+
+            - name: Download wheel artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: python_template_server_wheel
+
+            - name: Install wheel
+              run: |
+                  PACKAGE_NAME="python_template_server"
+                  WHEEL_FILE=$(find . -name "${PACKAGE_NAME}-*-py3-none-any.whl")
+
+                  if [ ! -f "$WHEEL_FILE" ]; then
+                    echo "Wheel file not found"
+                    exit 1
+                  fi
+
+                  echo "Installing wheel: $WHEEL_FILE"
+                  uv pip install "$WHEEL_FILE"
+
+            - name: Verify installed package structure
+              run: |
+                  PACKAGE_NAME="python_template_server"
+
+                  # Find site-packages directory
+                  SITE_PACKAGES=$(find . -name "site-packages" -type d | head -1)
+                  echo "Site-packages directory: $SITE_PACKAGES"
+
+                  # Check for required directories in site-packages
+                  echo "Checking required directories in site-packages..."
+                  REQUIRED_DIRS=(
+                    "${SITE_PACKAGES}/${PACKAGE_NAME}"
+                    "${SITE_PACKAGES}/configuration"
+                    "${SITE_PACKAGES}/grafana"
+                    "${SITE_PACKAGES}/prometheus"
+                  )
+
+                  for dir in "${REQUIRED_DIRS[@]}"; do
+                    if [ ! -d "$dir" ]; then
+                      echo "Required directory not found: $dir"
+                      exit 1
+                    fi
+                  done
+
+                  # Check for required files in site-packages
+                  echo "Checking required files in site-packages..."
+                  REQUIRED_FILES=(
+                    "${SITE_PACKAGES}/configuration/config.json"
+                    "${SITE_PACKAGES}/README.md"
+                    "${SITE_PACKAGES}/LICENSE"
+                    "${SITE_PACKAGES}/.here"
+                  )
+
+                  for file in "${REQUIRED_FILES[@]}"; do
+                    if [ ! -f "$file" ]; then
+                      echo "Required file not found: $file"
+                      exit 1
+                    fi
+                  done
+
+                  # Show directory structure
+                  echo "Package structure in site-packages:"
+                  tree "${SITE_PACKAGES}/${PACKAGE_NAME}" --dirsfirst -F -L 2
+                  echo "Configuration structure:"
+                  tree "${SITE_PACKAGES}/configuration" --dirsfirst -F
+                  echo "Grafana structure:"
+                  tree "${SITE_PACKAGES}/grafana" --dirsfirst -F -L 2
+                  echo "Prometheus structure:"
+                  tree "${SITE_PACKAGES}/prometheus" --dirsfirst -F

@@ -33,7 +33,7 @@ jobs:
       - name: Check with mypy
         run: |
           uv run -m mypy .
-  test:
+  pytest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,10 +41,10 @@ jobs:
       - name: Test with pytest
         run: |
           uv run -m pytest --cov-report html --cov-report term
-      - name: Upload coverage report
+      - name: Upload backend coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: backend-coverage-report
           path: htmlcov
   bandit:
     runs-on: ubuntu-latest
