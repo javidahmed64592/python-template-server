@@ -23,7 +23,7 @@ It consists of the following jobs:
 - Setup Python environment with dev dependencies (via custom action)
 - Run mypy type checking with `uv run -m mypy .`
 
-### test
+### pytest
 - Checkout code
 - Setup Python environment with dev dependencies (via custom action)
 - Run pytest with coverage (HTML and terminal reports) using `uv run -m pytest --cov-report html --cov-report term`
@@ -47,26 +47,45 @@ It consists of the following jobs:
 - Setup Python environment with dev dependencies (via custom action)
 - Check version consistency across `pyproject.toml` and `uv.lock`
 
-## Docker Workflow
+## Build Workflow
 
-The Docker workflow runs on pushes and pull requests to the `main` branch.
+The Build workflow runs on pushes and pull requests to the `main` branch.
 It consists of the following jobs:
 
-### docker-development
-- Checkout code
-- Install uv with caching and set up Python from `.python-version`
-- Create directories with proper permissions
-- Build and start services with docker compose
-- Show server logs
-- **Health check** using reusable composite action `.github/actions/docker-check-containers` that checks Python Template Server, Prometheus, and Grafana
-- Stop services
+### build_wheel
+  - Checkout code
+  - Setup Python environment with dev dependencies (via custom action)
+  - Download frontend build artifact to `static/` directory
+  - Build wheel with `uv build`
+  - Inspect wheel contents for verification
+  - Upload wheel artifact (`python_template_server_wheel`)
 
-### docker-production
-- Checkout code
-- Install uv with caching and set up Python from `.python-version`
-- Create directories with proper permissions
-- Build production image with `ENV=prod` and `PORT=443` build arguments
-- Start services with docker compose using production environment variables
-- Show server logs
-- **Health check** using reusable composite action `.github/actions/docker-check-containers` that checks Python Template Server, Prometheus, and Grafana
-- Stop services
+### verify_structure
+  - Depends on `build_wheel` job
+  - Checkout code
+  - Setup Python environment (via custom action)
+  - Download wheel artifact
+  - Install wheel using `uv pip install`
+  - Verify installed package structure in site-packages:
+    - `python_template_server/` - Python package
+    - `configuration/` - Server configuration
+    - `grafana/` - Grafana dashboards and provisioning
+    - `prometheus/` - Prometheus configuration
+  - Display directory structure with tree views for verification
+
+## Docker Workflow
+
+The Docker workflow runs on pushes, pull requests to the `main` branch, and manual dispatch.
+It consists of the following jobs:
+
+### build
+  - Checkout code
+  - Setup Python environment with dev dependencies (via custom action)
+  - Build and start services with `docker compose --build -d`
+  - Wait for services to start (5 seconds)
+  - Show server logs from `python-template-server` container
+  - **Health check** using reusable composite action `.github/actions/docker-check-containers`:
+    - Verifies server is running on port 443
+    - Checks Prometheus and Grafana services
+    - Validates Ollama integration
+  - Stop services with full cleanup: `docker compose down --volumes --remove-orphans`
