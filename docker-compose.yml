@@ -1,6 +1,7 @@
 services:
+  # Python Template Server
   python-template-server:
-    image: python-template-server:${ENV:-dev}
+    image: ${CYBER_QUERY_AI_IMAGE:-ghcr.io/javidahmed64592/cyber-query-ai:latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,13 +9,12 @@ services:
     ports:
       - "443:443"
     environment:
-      - ENV=${ENV:-dev}
       # Load API token hash from .env file (optional - will be generated if missing)
       - API_TOKEN_HASH=${API_TOKEN_HASH:-}
     volumes:
-      # Persist certificates and logs
-      - ./certs:/app/certs
-      - ./logs:/app/logs
+      - certs:/app/certs
+      - logs:/app/logs
+      - monitoring-configs:/monitoring-configs
     networks:
       - monitoring
     restart: unless-stopped
@@ -38,10 +38,10 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - template-server-prometheus-data:/prometheus
+      - monitoring-configs:/monitoring-configs:ro
+      - prometheus-data:/prometheus
     command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--config.file=/monitoring-configs/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
       - "--web.console.libraries=/usr/share/prometheus/console_libraries"
       - "--web.console.templates=/usr/share/prometheus/consoles"
@@ -50,7 +50,8 @@ services:
       - monitoring
     restart: unless-stopped
     depends_on:
-      - python-template-server
+      python-template-server:
+        condition: service_started
 
   # Grafana for metrics visualization
   grafana:
@@ -62,20 +63,26 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_INSTALL_PLUGINS=
+      - GF_PATHS_PROVISIONING=/monitoring-configs/grafana/provisioning
     volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
-      - template-server-grafana-data:/var/lib/grafana
+      - monitoring-configs:/monitoring-configs:ro
+      - grafana-data:/var/lib/grafana
     networks:
       - monitoring
     restart: unless-stopped
     depends_on:
-      - prometheus
+      python-template-server:
+        condition: service_started
+      prometheus:
+        condition: service_started
 
 networks:
   monitoring:
     driver: bridge
 
 volumes:
-  template-server-prometheus-data:
-  template-server-grafana-data:
+  certs:
+  logs:
+  prometheus-data:
+  grafana-data:
+  monitoring-configs:
