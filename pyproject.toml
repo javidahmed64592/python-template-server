@@ -57,6 +57,8 @@ allow-direct-references = true
 include = [
   "python_template_server/**",
   "configuration/**",
+  "grafana/**",
+  "prometheus/**",
   ".here",
   "LICENSE",
   "README.md",
