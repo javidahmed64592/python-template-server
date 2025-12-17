@@ -4,16 +4,6 @@ global:
   evaluation_interval: 15s
   scrape_timeout: 10s
 
-# Alertmanager configuration (optional, for future use)
-# alerting:
-#   alertmanagers:
-#     - static_configs:
-#         - targets: []
-
-# Load rules once and periodically evaluate them
-# rule_files:
-#   - "alerts.yml"
-
 # Scrape configurations
 scrape_configs:
   - job_name: 'python-template-server'
@@ -23,10 +13,10 @@ scrape_configs:
     static_configs:
       - targets: ['python-template-server:443']
         labels:
-          service: 'template-server-storage'
+          service: 'python-template-server-storage'
           environment: 'prod'
 
-    metrics_path: '/metrics'
+    metrics_path: '/api/metrics'
 
   # Prometheus self-monitoring
   - job_name: 'prometheus'
