@@ -133,11 +133,11 @@ The backend will be available at `https://localhost:443/api` by default.
 
 **Testing the API:**
 ```sh
-# Health check (no auth required)
-curl -k https://localhost:443/api/health
-
 # Metrics endpoint (no auth required)
 curl -k https://localhost:443/api/metrics
+
+# Health check (no auth required)
+curl -k https://localhost:443/api/health
 
 # Login endpoint (requires authentication)
 curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/login

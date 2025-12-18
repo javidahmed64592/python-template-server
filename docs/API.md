@@ -24,6 +24,9 @@ All endpoints are mounted under the `/api` prefix.
   - [GET /api/health](#get-apihealth)
   - [GET /api/login](#get-apilogin)
 - [Request and Response Models (Pydantic)](#request-and-response-models-pydantic)
+- [API Documentation](#api-documentation)
+  - [Swagger UI (/api/docs)](#swagger-ui-apidocs)
+  - [ReDoc (/api/redoc)](#redoc-apiredoc)
 
 ## Authentication
 
@@ -257,3 +260,33 @@ The primary Pydantic models are defined in `python_template_server/models.py`:
 **Extending Configurations**: Extend the `TemplateServerConfig` class to get the necessary server setup configuration.
 
 **Extending Models**: When building your own server, create custom response models by extending `BaseResponse` for consistent API responses.
+
+## API Documentation
+
+FastAPI automatically generates interactive API documentation, providing two different interfaces for exploring and testing the API.
+
+### Swagger UI (/api/docs)
+
+**URL**: `https://localhost:443/api/docs`
+
+**Purpose**: Interactive API documentation with "Try it out" functionality
+
+**Features**:
+- Execute API calls directly from the browser
+- View request/response schemas
+- Test authentication with API keys
+- Explore all available endpoints
+- View models and their properties
+
+### ReDoc (/api/redoc)
+
+**URL**: `https://localhost:443/api/redoc`
+
+**Purpose**: Alternative API documentation with a clean, three-panel layout
+
+**Features**:
+- Read-only documentation interface
+- Clean, responsive design
+- Search functionality
+- Detailed schema information
+- Markdown support in descriptions

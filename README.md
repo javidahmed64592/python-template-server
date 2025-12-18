@@ -92,6 +92,8 @@ uv run generate-new-token
 uv run python-template-server
 
 # Server runs at https://localhost:443/api
+# Swagger UI: https://localhost:443/api/docs
+# Redoc: https://localhost:443/api/redoc
 # Metrics: curl -k https://localhost:443/api/metrics
 # Health check: curl -k https://localhost:443/api/health
 # Login (requires authentication): curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/login
