@@ -15,6 +15,7 @@ from python_template_server.models import (
     JSONResponseConfigModel,
     MetricConfig,
     MetricTypes,
+    PostLoginResponse,
     RateLimitConfigModel,
     ResponseCode,
     SecurityConfigModel,
@@ -291,7 +292,8 @@ class TestBaseResponse:
 
     def test_model_dump(self) -> None:
         """Test the model_dump method."""
-        config_dict: dict = {"code": ResponseCode.OK, "message": "Success", "timestamp": "2025-11-22T12:00:00Z"}
+        timestamp = BaseResponse.current_timestamp()
+        config_dict: dict = {"code": ResponseCode.OK, "message": "Success", "timestamp": timestamp}
         response = BaseResponse(**config_dict)
         assert response.model_dump() == config_dict
 
@@ -301,11 +303,27 @@ class TestGetHealthResponse:
 
     def test_model_dump(self) -> None:
         """Test the model_dump method."""
+        timestamp = GetHealthResponse.current_timestamp()
         config_dict: dict = {
             "code": ResponseCode.OK,
             "message": "Server is healthy",
-            "timestamp": "2025-11-22T12:00:00Z",
+            "timestamp": timestamp,
             "status": ServerHealthStatus.HEALTHY,
         }
         response = GetHealthResponse(**config_dict)
+        assert response.model_dump() == config_dict
+
+
+class TestPostLoginResponse:
+    """Unit tests for the PostLoginResponse class."""
+
+    def test_model_dump(self) -> None:
+        """Test the model_dump method."""
+        timestamp = PostLoginResponse.current_timestamp()
+        config_dict: dict = {
+            "code": ResponseCode.OK,
+            "message": "Login successful",
+            "timestamp": timestamp,
+        }
+        response = PostLoginResponse(**config_dict)
         assert response.model_dump() == config_dict

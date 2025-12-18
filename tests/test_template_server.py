@@ -563,6 +563,7 @@ class TestTemplateServerRoutes:
         routes = [route.path for route in api_routes]
         expected_endpoints = [
             "/health",
+            "/login",
             "/metrics",
             "/unauthenticated-endpoint",
             "/authenticated-endpoint",
@@ -573,7 +574,7 @@ class TestTemplateServerRoutes:
             assert endpoint in routes
 
 
-class TestHealthEndpoint:
+class TestGetHealthEndpoint:
     """Integration tests for the /health endpoint."""
 
     def test_get_health(self, mock_template_server: TemplateServer) -> None:
@@ -602,7 +603,7 @@ class TestHealthEndpoint:
         assert token_gauge is not None
         assert token_gauge._value.get() == 0
 
-    def test_health_endpoint(
+    def test_get_health_endpoint(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock, mock_timestamp: str
     ) -> None:
         """Test /health endpoint returns 200."""
@@ -617,4 +618,32 @@ class TestHealthEndpoint:
             "message": "Server is healthy",
             "timestamp": mock_timestamp,
             "status": ServerHealthStatus.HEALTHY,
+        }
+
+
+class TestPostLoginEndpoint:
+    """Integration tests for the /login endpoint."""
+
+    def test_post_login(self, mock_template_server: TemplateServer) -> None:
+        """Test the /login endpoint method."""
+        request = MagicMock()
+        response = asyncio.run(mock_template_server.post_login(request))
+
+        assert response.code == ResponseCode.OK
+        assert response.message == "Login successful."
+
+    def test_post_login_endpoint(
+        self, mock_template_server: TemplateServer, mock_verify_token: MagicMock, mock_timestamp: str
+    ) -> None:
+        """Test /login endpoint returns 200."""
+        mock_verify_token.return_value = True
+        app = mock_template_server.app
+        client = TestClient(app)
+
+        response = client.post("/login", headers={"X-API-Key": "test-token"})
+        assert response.status_code == ResponseCode.OK
+        assert response.json() == {
+            "code": ResponseCode.OK,
+            "message": "Login successful.",
+            "timestamp": mock_timestamp,
         }
