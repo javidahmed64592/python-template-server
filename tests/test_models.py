@@ -12,10 +12,10 @@ from python_template_server.models import (
     CertificateConfigModel,
     CustomJSONResponse,
     GetHealthResponse,
+    GetLoginResponse,
     JSONResponseConfigModel,
     MetricConfig,
     MetricTypes,
-    PostLoginResponse,
     RateLimitConfigModel,
     ResponseCode,
     SecurityConfigModel,
@@ -314,16 +314,16 @@ class TestGetHealthResponse:
         assert response.model_dump() == config_dict
 
 
-class TestPostLoginResponse:
-    """Unit tests for the PostLoginResponse class."""
+class TestGetLoginResponse:
+    """Unit tests for the GetLoginResponse class."""
 
     def test_model_dump(self) -> None:
         """Test the model_dump method."""
-        timestamp = PostLoginResponse.current_timestamp()
+        timestamp = GetLoginResponse.current_timestamp()
         config_dict: dict = {
             "code": ResponseCode.OK,
             "message": "Login successful",
             "timestamp": timestamp,
         }
-        response = PostLoginResponse(**config_dict)
+        response = GetLoginResponse(**config_dict)
         assert response.model_dump() == config_dict

@@ -621,18 +621,18 @@ class TestGetHealthEndpoint:
         }
 
 
-class TestPostLoginEndpoint:
+class TestGetLoginEndpoint:
     """Integration tests for the /login endpoint."""
 
-    def test_post_login(self, mock_template_server: TemplateServer) -> None:
+    def test_get_login(self, mock_template_server: TemplateServer) -> None:
         """Test the /login endpoint method."""
         request = MagicMock()
-        response = asyncio.run(mock_template_server.post_login(request))
+        response = asyncio.run(mock_template_server.get_login(request))
 
         assert response.code == ResponseCode.OK
         assert response.message == "Login successful."
 
-    def test_post_login_endpoint(
+    def test_get_login_endpoint(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock, mock_timestamp: str
     ) -> None:
         """Test /login endpoint returns 200."""
@@ -640,7 +640,7 @@ class TestPostLoginEndpoint:
         app = mock_template_server.app
         client = TestClient(app)
 
-        response = client.post("/login", headers={"X-API-Key": "test-token"})
+        response = client.get("/login", headers={"X-API-Key": "test-token"})
         assert response.status_code == ResponseCode.OK
         assert response.json() == {
             "code": ResponseCode.OK,
