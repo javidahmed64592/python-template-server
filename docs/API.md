@@ -22,6 +22,7 @@ All endpoints are mounted under the `/api` prefix.
     - [Grafana Dashboards](#grafana-dashboards)
 - [Endpoints](#endpoints)
   - [GET /api/health](#get-apihealth)
+  - [GET /api/login](#get-apilogin)
 - [Request and Response Models (Pydantic)](#request-and-response-models-pydantic)
 
 ## Authentication
@@ -211,11 +212,46 @@ curl -k https://localhost:443/api/health
 }
 ```
 
+### GET /api/login
+
+**Purpose**: Verify API token and return successful login message.
+
+**Authentication**: Required (API key must be provided)
+
+**Rate Limiting**: Subject to rate limits (default: 100/minute)
+
+**Request**: None
+
+**Response Model**: `GetLoginResponse`
+- `code` (int): HTTP status code
+- `message` (string): Login status message
+- `timestamp` (string): ISO 8601 timestamp
+
+**Example Request**:
+```bash
+curl -k https://localhost:443/api/login \
+  -H "X-API-Key: your-api-token-here"
+```
+
+**Example Response** (200 OK):
+```json
+{
+  "code": 200,
+  "message": "Login successful.",
+  "timestamp": "2025-11-22T12:00:00.000000Z"
+}
+```
+
+**Error Responses**:
+- `401 Unauthorized`: Missing or invalid API key
+- `429 Too Many Requests`: Rate limit exceeded
+
 ## Request and Response Models (Pydantic)
 
 The primary Pydantic models are defined in `python_template_server/models.py`:
 - `BaseResponse`: Base model with code, message, and timestamp fields
 - `GetHealthResponse`: Extends BaseResponse with status field (HEALTHY/UNHEALTHY)
+- `GetLoginResponse`: Extends BaseResponse for login endpoint responses
 - `TemplateServerConfig`: Configuration model for server settings (security, rate limiting, JSON response)
 
 **Extending Configurations**: Extend the `TemplateServerConfig` class to get the necessary server setup configuration.

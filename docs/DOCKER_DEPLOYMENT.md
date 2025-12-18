@@ -174,8 +174,9 @@ docker compose down -v
 **Base URL**: `https://localhost:443`
 
 **API Endpoints**:
-- Health Check: `GET /api/health` (publicly accessible, no authentication required)
 - Metrics: `GET /api/metrics` (publicly accessible, no authentication required)
+- Health Check: `GET /api/health` (publicly accessible, no authentication required)
+- Login: `GET /api/login` (requires authentication with X-API-Key header)
 - Custom Endpoints: Defined in your server subclass (authentication may be required)
 
 **Example Request**:
@@ -183,8 +184,8 @@ docker compose down -v
 # Using curl (with self-signed cert)
 curl -k https://localhost:443/api/health
 
-# Authenticated request to custom endpoint
-curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/your-endpoint
+# Login endpoint (authenticated)
+curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/login
 ```
 
 ### Prometheus
