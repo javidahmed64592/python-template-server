@@ -26,6 +26,7 @@ from python_template_server.middleware import RequestLoggingMiddleware, Security
 from python_template_server.models import (
     CustomJSONResponse,
     GetHealthResponse,
+    GetLoginResponse,
     ResponseCode,
     ServerHealthStatus,
     TemplateServerConfig,
@@ -328,6 +329,7 @@ class TemplateServer(ABC):
 
         """
         self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse, ["GET"], limited=False)
+        self.add_authenticated_route("/login", self.get_login, GetLoginResponse, methods=["GET"])
 
     async def get_health(self, request: Request) -> GetHealthResponse:
         """Get server health.
@@ -350,4 +352,13 @@ class TemplateServer(ABC):
             message="Server is healthy",
             timestamp=GetHealthResponse.current_timestamp(),
             status=ServerHealthStatus.HEALTHY,
+        )
+
+    async def get_login(self, request: Request) -> GetLoginResponse:
+        """Handle user login and return a success response."""
+        logger.info("User login successful.")
+        return GetLoginResponse(
+            code=ResponseCode.OK,
+            message="Login successful.",
+            timestamp=GetLoginResponse.current_timestamp(),
         )

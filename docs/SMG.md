@@ -127,19 +127,20 @@ uv run python-template-server
 The backend will be available at `https://localhost:443/api` by default.
 
 **Available Endpoints:**
-- Health Check: `https://localhost:443/api/health`
 - Prometheus Metrics: `https://localhost:443/api/metrics`
+- Health Check: `https://localhost:443/api/health`
+- Login: `https://localhost:443/api/login` (requires authentication)
 
 **Testing the API:**
 ```sh
-# Health check (no auth required)
-curl -k https://localhost:443/api/health
-
 # Metrics endpoint (no auth required)
 curl -k https://localhost:443/api/metrics
 
-# Add custom authenticated endpoints in your server subclass
-curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/your-endpoint
+# Health check (no auth required)
+curl -k https://localhost:443/api/health
+
+# Login endpoint (requires authentication)
+curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/login
 ```
 
 ### Testing, Linting, and Type Checking

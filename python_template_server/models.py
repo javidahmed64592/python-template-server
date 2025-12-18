@@ -198,3 +198,7 @@ class GetHealthResponse(BaseResponse):
     """Response model for the health endpoint."""
 
     status: ServerHealthStatus = Field(..., description="Health status of the server")
+
+
+class GetLoginResponse(BaseResponse):
+    """Response model for login endpoint."""
