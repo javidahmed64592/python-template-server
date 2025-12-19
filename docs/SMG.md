@@ -150,5 +150,5 @@ curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/login
 - **Format code:** `uv run ruff format .`
 - **Type check:** `uv run mypy .`
 - **Run tests:** `uv run pytest`
-- **Security scan:** `uv run bandit -r example/`
+- **Security scan:** `uv run bandit -r python_template_server/`
 - **Audit dependencies:** `uv run pip-audit`
