@@ -49,14 +49,14 @@ RUN echo '#!/bin/sh\n\
     export $(grep -v "^#" .env | xargs)\n\
     fi\n\
     \n\
-    exec python-template-server' > /app/start.sh && \
+    exec python-template-server --port $PORT' > /app/start.sh && \
     chmod +x /app/start.sh
 
-# Expose HTTPS port
-EXPOSE 443
+# Expose server port
+EXPOSE $PORT
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('https://localhost:443/api/health', context=__import__('ssl')._create_unverified_context()).read()" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('https://localhost:'\"$PORT\"'/api/health', context=__import__('ssl')._create_unverified_context()).read()" || exit 1
 
 CMD ["/app/start.sh"]

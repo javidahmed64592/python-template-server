@@ -1,5 +1,6 @@
 """Template FastAPI server module."""
 
+import argparse
 import json
 import logging
 import sys
@@ -35,6 +36,7 @@ from python_template_server.models import (
 
 setup_logging()
 logger = logging.getLogger(__name__)
+argparser = argparse.ArgumentParser(description="Template FastAPI Server")
 
 
 class TemplateServer(ABC):
@@ -113,12 +115,22 @@ class TemplateServer(ABC):
         """
         if not config_filepath.exists():
             logger.warning("Configuration file not found, creating...")
-            TemplateServerConfig().save_to_file(config_filepath)
+            default_config = self.validate_config({})
+            argparser.add_argument(
+                "--port", type=int, default=default_config.server.port, help="Port to run the server on"
+            )
+            args = argparser.parse_args()
+            default_config.server.port = args.port
+            default_config.save_to_file(config_filepath)
+            return default_config
 
         try:
             with config_filepath.open() as f:
                 config_data = json.load(f)
-            return self.validate_config(config_data)
+            config = self.validate_config(config_data)
+            argparser.add_argument("--port", type=int, default=config.server.port, help="Port to run the server on")
+            args = argparser.parse_args()
+            config.server.port = args.port
         except json.JSONDecodeError:
             logger.exception("JSON parsing error: %s", config_filepath)
             sys.exit(1)
@@ -128,6 +140,8 @@ class TemplateServer(ABC):
         except ValidationError:
             logger.exception("Invalid configuration in: %s", config_filepath)
             sys.exit(1)
+        else:
+            return config
 
     async def _verify_api_key(
         self, api_key: str | None = Security(APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False))

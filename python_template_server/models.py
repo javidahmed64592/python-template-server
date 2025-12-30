@@ -33,7 +33,13 @@ class SecurityConfigModel(BaseModel):
 
     hsts_max_age: int = Field(default=31536000, ge=0, description="HSTS max-age in seconds (1 year default)")
     content_security_policy: str = Field(
-        default="default-src 'self'", description="Content Security Policy header value"
+        default=(
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https://cdn.jsdelivr.net https://fastapi.tiangolo.com"
+        ),
+        description="Content Security Policy header value",
     )
 
 
