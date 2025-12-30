@@ -89,10 +89,11 @@ The Docker startup script automatically handles token generation with the follow
 
 The `docker-compose.yml` defines the following services:
 
-1. **python-template-server** (Port 443)
+1. **python-template-server**
    - FastAPI application with HTTPS
    - Auto-generates self-signed certificates on first run (if not present)
    - Uses existing `.env` file if available, otherwise generates a new token on startup
+   - Port can be overridden with an environment variable
 
 ### Environment Variables
 
