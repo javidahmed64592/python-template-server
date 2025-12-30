@@ -1,7 +1,6 @@
 services:
   # Python Template Server
   python-template-server:
-    image: ${SERVER_IMAGE:-ghcr.io/javidahmed64592/python-template-server:latest}
     build:
       context: .
       dockerfile: Dockerfile
