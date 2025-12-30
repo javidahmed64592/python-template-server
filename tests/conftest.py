@@ -17,14 +17,6 @@ from python_template_server.models import (
 
 
 # General fixtures
-@pytest.fixture(autouse=True)
-def mock_here(tmp_path: str) -> Generator[MagicMock]:
-    """Mock the here() function to return a temporary directory."""
-    with patch("pyhere.here") as mock_here:
-        mock_here.return_value = tmp_path
-        yield mock_here
-
-
 @pytest.fixture
 def mock_exists() -> Generator[MagicMock]:
     """Mock the Path.exists() method."""
