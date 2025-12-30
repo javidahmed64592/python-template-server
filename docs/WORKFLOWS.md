@@ -73,7 +73,7 @@ It consists of the following jobs:
 The Docker workflow runs on pushes, pull requests to the `main` branch, and manual dispatch.
 It consists of the following jobs:
 
-### build
+### build-docker
 - Checkout code
 - Build and start services with `docker compose up --build -d`
 - Wait for services to start (5 seconds)
@@ -100,7 +100,7 @@ It consists of the following jobs:
 - Verify post-installation contents: ensure installer script is removed, check for created service files (`python-template-server.service`, `start_service.sh`, `stop_service.sh`, `uninstall_python_template_server.sh`) and verify scripts are executable
 
 ### publish-release
-- Depends on `build` job
+- Depends on `build-docker` and `check-installer` jobs
 - Only runs on push to `main` branch (not PRs)
 - Requires `contents: write` and `packages: write` permissions
 - Checkout code
