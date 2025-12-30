@@ -19,13 +19,11 @@ STOP_SERVICE_PATH="${WD}/${STOP_SERVICE_FILE}"
 UNINSTALL_PATH="${WD}/${UNINSTALL_FILE}"
 
 echo ${SEPARATOR}
-echo "Preparing directories..."
-mkdir -p "${SERVICE_DIR}"
-
 if [ -t 0 ]; then
     read -p "Enter the port number (default 443): " port
     port=${port:-443}
 else
+    echo "No terminal detected. Using default port 443."
     port=443
 fi
 
