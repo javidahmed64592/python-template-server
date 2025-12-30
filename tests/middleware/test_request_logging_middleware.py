@@ -21,6 +21,8 @@ class TestRequestLoggingMiddleware:
         self, mock_app: FastAPI, mock_request: Request, mock_response: Response
     ) -> None:
         """Test that dispatch logs both request and response."""
+        assert mock_request.client is not None  # Ensure client is set for this test
+
         middleware = RequestLoggingMiddleware(mock_app)
 
         # Mock the call_next function
