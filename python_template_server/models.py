@@ -15,7 +15,7 @@ class ServerConfigModel(BaseModel):
     """Server configuration model."""
 
     host: str = Field(default="localhost", description="Server hostname or IP address")
-    port: int = Field(default=8000, ge=1, le=65535, description="Server port number")
+    port: int = Field(default=443, ge=1, le=65535, description="Server port number")
 
     @property
     def address(self) -> str:
