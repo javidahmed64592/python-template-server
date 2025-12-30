@@ -49,12 +49,6 @@ RUN echo '#!/bin/sh\n\
     export $(grep -v "^#" .env | xargs)\n\
     fi\n\
     \n\
-    # Generate certificates if needed\n\
-    if [ ! -f certs/cert.pem ] || [ ! -f certs/key.pem ]; then\n\
-    echo "Generating self-signed certificates..."\n\
-    generate-certificate\n\
-    fi\n\
-    \n\
     exec python-template-server' > /app/start.sh && \
     chmod +x /app/start.sh
 

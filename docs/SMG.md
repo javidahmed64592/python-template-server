@@ -9,9 +9,7 @@ This document outlines how to configure and setup a development environment to w
   - [Directory Structure](#directory-structure)
   - [Architecture Overview](#architecture-overview)
   - [Installing Dependencies](#installing-dependencies)
-  - [Setting Up Certificates and Authentication](#setting-up-certificates-and-authentication)
-    - [Generating SSL Certificates](#generating-ssl-certificates)
-    - [Generating API Authentication Tokens](#generating-api-authentication-tokens)
+  - [Setting Up Authentication](#setting-up-authentication)
   - [Running the Backend](#running-the-backend)
   - [Testing, Linting, and Type Checking](#testing-linting-and-type-checking)
 
@@ -83,26 +81,9 @@ After installing dev dependencies, set up pre-commit hooks:
     uv run pre-commit install
 ```
 
-### Setting Up Certificates and Authentication
+### Setting Up Authentication
 
-Before running the server, you need to generate SSL certificates and an API authentication token.
-
-#### Generating SSL Certificates
-
-The server requires self-signed SSL certificates for HTTPS support:
-
-```sh
-uv run generate-certificate
-```
-
-This command:
-- Creates a self-signed certificate valid for 365 days
-- Generates RSA-4096 key pairs
-- Saves certificates to the `certs/` directory (`cert.pem` and `key.pem`)
-
-#### Generating API Authentication Tokens
-
-Generate a secure API token for authenticating requests:
+Before running the server, you need to generate an API authentication token.
 
 ```sh
 uv run generate-new-token

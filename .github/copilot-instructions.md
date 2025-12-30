@@ -51,7 +51,6 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 ```powershell
 # Setup (first time)
 uv sync                          # Install dependencies
-uv run generate-certificate      # Create self-signed SSL certs (certs/ dir)
 uv run generate-new-token        # Generate API key, save hash to .env
 
 # Development
