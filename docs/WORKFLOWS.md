@@ -52,15 +52,15 @@ It consists of the following jobs:
 The Build workflow runs on pushes and pull requests to the `main` branch.
 It consists of the following jobs:
 
-### build_wheel
+### build-wheel
 - Checkout code
 - Setup Python environment with dev dependencies (via custom action)
 - Build wheel with `uv build`
 - Inspect wheel contents for verification
 - Upload wheel artifact (`python_template_server_wheel`)
 
-### verify_structure
-- Depends on `build_wheel` job
+### verify-structure
+- Depends on `build-wheel` job
 - Checkout code
 - Setup Python environment (via custom action)
 - Download wheel artifact
@@ -89,7 +89,7 @@ It consists of the following jobs:
 - Create compressed tarball of the release directory
 - Upload tarball as artifact (`python_template_server_release`)
 
-### check_installer
+### check-installer
 - Depends on `prepare-release` job
 - Checkout code
 - Setup Python environment (via custom action)

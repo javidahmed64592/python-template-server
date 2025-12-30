@@ -143,8 +143,8 @@ All PRs must pass:
 
 **Build Workflow (build.yml):**
 
-1. `build_wheel` - Create and upload Python wheel package
-2. `verify_structure` - Verify installed package structure and required files
+1. `build-wheel` - Create and upload Python wheel package
+2. `verify-structure` - Verify installed package structure and required files
 
 **Docker Workflow (docker.yml):**
 

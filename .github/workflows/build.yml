@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build_wheel:
+  build-wheel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,9 +27,9 @@ jobs:
           name: python_template_server_wheel
           path: dist/python_template_server-*-py3-none-any.whl
 
-  verify_structure:
+  verify-structure:
     runs-on: ubuntu-latest
-    needs: build_wheel
+    needs: build-wheel
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-python-core
