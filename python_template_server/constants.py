@@ -31,6 +31,6 @@ TOKEN_LENGTH = 32
 # Logging constants
 LOG_MAX_BYTES = 10 * BYTES_TO_MB  # 10 MB
 LOG_BACKUP_COUNT = 5
-LOG_FORMAT = "[%(asctime)s] (%(levelname)s) %(module)s: %(message)s"
+LOG_FORMAT = "[%(asctime)s] %(levelname)s [%(module)s]: %(message)s"
 LOG_DATE_FORMAT = "%d/%m/%Y | %H:%M:%S"
 LOG_LEVEL = "INFO"
