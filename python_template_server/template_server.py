@@ -65,7 +65,7 @@ class TemplateServer(ABC):
         self.api_prefix = api_prefix
         self.api_key_header_name = api_key_header_name
         self.config_filepath = config_filepath
-        self.config = config or self.load_config(config_filepath)
+        self.config = config or self.load_config(self.config_filepath)
 
         CustomJSONResponse.configure(self.config.json_response)
 
@@ -110,22 +110,20 @@ class TemplateServer(ABC):
         :raise SystemExit: If configuration file is missing, invalid JSON, or fails validation
         """
         if not config_filepath.exists():
-            logger.error("Configuration file not found: %s", config_filepath)
-            sys.exit(1)
+            logger.error("Configuration file not found, creating...")
+            config_filepath.parent.mkdir(parents=True, exist_ok=True)
+            TemplateServerConfig().save_to_file(config_filepath)
 
-        config_data = {}
         try:
             with config_filepath.open() as f:
                 config_data = json.load(f)
+            return self.validate_config(config_data)
         except json.JSONDecodeError:
             logger.exception("JSON parsing error: %s", config_filepath)
             sys.exit(1)
         except OSError:
             logger.exception("JSON read error: %s", config_filepath)
             sys.exit(1)
-
-        try:
-            return self.validate_config(config_data)
         except ValidationError:
             logger.exception("Invalid configuration in: %s", config_filepath)
             sys.exit(1)

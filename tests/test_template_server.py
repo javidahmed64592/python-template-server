@@ -69,13 +69,19 @@ def mock_timestamp() -> Generator[str]:
 
 
 @pytest.fixture
-def mock_template_server(mock_template_server_config: TemplateServerConfig) -> MockTemplateServer:
+def mock_template_server(
+    mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+) -> MockTemplateServer:
     """Provide a MockTemplateServer instance for testing."""
-    return MockTemplateServer(config=mock_template_server_config)
+    return MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
 
 
 class MockTemplateServer(TemplateServer):
     """Mock subclass of TemplateServer for testing."""
+
+    def __init__(self, config_filepath: Path, config: TemplateServerConfig | None = None) -> None:
+        """Initialize MockTemplateServer."""
+        super().__init__(config_filepath=config_filepath, config=config)
 
     def mock_unprotected_method(self, request: Request) -> BaseResponse:
         """Mock unprotected method."""
@@ -170,59 +176,42 @@ class TestTemplateServer:
 class TestLoadConfig:
     """Tests for the load_config function."""
 
-    def test_load_config_with_filepath_success(self, mock_template_server_config: TemplateServerConfig) -> None:
+    def test_load_config_with_filepath_success(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    ) -> None:
         """Test that load_config is called with the specified filepath when config is None."""
         with patch.object(
             MockTemplateServer, "load_config", return_value=mock_template_server_config
         ) as mock_load_config:
-            custom_filepath = Path("/custom/config.json")
-            server = MockTemplateServer(config_filepath=custom_filepath)
+            server = MockTemplateServer(config_filepath=mock_tmp_config_path)
 
-            mock_load_config.assert_called_once_with(custom_filepath)
+            mock_load_config.assert_called_once_with(mock_tmp_config_path)
             assert server.config == mock_template_server_config
 
-    def test_load_config_with_no_filepath_success(
-        self,
-        mock_exists: MagicMock,
-        mock_open_file: MagicMock,
-        mock_sys_exit: MagicMock,
-        mock_template_server_config: TemplateServerConfig,
-    ) -> None:
-        """Test successful loading of config."""
-        mock_exists.return_value = True
-        mock_open_file.return_value.read.return_value = json.dumps(mock_template_server_config.model_dump())
-
-        config = MockTemplateServer().config
-
-        assert isinstance(config, TemplateServerConfig)
-        assert config == mock_template_server_config
-        mock_sys_exit.assert_not_called()
-
-    def test_load_config_file_not_found(
+    def test_load_config_file_not_found_succeeds(
         self,
         mock_exists: MagicMock,
         mock_sys_exit: MagicMock,
+        mock_tmp_config_path: Path,
     ) -> None:
         """Test loading config when the file does not exist."""
         mock_exists.return_value = False
-
-        with pytest.raises(SystemExit):
-            MockTemplateServer()
-
-        mock_sys_exit.assert_called_once_with(1)
+        MockTemplateServer(config_filepath=mock_tmp_config_path)
+        mock_sys_exit.assert_not_called()
 
     def test_load_config_invalid_json(
         self,
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
         mock_sys_exit: MagicMock,
+        mock_tmp_config_path: Path,
     ) -> None:
         """Test loading config with invalid JSON content."""
         mock_exists.return_value = True
         mock_open_file.return_value.read.return_value = "invalid json"
 
         with pytest.raises(SystemExit):
-            MockTemplateServer()
+            MockTemplateServer(config_filepath=mock_tmp_config_path)
 
         mock_sys_exit.assert_called_with(1)
 
@@ -231,13 +220,14 @@ class TestLoadConfig:
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
         mock_sys_exit: MagicMock,
+        mock_tmp_config_path: Path,
     ) -> None:
         """Test loading config that raises an OSError."""
         mock_exists.return_value = True
         mock_open_file.side_effect = OSError("File read error")
 
         with pytest.raises(SystemExit):
-            MockTemplateServer()
+            MockTemplateServer(config_filepath=mock_tmp_config_path)
 
         mock_sys_exit.assert_called_with(1)
 
@@ -246,13 +236,14 @@ class TestLoadConfig:
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
         mock_sys_exit: MagicMock,
+        mock_tmp_config_path: Path,
     ) -> None:
         """Test loading config that fails validation."""
         mock_exists.return_value = True
         mock_open_file.return_value.read.return_value = json.dumps({"server": {"host": "localhost", "port": 999999}})
 
         with pytest.raises(SystemExit):
-            MockTemplateServer()
+            MockTemplateServer(config_filepath=mock_tmp_config_path)
 
         mock_sys_exit.assert_called_once_with(1)
 
@@ -318,34 +309,42 @@ class TestRateLimiting:
         assert json.loads(response.body.decode()) == {"detail": "Rate limit exceeded"}
         assert response.headers.get("Retry-After") == str(exc.retry_after)
 
-    def test_setup_rate_limiting_enabled(self, mock_template_server_config: TemplateServerConfig) -> None:
+    def test_setup_rate_limiting_enabled(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    ) -> None:
         """Test rate limiting setup when enabled."""
         mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer(config=mock_template_server_config)
+        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
 
         assert server.limiter is not None
         assert server.app.state.limiter is not None
 
-    def test_setup_rate_limiting_disabled(self, mock_template_server_config: TemplateServerConfig) -> None:
+    def test_setup_rate_limiting_disabled(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    ) -> None:
         """Test rate limiting setup when disabled."""
-        server = MockTemplateServer(config=mock_template_server_config)
+        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
 
         assert server.limiter is None
 
-    def test_limit_route_with_limiter_enabled(self, mock_template_server_config: TemplateServerConfig) -> None:
+    def test_limit_route_with_limiter_enabled(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    ) -> None:
         """Test _limit_route when rate limiting is enabled."""
         mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer(config=mock_template_server_config)
+        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route != server.mock_unprotected_method
         assert hasattr(limited_route, "__wrapped__")
 
-    def test_limit_route_with_limiter_disabled(self, mock_template_server_config: TemplateServerConfig) -> None:
+    def test_limit_route_with_limiter_disabled(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    ) -> None:
         """Test _limit_route when rate limiting is disabled."""
-        server = MockTemplateServer(config=mock_template_server_config)
+        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route == server.mock_unprotected_method
@@ -431,11 +430,11 @@ class TestTemplateServerRoutes:
         assert test_route.response_model == BaseResponse
 
     def test_limited_parameter_with_rate_limiting_enabled(
-        self, mock_template_server_config: TemplateServerConfig
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
     ) -> None:
         """Test that limited=True applies rate limiting when limiter is enabled."""
         mock_template_server_config.rate_limit.enabled = True
-        server = MockTemplateServer(config=mock_template_server_config)
+        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
 
         # Get the limited routes
         api_routes = [route for route in server.app.routes if isinstance(route, APIRoute)]
@@ -452,10 +451,12 @@ class TestTemplateServerRoutes:
         # Unlimited route should not have the limiter wrapper
         assert not hasattr(unlimited_route.endpoint, "__wrapped__")
 
-    def test_authenticated_route_limited_parameter(self, mock_template_server_config: TemplateServerConfig) -> None:
+    def test_authenticated_route_limited_parameter(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    ) -> None:
         """Test that limited parameter works correctly for authenticated routes."""
         mock_template_server_config.rate_limit.enabled = True
-        server = MockTemplateServer(config=mock_template_server_config)
+        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
 
         # Get the authenticated routes
         api_routes = [route for route in server.app.routes if isinstance(route, APIRoute)]
