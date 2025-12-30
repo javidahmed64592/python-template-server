@@ -87,6 +87,7 @@ class TemplateServerConfig(BaseModel):
 
         :param Path filepath: Path to the configuration file
         """
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         with filepath.open("w", encoding="utf-8") as config_file:
             config_file.write(self.model_dump_json(indent=2))
             config_file.write("\n")

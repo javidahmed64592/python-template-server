@@ -110,8 +110,7 @@ class TemplateServer(ABC):
         :raise SystemExit: If configuration file is missing, invalid JSON, or fails validation
         """
         if not config_filepath.exists():
-            logger.error("Configuration file not found, creating...")
-            config_filepath.parent.mkdir(parents=True, exist_ok=True)
+            logger.warning("Configuration file not found, creating...")
             TemplateServerConfig().save_to_file(config_filepath)
 
         try:
