@@ -345,44 +345,47 @@ class TestRateLimiting:
 class TestTemplateServerRun:
     """Unit tests for TemplateServer.run method."""
 
-    def test_run_success(self, mock_template_server: TemplateServer, mock_exists: MagicMock) -> None:
+    @pytest.fixture
+    def mock_uvicorn_run(self) -> Generator[MagicMock]:
+        """Mock uvicorn.run function."""
+        with patch("python_template_server.template_server.uvicorn.run") as mock_run:
+            yield mock_run
+
+    def test_run_success(
+        self, mock_template_server: TemplateServer, mock_exists: MagicMock, mock_uvicorn_run: MagicMock
+    ) -> None:
         """Test successful server run."""
         mock_exists.side_effect = [True, True]
 
-        with patch("python_template_server.template_server.uvicorn.run") as mock_uvicorn_run:
-            mock_template_server.run()
+        mock_template_server.run()
 
         mock_uvicorn_run.assert_called_once()
         call_kwargs = mock_uvicorn_run.call_args.kwargs
         assert call_kwargs["host"] == mock_template_server.config.server.host
         assert call_kwargs["port"] == mock_template_server.config.server.port
 
-    def test_run_error(self, mock_template_server: TemplateServer, mock_exists: MagicMock) -> None:
-        """Test run raises SystemExit on Exception."""
-        mock_exists.side_effect = [True, True]
-
-        with patch("python_template_server.template_server.uvicorn.run") as mock_uvicorn_run:
-            mock_uvicorn_run.side_effect = Exception("Test Exception")
-
-            with pytest.raises(SystemExit):
-                mock_template_server.run()
-
     def test_run_generates_cert_when_missing(
-        self, mock_template_server: TemplateServer, mock_exists: MagicMock
+        self, mock_template_server: TemplateServer, mock_exists: MagicMock, mock_uvicorn_run: MagicMock
     ) -> None:
         """Test that self-signed certificate is generated when cert/key files are missing."""
         # Mock the cert and key file paths to not exist
         mock_exists.side_effect = [False, False]
 
-        with (
-            patch("python_template_server.template_server.uvicorn.run") as mock_uvicorn_run,
-        ):
-            mock_template_server.run()
+        mock_template_server.run()
 
-            # Verify generate_self_signed_cert was called
-            mock_template_server.cert_handler.generate_self_signed_cert.assert_called_once()
-            # Verify uvicorn.run was still called
-            mock_uvicorn_run.assert_called_once()
+        mock_template_server.cert_handler.generate_self_signed_cert.assert_called_once()  # type: ignore[attr-defined]
+        mock_uvicorn_run.assert_called_once()
+
+    def test_run_error(
+        self, mock_template_server: TemplateServer, mock_exists: MagicMock, mock_uvicorn_run: MagicMock
+    ) -> None:
+        """Test run raises SystemExit on Exception."""
+        mock_exists.side_effect = [True, True]
+
+        mock_uvicorn_run.side_effect = Exception("Test Exception")
+
+        with pytest.raises(SystemExit):
+            mock_template_server.run()
 
 
 class TestTemplateServerRoutes:
