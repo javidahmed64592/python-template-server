@@ -75,19 +75,36 @@ It consists of the following jobs:
 
 ### build
 - Checkout code
-- Setup Python environment with dev dependencies (via custom action)
-- Build and start services with `docker compose --build -d`
+- Build and start services with `docker compose up --build -d`
 - Wait for services to start (5 seconds)
 - Show server logs from `python-template-server` container
-- **Health check** using reusable composite action `.github/actions/docker-check-containers`:
+- **Health check** using reusable composite action `.github/actions/docker-check-containers` with port 443
 - Stop services with full cleanup: `docker compose down --volumes --remove-orphans`
+
+### prepare-release
+- Checkout code
+- Setup Python environment with dev dependencies (via custom action)
+- Extract version from `pyproject.toml` using Python's `tomllib`
+- Prepare release directory: copy `docker-compose.yml` and `README.md` to `release/`, make `install_template_server.sh` executable, rename `release/` to `python_template_server_<version>`, display directory tree
+- Create compressed tarball of the release directory
+- Upload tarball as artifact (`python_template_server_release`)
+
+### check_installer
+- Depends on `prepare-release` job
+- Checkout code
+- Setup Python environment (via custom action)
+- Download release tarball artifact
+- Extract tarball
+- Verify pre-installation contents: check for `docker-compose.yml`, `README.md`, and executable `install_template_server.sh`
+- Run installer script (non-interactive, defaults to port 443)
+- Verify post-installation contents: ensure installer script is removed, check for created service files (`python-template-server.service`, `start_service.sh`, `stop_service.sh`, `uninstall_python_template_server.sh`) and verify scripts are executable
 
 ### publish-release
 - Depends on `build` job
 - Only runs on push to `main` branch (not PRs)
 - Requires `contents: write` and `packages: write` permissions
 - Checkout code
-- Setup Python environment (via custom action)
+- Setup Python environment with dev dependencies (via custom action)
 - Extract version from `pyproject.toml` using Python's `tomllib`
 - Check if Git tag already exists (skip if duplicate)
 - Set up Docker Buildx for multi-platform builds
