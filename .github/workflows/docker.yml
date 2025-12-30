@@ -158,7 +158,7 @@ jobs:
           done
   publish-release:
     runs-on: ubuntu-latest
-    needs: [build, prepare-release]
+    needs: [build, check-installer]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write
