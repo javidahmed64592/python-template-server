@@ -14,8 +14,8 @@ from pydantic import BaseModel, Field
 class ServerConfigModel(BaseModel):
     """Server configuration model."""
 
-    host: str = Field(default="localhost", description="Server hostname or IP address")
-    port: int = Field(default=8000, ge=1, le=65535, description="Server port number")
+    host: str = Field(default="0.0.0.0", description="Server hostname or IP address")  # noqa: S104
+    port: int = Field(default=443, ge=1, le=65535, description="Server port number")
 
     @property
     def address(self) -> str:
@@ -33,7 +33,13 @@ class SecurityConfigModel(BaseModel):
 
     hsts_max_age: int = Field(default=31536000, ge=0, description="HSTS max-age in seconds (1 year default)")
     content_security_policy: str = Field(
-        default="default-src 'self'", description="Content Security Policy header value"
+        default=(
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https://cdn.jsdelivr.net https://fastapi.tiangolo.com"
+        ),
+        description="Content Security Policy header value",
     )
 
 
@@ -87,6 +93,7 @@ class TemplateServerConfig(BaseModel):
 
         :param Path filepath: Path to the configuration file
         """
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         with filepath.open("w", encoding="utf-8") as config_file:
             config_file.write(self.model_dump_json(indent=2))
             config_file.write("\n")

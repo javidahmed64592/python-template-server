@@ -20,7 +20,7 @@ This repository provides a solid foundation for building secure, observable Fast
 - [Quick Start](#quick-start)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Generate Certificates and API Token](#generate-certificates-and-api-token)
+  - [Generate API Token](#generate-api-token)
   - [Run the Server](#run-the-server)
 - [Using as a Template](#using-as-a-template)
 - [Docker Deployment](#docker-deployment)
@@ -73,13 +73,9 @@ cd python-template-server
 uv sync --extra dev
 ```
 
-### Generate Certificates and API Token
+### Generate API Token
 
 ```sh
-# Generate self-signed SSL certificate (saves to certs/ directory)
-uv run generate-certificate
-
-# Generate API authentication token (saves hash to .env)
 uv run generate-new-token
 # ⚠️ Save the displayed token - you'll need it for API requests!
 ```

@@ -51,7 +51,6 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 ```powershell
 # Setup (first time)
 uv sync                          # Install dependencies
-uv run generate-certificate      # Create self-signed SSL certs (certs/ dir)
 uv run generate-new-token        # Generate API key, save hash to .env
 
 # Development
@@ -76,9 +75,9 @@ docker compose down              # Stop and remove containers
 
 ### Docker Multi-Stage Build
 
-- **Stage 1 (builder)**: Uses `uv` to build wheel, copies `configuration/` directory and other required files
+- **Stage 1 (builder)**: Uses `uv` to build wheel, copies required files
 - **Stage 2 (runtime)**: Installs wheel, copies runtime files (.here, configs, LICENSE, README.md) from wheel to /app
-- **Startup Script**: `/app/start.sh` generates token/certs if missing, starts server
+- **Startup Script**: `/app/start.sh` generates token if missing, starts server
 - **Config Selection**: Uses `config.json` for all environments
 - **Build Args**: `PORT=443` (exposes port)
 - **Health Check**: Curls `/api/health` with unverified SSL context (no auth required)
@@ -117,7 +116,6 @@ docker compose down              # Stop and remove containers
 
 ### What's NOT Implemented Yet
 
-- Custom domain-specific endpoints (template provides base functionality only)
 - Database/metadata storage (users implement as needed in subclasses)
 - CORS configuration (can be added by subclasses)
 - API key rotation/expiry
@@ -125,7 +123,6 @@ docker compose down              # Stop and remove containers
 
 ### Testing Requirements
 
-- Mock `pyhere.here()` for all file path tests (see `conftest.py`)
 - Use fixtures for TemplateServer/ExampleServer instantiation
 - Test async endpoints with `@pytest.mark.asyncio`
 - Mock `uvicorn.run` when testing server `.run()` methods
@@ -134,18 +131,24 @@ docker compose down              # Stop and remove containers
 
 All PRs must pass:
 
-**CI Workflow:**
+**Build Workflow (build.yml):**
+
+1. `build_wheel` - Create and upload Python wheel package
+2. `verify_structure` - Verify installed package structure and required files
+
+**CI Workflow (ci.yml):**
 
 1. `validate-pyproject` - pyproject.toml schema validation
 2. `ruff` - linting (120 char line length, strict rules in pyproject.toml)
 3. `mypy` - 100% type coverage (strict mode)
 4. `pytest` - 99% code coverage, HTML report uploaded
-5. `version-check` - pyproject.toml vs uv.lock version consistency
+5. `bandit` - security check for Python code
+6. `pip-audit` - audit dependencies for known vulnerabilities
+7. `version-check` - pyproject.toml vs uv.lock version consistency
 
-**Docker Workflow:**
+**Docker Workflow (docker.yml):**
 
-1. `docker-development` - Build and test dev image with docker compose
-2. `docker-production` - Build and test prod image with ENV=prod, PORT=443
+1. `build` - Build and test development image with docker compose
 
 ## Quick Reference
 

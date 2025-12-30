@@ -6,10 +6,11 @@ services:
       dockerfile: Dockerfile
     container_name: python-template-server
     ports:
-      - "443:443"
+      - "${PORT:-443}:${PORT:-443}"
     environment:
       # Load API token hash from .env file (optional - will be generated if missing)
       - API_TOKEN_HASH=${API_TOKEN_HASH:-}
+      - PORT=${PORT:-443}
     volumes:
       - certs:/app/certs
       - logs:/app/logs
@@ -20,7 +21,7 @@ services:
           "CMD",
           "sh",
           "-c",
-          'python -c "import urllib.request; urllib.request.urlopen(''https://localhost:443/api/health'', context=__import__(''ssl'')._create_unverified_context()).read()"',
+          'python -c "import urllib.request; urllib.request.urlopen(''https://localhost:$PORT/api/health'', context=__import__(''ssl'')._create_unverified_context()).read()"',
         ]
       interval: 30s
       timeout: 10s

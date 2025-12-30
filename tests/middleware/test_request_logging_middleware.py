@@ -21,6 +21,8 @@ class TestRequestLoggingMiddleware:
         self, mock_app: FastAPI, mock_request: Request, mock_response: Response
     ) -> None:
         """Test that dispatch logs both request and response."""
+        assert mock_request.client is not None  # Ensure client is set for this test
+
         middleware = RequestLoggingMiddleware(mock_app)
 
         # Mock the call_next function
@@ -34,7 +36,7 @@ class TestRequestLoggingMiddleware:
         assert result == mock_response
         middleware.logger.info.assert_has_calls(
             [
-                call("Request: %s %s from %s", "GET", "/test", "127.0.0.1"),
+                call("Request: %s %s from %s:%d", "GET", "/test", "127.0.0.1", mock_request.client.port),
                 call("Response: %s %s -> %d", "GET", "/test", 200),
             ]
         )
@@ -56,4 +58,4 @@ class TestRequestLoggingMiddleware:
         result = await middleware.dispatch(request, call_next)
 
         assert result == mock_response
-        middleware.logger.info.assert_any_call("Request: %s %s from %s", "POST", "/api/endpoint", "unknown")
+        middleware.logger.info.assert_any_call("Request: %s %s from %s:%d", "POST", "/api/endpoint", "unknown", 0)

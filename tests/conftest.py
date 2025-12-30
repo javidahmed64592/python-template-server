@@ -1,6 +1,7 @@
 """Pytest fixtures for the application's unit tests."""
 
 from collections.abc import Generator
+from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -16,14 +17,6 @@ from python_template_server.models import (
 
 
 # General fixtures
-@pytest.fixture(autouse=True)
-def mock_here(tmp_path: str) -> Generator[MagicMock]:
-    """Mock the here() function to return a temporary directory."""
-    with patch("pyhere.here") as mock_here:
-        mock_here.return_value = tmp_path
-        yield mock_here
-
-
 @pytest.fixture
 def mock_exists() -> Generator[MagicMock]:
     """Mock the Path.exists() method."""
@@ -53,14 +46,6 @@ def mock_touch() -> Generator[MagicMock]:
 
 
 @pytest.fixture
-def mock_sys_exit() -> Generator[MagicMock]:
-    """Mock sys.exit to raise SystemExit."""
-    with patch("sys.exit") as mock_exit:
-        mock_exit.side_effect = SystemExit
-        yield mock_exit
-
-
-@pytest.fixture
 def mock_set_key() -> Generator[MagicMock]:
     """Mock the set_key function."""
     with patch("dotenv.set_key") as mock_set_key:
@@ -72,6 +57,12 @@ def mock_os_getenv() -> Generator[MagicMock]:
     """Mock the os.getenv function."""
     with patch("os.getenv") as mock_getenv:
         yield mock_getenv
+
+
+@pytest.fixture
+def mock_tmp_config_path(tmp_path: Path) -> Path:
+    """Provide a temporary config file path."""
+    return tmp_path / "config.json"
 
 
 # Template Server Configuration Models

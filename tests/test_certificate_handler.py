@@ -1,6 +1,5 @@
 """Unit tests for the python_template_server.certificate_handler module."""
 
-from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -10,36 +9,10 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from python_template_server.certificate_handler import (
     CertificateHandler,
-    generate_self_signed_certificate,
 )
-from python_template_server.models import CertificateConfigModel, TemplateServerConfig
+from python_template_server.models import CertificateConfigModel
 
 RSA_KEY_SIZE = 4096
-
-
-@pytest.fixture(autouse=True)
-def mock_parse_args(
-    tmp_path: Path,
-) -> Generator[MagicMock]:
-    """Mock argparse.ArgumentParser.parse_args to return a test config path."""
-    test_config_path = tmp_path / "config.json"
-    with patch(
-        "python_template_server.certificate_handler.parse_args",
-        return_value=MagicMock(autospec=True, config=str(test_config_path)),
-    ) as mock_parse:
-        yield mock_parse
-
-
-@pytest.fixture
-def mock_example_server(
-    tmp_path: Path, mock_template_server_config: TemplateServerConfig
-) -> Generator[MagicMock]:
-    """Mock the ExampleServer class."""
-    with patch("python_template_server.certificate_handler.ExampleServer") as mock_server:
-        cert_dir = tmp_path / "certs"
-        mock_template_server_config.certificate.directory = str(cert_dir)
-        mock_server.return_value.config = mock_template_server_config
-        yield mock_server
 
 
 class TestCertificateHandler:
@@ -133,7 +106,6 @@ class TestCertificateHandler:
         mock_mkdir: MagicMock,
         mock_open_file: MagicMock,
         mock_exists: MagicMock,
-        mock_sys_exit: MagicMock,
     ) -> None:
         """Test certificate generation when directory creation fails."""
         mock_exists.return_value = False
@@ -143,8 +115,6 @@ class TestCertificateHandler:
 
         with pytest.raises(SystemExit):
             handler.generate_self_signed_cert()
-
-        mock_sys_exit.assert_called_once_with(1)
 
     def test_generate_self_signed_cert_permission_error(
         self, mock_certificate_config: CertificateConfigModel, tmp_path: Path
@@ -175,77 +145,3 @@ class TestCertificateHandler:
         with patch.object(handler, "write_to_cert_file", side_effect=OSError("Disk full")):
             with pytest.raises(OSError, match="Disk full"):
                 handler.generate_self_signed_cert()
-
-
-class TestGenerateSelfSignedCertificate:
-    """Unit tests for the generate_self_signed_certificate function."""
-
-    def test_generate_self_signed_certificate_success(
-        self, mock_example_server: MagicMock, mock_template_server_config: TemplateServerConfig, tmp_path: Path
-    ) -> None:
-        """Test successful certificate generation via wrapper function."""
-        with (
-            patch.object(CertificateHandler, "write_to_key_file") as mock_write_key,
-            patch.object(CertificateHandler, "write_to_cert_file") as mock_write_cert,
-        ):
-            generate_self_signed_certificate()
-
-            # Verify write methods were called with PEM-encoded data
-            mock_write_key.assert_called_once()
-            key_data = mock_write_key.call_args[0][0]
-            assert b"BEGIN RSA PRIVATE KEY" in key_data
-
-            mock_write_cert.assert_called_once()
-            cert_data = mock_write_cert.call_args[0][0]
-            assert b"BEGIN CERTIFICATE" in cert_data
-
-    def test_generate_self_signed_certificate_os_error(
-        self,
-        mock_example_server: MagicMock,
-        mock_template_server_config: TemplateServerConfig,
-        mock_sys_exit: MagicMock,
-        tmp_path: Path,
-    ) -> None:
-        """Test certificate generation wrapper handles OSError."""
-        with patch(
-            "python_template_server.certificate_handler.CertificateHandler.generate_self_signed_cert",
-            side_effect=OSError("Disk error"),
-        ):
-            with pytest.raises(SystemExit):
-                generate_self_signed_certificate()
-
-        mock_sys_exit.assert_called_once_with(1)
-
-    def test_generate_self_signed_certificate_permission_error(
-        self,
-        mock_example_server: MagicMock,
-        mock_template_server_config: TemplateServerConfig,
-        mock_sys_exit: MagicMock,
-        tmp_path: Path,
-    ) -> None:
-        """Test certificate generation wrapper handles PermissionError."""
-        with patch(
-            "python_template_server.certificate_handler.CertificateHandler.generate_self_signed_cert",
-            side_effect=PermissionError("No permission"),
-        ):
-            with pytest.raises(SystemExit):
-                generate_self_signed_certificate()
-
-        mock_sys_exit.assert_called_once_with(1)
-
-    def test_generate_self_signed_certificate_unexpected_error(
-        self,
-        mock_example_server: MagicMock,
-        mock_template_server_config: TemplateServerConfig,
-        mock_sys_exit: MagicMock,
-        tmp_path: Path,
-    ) -> None:
-        """Test certificate generation wrapper handles unexpected exceptions."""
-        with patch(
-            "python_template_server.certificate_handler.CertificateHandler.generate_self_signed_cert",
-            side_effect=RuntimeError("Unexpected error"),
-        ):
-            with pytest.raises(SystemExit):
-                generate_self_signed_certificate()
-
-        mock_sys_exit.assert_called_once_with(1)
