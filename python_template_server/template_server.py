@@ -248,6 +248,8 @@ class TemplateServer(ABC):
                 port=self.config.server.port,
                 ssl_keyfile=str(key_file),
                 ssl_certfile=str(cert_file),
+                log_level="warning",
+                access_log=False,
             )
             logger.info("Server stopped.")
         except Exception:

@@ -19,12 +19,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         """Log request and response details."""
         client_ip = request.client.host if request.client else "unknown"
+        client_port = request.client.port if request.client else 0
 
         self.logger.info(
-            "Request: %s %s from %s",
+            "Request: %s %s from %s:%d",
             request.method,
             request.url.path,
             client_ip,
+            client_port,
         )
 
         response = await call_next(request)
