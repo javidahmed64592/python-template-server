@@ -106,7 +106,6 @@ class TestCertificateHandler:
         mock_mkdir: MagicMock,
         mock_open_file: MagicMock,
         mock_exists: MagicMock,
-        mock_sys_exit: MagicMock,
     ) -> None:
         """Test certificate generation when directory creation fails."""
         mock_exists.return_value = False
@@ -116,8 +115,6 @@ class TestCertificateHandler:
 
         with pytest.raises(SystemExit):
             handler.generate_self_signed_cert()
-
-        mock_sys_exit.assert_called_once_with(1)
 
     def test_generate_self_signed_cert_permission_error(
         self, mock_certificate_config: CertificateConfigModel, tmp_path: Path

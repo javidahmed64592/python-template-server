@@ -114,15 +114,8 @@ class TemplateServer(ABC):
         :raise SystemExit: If configuration file is missing, invalid JSON, or fails validation
         """
         if not config_filepath.exists():
-            logger.warning("Configuration file not found, creating...")
-            default_config = self.validate_config({})
-            argparser.add_argument(
-                "--port", type=int, default=default_config.server.port, help="Port to run the server on"
-            )
-            args = argparser.parse_args()
-            default_config.server.port = args.port
-            default_config.save_to_file(config_filepath)
-            return default_config
+            logger.error("Configuration file not found: %s", config_filepath)
+            sys.exit(1)
 
         try:
             with config_filepath.open() as f:
@@ -131,6 +124,7 @@ class TemplateServer(ABC):
             argparser.add_argument("--port", type=int, default=config.server.port, help="Port to run the server on")
             args = argparser.parse_args()
             config.server.port = args.port
+            config.save_to_file(config_filepath)
         except json.JSONDecodeError:
             logger.exception("JSON parsing error: %s", config_filepath)
             sys.exit(1)

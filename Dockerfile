@@ -25,6 +25,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Copy the built wheel from backend builder
 COPY --from=backend-builder /build/dist/*.whl /tmp/
 
+# Copy configuration
+COPY configuration /app/configuration/
+
 # Install the wheel
 RUN uv pip install --system --no-cache /tmp/*.whl && \
     rm /tmp/*.whl

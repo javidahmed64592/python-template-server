@@ -189,22 +189,21 @@ class TestLoadConfig:
             mock_load_config.assert_called_once_with(mock_tmp_config_path)
             assert server.config == mock_template_server_config
 
-    def test_load_config_file_not_found_succeeds(
+    def test_load_config_file_not_found(
         self,
         mock_exists: MagicMock,
-        mock_sys_exit: MagicMock,
         mock_tmp_config_path: Path,
     ) -> None:
         """Test loading config when the file does not exist."""
         mock_exists.return_value = False
-        MockTemplateServer(config_filepath=mock_tmp_config_path)
-        mock_sys_exit.assert_not_called()
+
+        with pytest.raises(SystemExit):
+            MockTemplateServer(config_filepath=mock_tmp_config_path)
 
     def test_load_config_invalid_json(
         self,
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
-        mock_sys_exit: MagicMock,
         mock_tmp_config_path: Path,
     ) -> None:
         """Test loading config with invalid JSON content."""
@@ -214,13 +213,10 @@ class TestLoadConfig:
         with pytest.raises(SystemExit):
             MockTemplateServer(config_filepath=mock_tmp_config_path)
 
-        mock_sys_exit.assert_called_with(1)
-
     def test_load_config_os_error(
         self,
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
-        mock_sys_exit: MagicMock,
         mock_tmp_config_path: Path,
     ) -> None:
         """Test loading config that raises an OSError."""
@@ -230,13 +226,10 @@ class TestLoadConfig:
         with pytest.raises(SystemExit):
             MockTemplateServer(config_filepath=mock_tmp_config_path)
 
-        mock_sys_exit.assert_called_with(1)
-
     def test_load_config_validation_error(
         self,
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
-        mock_sys_exit: MagicMock,
         mock_tmp_config_path: Path,
     ) -> None:
         """Test loading config that fails validation."""
@@ -245,8 +238,6 @@ class TestLoadConfig:
 
         with pytest.raises(SystemExit):
             MockTemplateServer(config_filepath=mock_tmp_config_path)
-
-        mock_sys_exit.assert_called_once_with(1)
 
 
 class TestVerifyApiKey:

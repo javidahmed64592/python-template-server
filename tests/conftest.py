@@ -46,14 +46,6 @@ def mock_touch() -> Generator[MagicMock]:
 
 
 @pytest.fixture
-def mock_sys_exit() -> Generator[MagicMock]:
-    """Mock sys.exit to raise SystemExit."""
-    with patch("sys.exit") as mock_exit:
-        mock_exit.side_effect = SystemExit
-        yield mock_exit
-
-
-@pytest.fixture
 def mock_set_key() -> Generator[MagicMock]:
     """Mock the set_key function."""
     with patch("dotenv.set_key") as mock_set_key:
