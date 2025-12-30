@@ -9,7 +9,6 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy backend source files
 COPY python_template_server/ ./python_template_server/
-COPY configuration/ ./configuration/
 COPY pyproject.toml .here LICENSE README.md ./
 
 # Build the wheel
@@ -35,7 +34,6 @@ RUN mkdir -p /app/logs /app/certs
 
 # Copy included files from installed wheel to app directory
 RUN SITE_PACKAGES_DIR=$(find /usr/local/lib -name "site-packages" -type d | head -1) && \
-    cp -r "${SITE_PACKAGES_DIR}/configuration" /app/ && \
     cp "${SITE_PACKAGES_DIR}/.here" /app/.here && \
     cp "${SITE_PACKAGES_DIR}/LICENSE" /app/LICENSE && \
     cp "${SITE_PACKAGES_DIR}/README.md" /app/README.md

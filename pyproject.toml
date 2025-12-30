@@ -55,7 +55,6 @@ allow-direct-references = true
 [tool.hatch.build]
 include = [
   "python_template_server/**",
-  "configuration/**",
   ".here",
   "LICENSE",
   "README.md",
