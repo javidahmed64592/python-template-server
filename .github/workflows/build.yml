@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+env:
+  PACKAGE_NAME: python_template_server
+
 jobs:
   build-wheel:
     runs-on: ubuntu-latest
@@ -20,12 +23,12 @@ jobs:
       - name: Inspect wheel contents
         run: |
           echo "Wheel contents:"
-          unzip -l dist/python_template_server-*-py3-none-any.whl
+          unzip -l dist/${{ env.PACKAGE_NAME }}-*-py3-none-any.whl
       - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
-          name: python_template_server_wheel
-          path: dist/python_template_server-*-py3-none-any.whl
+          name: ${{ env.PACKAGE_NAME }}_wheel
+          path: dist/${{ env.PACKAGE_NAME }}-*-py3-none-any.whl
 
   verify-structure:
     runs-on: ubuntu-latest
@@ -37,12 +40,11 @@ jobs:
       - name: Download wheel artifact
         uses: actions/download-artifact@v4
         with:
-          name: python_template_server_wheel
+          name: ${{ env.PACKAGE_NAME }}_wheel
 
       - name: Install wheel
         run: |
-          PACKAGE_NAME="python_template_server"
-          WHEEL_FILE=$(find . -name "${PACKAGE_NAME}-*-py3-none-any.whl")
+          WHEEL_FILE=$(find . -name "${{ env.PACKAGE_NAME }}-*-py3-none-any.whl")
 
           if [ ! -f "$WHEEL_FILE" ]; then
             echo "Wheel file not found"
@@ -54,8 +56,6 @@ jobs:
 
       - name: Verify installed package structure
         run: |
-          PACKAGE_NAME="python_template_server"
-
           # Find site-packages directory
           SITE_PACKAGES=$(find . -name "site-packages" -type d | head -1)
           echo "Site-packages directory: $SITE_PACKAGES"
@@ -63,7 +63,7 @@ jobs:
           # Check for required directories in site-packages
           echo "Checking required directories in site-packages..."
           REQUIRED_DIRS=(
-            "${SITE_PACKAGES}/${PACKAGE_NAME}"
+            "${SITE_PACKAGES}/${{ env.PACKAGE_NAME }}"
           )
 
           for dir in "${REQUIRED_DIRS[@]}"; do
