@@ -101,11 +101,14 @@ Configure the FastAPI server using environment variables in `docker-compose.yml`
 ```yaml
 environment:
   - API_TOKEN_HASH=${API_TOKEN_HASH}
+  - PORT=${PORT:-443}
 ```
 
 The `API_TOKEN_HASH` is loaded from your local `.env` file.
 If the `.env` file exists when you run `docker compose up`, the container will use that token hash.
 Otherwise, the container startup script will generate a new token and create the `.env` file.
+
+The `PORT` environment variable sets the server port (default 443).
 
 ### Server Configuration
 
