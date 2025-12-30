@@ -69,7 +69,7 @@ addopts = [
 
 [tool.coverage.run]
 branch = true
-source = ["python_template_server"]
+source = ["python_template_server", "tests"]
 
 [tool.coverage.report]
 fail_under = 80
