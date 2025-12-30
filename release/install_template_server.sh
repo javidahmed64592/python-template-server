@@ -128,12 +128,14 @@ chmod +x "${UNINSTALL_PATH}"
 echo "${SEPARATOR}"
 echo "Python Template Server has been installed successfully."
 echo
-echo "To create a start-up service for the Python Template Server, run: './service/${START_SERVICE_FILE}'"
-echo "To stop the service, run: './service/${STOP_SERVICE_FILE}'"
+echo "To create a start-up service for the Python Template Server, run: './${START_SERVICE_FILE}'"
+echo "To stop the service, run: './${STOP_SERVICE_FILE}'"
 echo "To change the port, edit the service file and then run the start service script: ${SERVICE_PATH}"
 echo "To view the logs: 'cat ${LOG_FILE}'"
 echo "To uninstall, run: './${UNINSTALL_FILE}'"
 echo
+echo "Note: You may need to add your user to the Docker group and log out/in for permission changes to take effect."
+echo "      Command: sudo usermod -aG docker \${USER}"
 echo "${SEPARATOR}"
 
 rm -- "$0"
