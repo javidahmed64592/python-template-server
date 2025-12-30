@@ -30,7 +30,7 @@ RUN uv pip install --system --no-cache /tmp/*.whl && \
     rm /tmp/*.whl
 
 # Create required directories
-RUN mkdir -p /app/logs /app/certs
+RUN mkdir -p /app/logs
 
 # Copy included files from installed wheel to app directory
 RUN SITE_PACKAGES_DIR=$(find /usr/local/lib -name "site-packages" -type d | head -1) && \

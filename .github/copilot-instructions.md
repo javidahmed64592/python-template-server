@@ -77,7 +77,7 @@ docker compose down              # Stop and remove containers
 
 - **Stage 1 (builder)**: Uses `uv` to build wheel, copies required files
 - **Stage 2 (runtime)**: Installs wheel, copies runtime files (.here, configs, LICENSE, README.md) from wheel to /app
-- **Startup Script**: `/app/start.sh` generates token/certs if missing, starts server
+- **Startup Script**: `/app/start.sh` generates token if missing, starts server
 - **Config Selection**: Uses `config.json` for all environments
 - **Build Args**: `PORT=443` (exposes port)
 - **Health Check**: Curls `/api/health` with unverified SSL context (no auth required)

@@ -1,6 +1,5 @@
 """Unit tests for the python_template_server.certificate_handler module."""
 
-from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -11,19 +10,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from python_template_server.certificate_handler import (
     CertificateHandler,
 )
-from python_template_server.models import CertificateConfigModel, TemplateServerConfig
+from python_template_server.models import CertificateConfigModel
 
 RSA_KEY_SIZE = 4096
-
-
-@pytest.fixture
-def mock_example_server(tmp_path: Path, mock_template_server_config: TemplateServerConfig) -> Generator[MagicMock]:
-    """Mock the ExampleServer class."""
-    with patch("python_template_server.certificate_handler.ExampleServer") as mock_server:
-        cert_dir = tmp_path / "certs"
-        mock_template_server_config.certificate.directory = str(cert_dir)
-        mock_server.return_value.config = mock_template_server_config
-        yield mock_server
 
 
 class TestCertificateHandler:
