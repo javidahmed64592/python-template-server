@@ -131,11 +131,6 @@ docker compose down              # Stop and remove containers
 
 All PRs must pass:
 
-**Build Workflow (build.yml):**
-
-1. `build_wheel` - Create and upload Python wheel package
-2. `verify_structure` - Verify installed package structure and required files
-
 **CI Workflow (ci.yml):**
 
 1. `validate-pyproject` - pyproject.toml schema validation
@@ -145,6 +140,11 @@ All PRs must pass:
 5. `bandit` - security check for Python code
 6. `pip-audit` - audit dependencies for known vulnerabilities
 7. `version-check` - pyproject.toml vs uv.lock version consistency
+
+**Build Workflow (build.yml):**
+
+1. `build_wheel` - Create and upload Python wheel package
+2. `verify_structure` - Verify installed package structure and required files
 
 **Docker Workflow (docker.yml):**
 

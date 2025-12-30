@@ -53,20 +53,20 @@ The Build workflow runs on pushes and pull requests to the `main` branch.
 It consists of the following jobs:
 
 ### build_wheel
-  - Checkout code
-  - Setup Python environment with dev dependencies (via custom action)
-  - Build wheel with `uv build`
-  - Inspect wheel contents for verification
-  - Upload wheel artifact (`python_template_server_wheel`)
+- Checkout code
+- Setup Python environment with dev dependencies (via custom action)
+- Build wheel with `uv build`
+- Inspect wheel contents for verification
+- Upload wheel artifact (`python_template_server_wheel`)
 
 ### verify_structure
-  - Depends on `build_wheel` job
-  - Checkout code
-  - Setup Python environment (via custom action)
-  - Download wheel artifact
-  - Install wheel using `uv pip install`
-  - Verify installed package structure in site-packages
-  - Display directory structure with tree views for verification
+- Depends on `build_wheel` job
+- Checkout code
+- Setup Python environment (via custom action)
+- Download wheel artifact
+- Install wheel using `uv pip install`
+- Verify installed package structure in site-packages
+- Display directory structure with tree views for verification
 
 ## Docker Workflow
 
@@ -74,10 +74,32 @@ The Docker workflow runs on pushes, pull requests to the `main` branch, and manu
 It consists of the following jobs:
 
 ### build
-  - Checkout code
-  - Setup Python environment with dev dependencies (via custom action)
-  - Build and start services with `docker compose --build -d`
-  - Wait for services to start (5 seconds)
-  - Show server logs from `python-template-server` container
-  - **Health check** using reusable composite action `.github/actions/docker-check-containers`:
-  - Stop services with full cleanup: `docker compose down --volumes --remove-orphans`
+- Checkout code
+- Setup Python environment with dev dependencies (via custom action)
+- Build and start services with `docker compose --build -d`
+- Wait for services to start (5 seconds)
+- Show server logs from `python-template-server` container
+- **Health check** using reusable composite action `.github/actions/docker-check-containers`:
+- Stop services with full cleanup: `docker compose down --volumes --remove-orphans`
+
+### publish-release
+- Depends on `build` job
+- Only runs on push to `main` branch (not PRs)
+- Requires `contents: write` and `packages: write` permissions
+- Checkout code
+- Setup Python environment (via custom action)
+- Extract version from `pyproject.toml` using Python's `tomllib`
+- Check if Git tag already exists (skip if duplicate)
+- Set up Docker Buildx for multi-platform builds
+- Log in to GitHub Container Registry (ghcr.io)
+- Extract Docker metadata with semantic versioning tags:
+  - `v1.2.3` - Exact version
+  - `1.2` - Major.minor
+  - `1` - Major only
+  - `latest` - Latest stable release
+- Build and push multi-platform Docker images:
+  - Platforms: `linux/amd64`, `linux/arm64`
+  - Registry: `ghcr.io/<owner>/<repo>`
+  - Uses GitHub Actions cache for layer caching
+- Generate release notes
+- Create GitHub Release with version tag and release notes
