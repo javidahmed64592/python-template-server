@@ -1,7 +1,7 @@
 <!-- omit from toc -->
 # Docker Deployment Guide
 
-This guide provides comprehensive instructions for deploying the Python Template Server using Docker and Docker Compose, including metrics visualization with Prometheus and Grafana.
+This guide provides comprehensive instructions for deploying the Python Template Server using Docker and Docker Compose.
 
 <!-- omit from toc -->
 ## Table of Contents
@@ -19,14 +19,6 @@ This guide provides comprehensive instructions for deploying the Python Template
   - [Managing Containers](#managing-containers)
 - [Accessing Services](#accessing-services)
   - [Python Template Server](#python-template-server)
-  - [Prometheus](#prometheus)
-  - [Grafana](#grafana)
-- [Metrics Visualization](#metrics-visualization)
-  - [Available Metrics](#available-metrics)
-    - [Authentication Metrics](#authentication-metrics)
-    - [Rate Limiting Metrics](#rate-limiting-metrics)
-    - [HTTP Metrics (provided by prometheus-fastapi-instrumentator)](#http-metrics-provided-by-prometheus-fastapi-instrumentator)
-  - [Custom Dashboard Setup](#custom-dashboard-setup)
   - [View Container Logs](#view-container-logs)
 
 ## Prerequisites
@@ -68,7 +60,7 @@ This will:
 ### 2. Start Services
 
 ```bash
-# Start all services (FastAPI server, Prometheus, Grafana)
+# Start all services
 docker compose up -d
 
 # View logs
@@ -95,24 +87,12 @@ The Docker startup script automatically handles token generation with the follow
 
 ### Docker Compose Services
 
-The `docker-compose.yml` defines three services:
+The `docker-compose.yml` defines the following services:
 
 1. **python-template-server** (Port 443)
    - FastAPI application with HTTPS
    - Auto-generates self-signed certificates on first run (if not present)
    - Uses existing `.env` file if available, otherwise generates a new token on startup
-   - Exposes `/api/metrics` endpoint for Prometheus
-
-2. **prometheus** (Port 9090)
-   - Metrics collection and storage
-   - Scrapes `/api/metrics` endpoint every 15 seconds
-   - Persistent storage via Docker volume
-
-3. **grafana** (Port 3000)
-   - Metrics visualization dashboards
-   - Pre-configured Prometheus datasource
-   - Custom dashboards for authentication and rate limiting
-   - Default credentials: `admin/admin`
 
 ### Environment Variables
 
@@ -174,7 +154,6 @@ docker compose down -v
 **Base URL**: `https://localhost:443`
 
 **API Endpoints**:
-- Metrics: `GET /api/metrics` (publicly accessible, no authentication required)
 - Health Check: `GET /api/health` (publicly accessible, no authentication required)
 - Login: `GET /api/login` (requires authentication with X-API-Key header)
 - Custom Endpoints: Defined in your server subclass (authentication may be required)
@@ -188,68 +167,8 @@ curl -k https://localhost:443/api/health
 curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/login
 ```
 
-### Prometheus
-
-**URL**: `http://localhost:9090`
-
-**Features**:
-- Query metrics directly
-- View scrape targets and status
-- Create custom queries
-
-### Grafana
-
-**URL**: `http://localhost:3000`
-
-**Default Credentials**:
-- Username: `admin`
-- Password: `admin` (change on first login)
-
-**Pre-installed Dashboards**:
-1. **Authentication Metrics** (`/d/auth-metrics`)
-   - Success/failure rates
-   - Total authentication attempts
-   - Failure reasons breakdown
-   - Success rate percentage
-
-2. **Rate Limiting & Performance** (`/d/rate-limit-metrics`)
-   - Rate limit violations by endpoint
-   - HTTP request rates
-   - Request duration percentiles
-   - Total violations gauge
-
-## Metrics Visualization
-
-### Available Metrics
-
-#### Authentication Metrics
-- `auth_success_total`: Successful authentication attempts
-- `auth_failure_total{reason}`: Failed attempts by reason (missing, invalid, error)
-
-#### Rate Limiting Metrics
-- `rate_limit_exceeded_total{endpoint}`: Rate limit violations per endpoint
-
-#### HTTP Metrics (provided by prometheus-fastapi-instrumentator)
-- `http_requests_total`: Total HTTP requests
-- `http_request_duration_seconds`: Request latency histogram
-- `http_requests_in_progress`: Current in-flight requests
-
-### Custom Dashboard Setup
-
-1. **Access Grafana**: Navigate to `http://localhost:3000`
-2. **Login**: Use `admin/admin`
-3. **Navigate**: Go to Dashboards → Browse → Python Template Server folder
-4. **View**: Select either dashboard to visualize metrics
-
 ### View Container Logs
 
 ```bash
-# All services
-docker compose logs -f
-
-# Specific service
 docker compose logs -f python-template-server
-
-# Last 100 lines
-docker compose logs --tail=100 prometheus
 ```

@@ -31,7 +31,6 @@ from python_template_server.models import (
     ServerHealthStatus,
     TemplateServerConfig,
 )
-from python_template_server.prometheus_handler import BaseMetricNames, PrometheusHandler
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -41,7 +40,7 @@ class TemplateServer(ABC):
     """Template FastAPI server.
 
     This class provides a template for building FastAPI servers with common features
-    such as request logging, security headers, rate limiting, and Prometheus metrics.
+    such as request logging, security headers and rate limiting.
 
     Ensure you implement the `setup_routes` and `validate_config` methods in subclasses.
     """
@@ -85,7 +84,6 @@ class TemplateServer(ABC):
         self._setup_request_logging()
         self._setup_security_headers()
         self._setup_rate_limiting()
-        self._setup_metrics()
         self.setup_routes()
 
     @staticmethod
@@ -142,7 +140,6 @@ class TemplateServer(ABC):
         """
         if api_key is None:
             logger.warning("Missing API key in request!")
-            self.prometheus_handler.increment_counter(BaseMetricNames.AUTH_FAILURE_TOTAL, labels={"reason": "missing"})
             raise HTTPException(
                 status_code=ResponseCode.UNAUTHORIZED,
                 detail="Missing API key",
@@ -151,18 +148,13 @@ class TemplateServer(ABC):
         try:
             if not verify_token(api_key, self.hashed_token):
                 logger.warning("Invalid API key attempt!")
-                self.prometheus_handler.increment_counter(
-                    BaseMetricNames.AUTH_FAILURE_TOTAL, labels={"reason": "invalid"}
-                )
                 raise HTTPException(
                     status_code=ResponseCode.UNAUTHORIZED,
                     detail="Invalid API key",
                 )
             logger.debug("API key validated successfully.")
-            self.prometheus_handler.increment_counter(BaseMetricNames.AUTH_SUCCESS_TOTAL)
         except ValueError as e:
             logger.exception("Error verifying API key!")
-            self.prometheus_handler.increment_counter(BaseMetricNames.AUTH_FAILURE_TOTAL, labels={"reason": "error"})
             raise HTTPException(
                 status_code=ResponseCode.UNAUTHORIZED,
                 detail=str(e),
@@ -188,17 +180,13 @@ class TemplateServer(ABC):
         )
 
     async def _rate_limit_exception_handler(self, request: Request, exc: RateLimitExceeded) -> CustomJSONResponse:
-        """Handle rate limit exceeded exceptions and track metrics.
+        """Handle rate limit exceeded exceptions.
 
         :param Request request: The incoming HTTP request
         :param RateLimitExceeded exc: The rate limit exceeded exception
         :return JSONResponse: HTTP 429 JSON response
         """
-        self.prometheus_handler.increment_counter(
-            BaseMetricNames.RATE_LIMIT_EXCEEDED_TOTAL, labels={"endpoint": request.url.path}
-        )
-
-        # Return JSON response with 429 status
+        logger.warning("Rate limit exceeded for %s", request.url.path)
         return CustomJSONResponse(
             status_code=429,
             content={"detail": "Rate limit exceeded"},
@@ -235,12 +223,6 @@ class TemplateServer(ABC):
         if self.limiter is not None:
             return self.limiter.limit(self.config.rate_limit.rate_limit)(route_function)  # type: ignore[no-any-return]
         return route_function
-
-    def _setup_metrics(self) -> None:
-        """Set up Prometheus metrics."""
-        self.prometheus_handler = PrometheusHandler(self.app)
-        self.prometheus_handler.set_gauge(BaseMetricNames.TOKEN_CONFIGURED, 1 if self.hashed_token else 0)
-        logger.info("Prometheus metrics enabled.")
 
     def run(self) -> None:
         """Run the server using uvicorn.
@@ -338,7 +320,6 @@ class TemplateServer(ABC):
         :return GetHealthResponse: Health status response
         """
         if not self.hashed_token:
-            self.prometheus_handler.set_gauge(BaseMetricNames.TOKEN_CONFIGURED, 0)
             return GetHealthResponse(
                 code=ResponseCode.INTERNAL_SERVER_ERROR,
                 message="Server token is not configured",
@@ -346,7 +327,6 @@ class TemplateServer(ABC):
                 status=ServerHealthStatus.UNHEALTHY,
             )
 
-        self.prometheus_handler.set_gauge(BaseMetricNames.TOKEN_CONFIGURED, 1)
         return GetHealthResponse(
             code=ResponseCode.OK,
             message="Server is healthy",

@@ -10,7 +10,8 @@
 <!-- omit from toc -->
 # Python Template Server
 
-A production-ready FastAPI server template with built-in authentication, rate limiting, security headers, and Prometheus metrics. This repository provides a solid foundation for building secure, observable FastAPI applications.
+A production-ready FastAPI server template with built-in authentication, rate limiting and security headers.
+This repository provides a solid foundation for building secure, observable FastAPI applications.
 
 <!-- omit from toc -->
 ## Table of Contents
@@ -30,7 +31,6 @@ A production-ready FastAPI server template with built-in authentication, rate li
 
 - **TemplateServer Base Class**: Reusable foundation
 - **FastAPI Framework**: Modern, fast, async-ready web framework
-- **Observability Stack**: Pre-configured Prometheus + Grafana dashboards
 - **Docker Support**: Multi-stage builds with docker-compose orchestration
 - **Production Patterns**: Token generation, SSL certificate handling, health checks
 
@@ -42,7 +42,6 @@ This project uses a **`TemplateServer` base class** that encapsulates cross-cutt
 - **Security Headers**: HSTS/CSP/X-Frame-Options automatically applied
 - **API Key Verification**: SHA-256 hashed tokens with secure validation
 - **Rate Limiting**: Configurable limits using `slowapi` (in-memory/Redis/Memcached)
-- **Prometheus Metrics**: Custom authentication/rate-limit metrics + HTTP instrumentation
 
 **Application-specific servers** (like `ExampleServer` in `main.py`) extend `TemplateServer` to implement domain-specific endpoints and business logic. The base class handles all infrastructure concerns, letting you focus on your API functionality.
 
@@ -94,7 +93,6 @@ uv run python-template-server
 # Server runs at https://localhost:443/api
 # Swagger UI: https://localhost:443/api/docs
 # Redoc: https://localhost:443/api/redoc
-# Metrics: curl -k https://localhost:443/api/metrics
 # Health check: curl -k https://localhost:443/api/health
 # Login (requires authentication): curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/login
 ```
@@ -115,7 +113,7 @@ See the [Software Maintenance Guide](./docs/SMG.md) for detailed setup instructi
 ## Docker Deployment
 
 ```sh
-# Start all services (FastAPI + Prometheus + Grafana)
+# Start all services
 docker compose up -d
 
 # View logs
@@ -123,13 +121,11 @@ docker compose logs -f python-template-server
 
 # Access services:
 # - API: https://localhost:443/api
-# - Prometheus: http://localhost:9090
-# - Grafana: http://localhost:3000 (admin/admin)
 ```
 
 ## Documentation
 
-- **[API Documentation](./docs/API.md)**: Endpoints, authentication, metrics
+- **[API Documentation](./docs/API.md)**: API architecture and endpoints
 - **[Software Maintenance Guide](./docs/SMG.md)**: Development setup, configuration
 - **[Docker Deployment Guide](./docs/DOCKER_DEPLOYMENT.md)**: Container orchestration
 - **[Workflows](./docs/WORKFLOWS.md)**: CI/CD pipeline details
