@@ -20,6 +20,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from python_template_server.authentication_handler import load_hashed_token, verify_token
+from python_template_server.certificate_handler import CertificateHandler
 from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_FILE_PATH, PACKAGE_NAME
 from python_template_server.logging_setup import setup_logging
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
@@ -66,6 +67,7 @@ class TemplateServer(ABC):
         self.api_key_header_name = api_key_header_name
         self.config_filepath = config_filepath
         self.config = config or self.load_config(self.config_filepath)
+        self.cert_handler = CertificateHandler(self.config.certificate)
 
         CustomJSONResponse.configure(self.config.json_response)
 
@@ -222,17 +224,14 @@ class TemplateServer(ABC):
         return route_function
 
     def run(self) -> None:
-        """Run the server using uvicorn.
-
-        :raise FileNotFoundError: If SSL certificate files are missing
-        """
+        """Run the server using uvicorn."""
         try:
             cert_file = self.config.certificate.ssl_cert_file_path
             key_file = self.config.certificate.ssl_key_file_path
 
             if not (cert_file.exists() and key_file.exists()):
-                logger.error("SSL certificate files are missing. Expected: '%s' and '%s'", cert_file, key_file)
-                sys.exit(1)
+                logger.warning("SSL certificate or key file not found, generating self-signed certificate...")
+                self.cert_handler.generate_self_signed_cert()
 
             logger.info("Starting server: %s%s", self.config.server.url, self.api_prefix)
             uvicorn.run(
@@ -243,8 +242,8 @@ class TemplateServer(ABC):
                 ssl_certfile=str(cert_file),
             )
             logger.info("Server stopped.")
-        except OSError:
-            logger.exception("Failed to start - ran into an OSError!")
+        except Exception:
+            logger.exception("Failed to start!")
             sys.exit(1)
 
     def add_unauthenticated_route(
