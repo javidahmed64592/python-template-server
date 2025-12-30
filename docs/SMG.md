@@ -35,7 +35,6 @@ python_template_server/
 ├── logging_setup.py                   # Logging configuration
 ├── main.py                            # Application entry point with ExampleServer
 ├── models.py                          # Pydantic models (config + API responses)
-├── prometheus_handler.py              # Prometheus metrics handler
 └── template_server.py                 # TemplateServer base class (reusable foundation)
 ```
 
@@ -47,7 +46,6 @@ The Python Template Server uses a **`TemplateServer` base class** that provides 
 - **Middleware Setup**: Request logging and security headers
 - **Authentication**: API key verification with SHA-256 hashing
 - **Rate Limiting**: Configurable request throttling per endpoint
-- **Metrics**: Prometheus instrumentation for observability
 - **Configuration**: JSON-based config loading and validation
 
 **Application-Specific Servers** (like `ExampleServer` in `main.py`) extend `TemplateServer` to:
@@ -55,7 +53,7 @@ The Python Template Server uses a **`TemplateServer` base class** that provides 
 - Implement domain-specific business logic
 - Validate custom configuration models via `validate_config()`
 
-This separation ensures that cross-cutting concerns (security, logging, metrics) are handled by the base class, while application developers focus on building their API functionality.
+This separation ensures that cross-cutting concerns (security, logging etc.) are handled by the base class, while application developers focus on building their API functionality.
 
 ### Installing Dependencies
 
@@ -127,15 +125,11 @@ uv run python-template-server
 The backend will be available at `https://localhost:443/api` by default.
 
 **Available Endpoints:**
-- Prometheus Metrics: `https://localhost:443/api/metrics`
 - Health Check: `https://localhost:443/api/health`
 - Login: `https://localhost:443/api/login` (requires authentication)
 
 **Testing the API:**
 ```sh
-# Metrics endpoint (no auth required)
-curl -k https://localhost:443/api/metrics
-
 # Health check (no auth required)
 curl -k https://localhost:443/api/health
 

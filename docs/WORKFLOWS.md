@@ -65,11 +65,7 @@ It consists of the following jobs:
   - Setup Python environment (via custom action)
   - Download wheel artifact
   - Install wheel using `uv pip install`
-  - Verify installed package structure in site-packages:
-    - `python_template_server/` - Python package
-    - `configuration/` - Server configuration
-    - `grafana/` - Grafana dashboards and provisioning
-    - `prometheus/` - Prometheus configuration
+  - Verify installed package structure in site-packages
   - Display directory structure with tree views for verification
 
 ## Docker Workflow
@@ -84,7 +80,4 @@ It consists of the following jobs:
   - Wait for services to start (5 seconds)
   - Show server logs from `python-template-server` container
   - **Health check** using reusable composite action `.github/actions/docker-check-containers`:
-    - Verifies server is running on port 443
-    - Checks Prometheus and Grafana services
-    - Validates Ollama integration
   - Stop services with full cleanup: `docker compose down --volumes --remove-orphans`

@@ -11,7 +11,7 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 ### Application Factory Pattern
 
 - Entry: `main.py:run()` → instantiates `ExampleServer` (subclass of `TemplateServer`) → calls `.run()`
-- `TemplateServer.__init__()` sets up middleware, rate limiting, metrics, and calls `setup_routes()`
+- `TemplateServer.__init__()` sets up middleware, rate limiting, and calls `setup_routes()`
 - **Critical**: Middleware order matters - request logging → security headers → rate limiting
 - **Extensibility**: Subclasses implement `setup_routes()` to add custom endpoints and `validate_config()` for config validation
 
@@ -29,7 +29,6 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 - **Hash Storage**: Only hash stored in `.env` (API_TOKEN_HASH), raw token shown once
 - **Token Loading**: `load_hashed_token()` loads hash from .env on server startup, stored in `TemplateServer.hashed_token`
 - **Verification Flow**: Request → `_verify_api_key()` dependency → `verify_token()` → hash comparison
-- **Metrics**: Success/failure counters with labeled reasons (missing/invalid/error)
 - **Health Endpoint**: `/api/health` does NOT require authentication, reports unhealthy if token not configured
 - Header: `X-API-Key` (defined in `constants.API_KEY_HEADER_NAME`)
 
@@ -42,8 +41,6 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 
 ### Observability Stack
 
-- **Prometheus**: `/metrics` endpoint always exposed (no auth), custom auth/rate-limit metrics
-- **Grafana**: Pre-configured dashboards in `grafana/dashboards/*.json`
 - **Logging**: Dual output (console + rotating file), 10MB per file, 5 backups in `logs/`
 - **Request Tracking**: `RequestLoggingMiddleware` logs all requests with client IP
 
@@ -107,7 +104,6 @@ docker compose down              # Stop and remove containers
 
 - **Prefix**: All routes under `/api` (API_PREFIX constant)
 - **Authentication**: Applied via `dependencies=[Security(self._verify_api_key)]` in route registration
-- **Unauthenticated Endpoints**: `/health` and `/metrics` do not require authentication
 - **Response Models**: All endpoints return `BaseResponse` subclasses with code/message/timestamp
 - **Health Status**: `/health` includes `status` field (HEALTHY/DEGRADED/UNHEALTHY), reports unhealthy if no token configured
 
@@ -155,15 +151,14 @@ All PRs must pass:
 
 ### Key Files
 
-- `template_server.py` - Base TemplateServer class with middleware/metrics/auth setup
+- `template_server.py` - Base TemplateServer class with middleware/auth setup
 - `main.py` - ExampleServer implementation showing how to extend TemplateServer
 - `authentication_handler.py` - Token generation, hashing, verification
-- `prometheus_handler.py` - Prometheus metrics setup and custom metric definitions
 - `certificate_handler.py` - Self-signed SSL certificate generation and loading
 - `logging_setup.py` - Logging configuration (executed on import)
 - `models.py` - All Pydantic models (config + responses)
 - `constants.py` - Project constants, logging config
-- `docker-compose.yml` - FastAPI + Prometheus + Grafana stack
+- `docker-compose.yml` - Container stack
 
 ### Environment Variables
 

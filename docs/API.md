@@ -13,13 +13,6 @@ All endpoints are mounted under the `/api` prefix.
 - [Request Logging](#request-logging)
 - [Security Headers](#security-headers)
 - [Rate Limiting](#rate-limiting)
-- [Prometheus Metrics](#prometheus-metrics)
-  - [GET /api/metrics](#get-apimetrics)
-    - [Standard HTTP Metrics (via `prometheus-fastapi-instrumentator`)](#standard-http-metrics-via-prometheus-fastapi-instrumentator)
-    - [Custom Application Metrics](#custom-application-metrics)
-  - [Accessing Dashboards](#accessing-dashboards)
-    - [Prometheus Dashboard](#prometheus-dashboard)
-    - [Grafana Dashboards](#grafana-dashboards)
 - [Endpoints](#endpoints)
   - [GET /api/health](#get-apihealth)
   - [GET /api/login](#get-apilogin)
@@ -120,53 +113,6 @@ API endpoints are rate-limited to prevent abuse. When the rate limit is exceeded
 Default rate limit: **100 requests per minute** per IP address.
 
 Rate limits can be configured in `config.json`.
-
-## Prometheus Metrics
-
-The server exposes Prometheus-compatible metrics for monitoring and observability.
-
-### GET /api/metrics
-
-- **Purpose**: Expose Prometheus metrics for scraping and monitoring.
-- **Format**: Prometheus text-based exposition format.
-
-**Metrics Exposed**:
-
-#### Standard HTTP Metrics (via `prometheus-fastapi-instrumentator`)
-- `http_requests_total`: Total number of HTTP requests by method, path, and status code
-- `http_request_duration_seconds`: HTTP request latency histogram by method and path
-- `http_requests_in_progress`: Number of HTTP requests currently being processed
-
-#### Custom Application Metrics
-
-**Authentication Metrics**:
-- `auth_success_total`: Counter tracking successful API key validations
-- `auth_failure_total{reason}`: Counter tracking failed authentication attempts with labels:
-  - `reason="missing"`: No API key provided in request
-  - `reason="invalid"`: Invalid or incorrect API key
-  - `reason="error"`: Error during token verification
-
-**Rate Limiting Metrics**:
-- `rate_limit_exceeded_total{endpoint}`: Counter tracking requests that exceeded rate limits, labeled by endpoint path
-
-### Accessing Dashboards
-
-The application includes pre-configured monitoring dashboards for visualization:
-
-#### Prometheus Dashboard
-- **URL**: http://localhost:9090
-- **Purpose**: Query and visualize raw metrics data
-- **Features**: Built-in query interface, graphing, and alerting
-
-#### Grafana Dashboards
-- **URL**: http://localhost:3000
-- **Credentials**: admin / admin (change after first login)
-- **Pre-configured Dashboards**:
-  - **Authentication Metrics**: Tracks successful and failed authentication attempts, including reasons for failures
-  - **Rate Limiting Metrics**: Monitors requests that exceed rate limits by endpoint
-
-To access the dashboards, the containers for Grafana and Prometheus must be running.
-See the [Docker documentation](./DOCKER_DEPLOYMENT.md) for information on how to run these.
 
 ## Endpoints
 
