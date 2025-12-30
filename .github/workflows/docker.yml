@@ -11,6 +11,10 @@ on:
 
 env:
   PACKAGE_NAME: python_template_server
+  INSTALLER_NAME: install_template_server.sh
+  SERVICE_NAME: python-template-server.service
+  UNINSTALLER_NAME: uninstall_template_server.sh
+  CONTAINER_NAME: python-template-server
 
 jobs:
   build:
@@ -25,7 +29,7 @@ jobs:
           sleep 5  # Wait for services to start
 
       - name: Show server logs
-        run: docker compose logs python-template-server
+        run: docker compose logs ${{ env.CONTAINER_NAME }}
 
       - uses: ./.github/actions/docker-check-containers
         with:
@@ -52,7 +56,7 @@ jobs:
           PACKAGE_DIR="${{ steps.get_package_info.outputs.package_dir }}"
           cp docker-compose.yml release/
           cp README.md release/
-          chmod +x release/install_template_server.sh
+          chmod +x release/${{ env.INSTALLER_NAME }}
           mv release $PACKAGE_DIR
           tree $PACKAGE_DIR --dirsfirst -F
 
@@ -94,7 +98,7 @@ jobs:
           tree --dirsfirst -F
 
           files=("docker-compose.yml" "README.md")
-          scripts=("install_template_server.sh")
+          scripts=("${{ env.INSTALLER_NAME }}")
 
           for file in "${files[@]}"; do
             if [ ! -f "$file" ]; then
@@ -120,7 +124,7 @@ jobs:
           DIR_NAME=$(basename "$TAR_FILE" .tar.gz)
 
           cd "$DIR_NAME"
-          ./install_template_server.sh
+          ./${{ env.INSTALLER_NAME }}
 
       - name: Verify post-installation directory contents
         run: |
@@ -131,13 +135,13 @@ jobs:
           echo "$DIR_NAME/"
           tree --dirsfirst -F
 
-          if [ -f "install_template_server.sh" ]; then
+          if [ -f "${{ env.INSTALLER_NAME }}" ]; then
             echo "Installer script not removed"
             exit 1
           fi
 
-          files=("docker-compose.yml" "README.md" "python-template-server.service" "start_service.sh" "stop_service.sh" "uninstall_python_template_server.sh")
-          scripts=("start_service.sh" "stop_service.sh" "uninstall_python_template_server.sh")
+          files=("docker-compose.yml" "README.md" "${{ env.SERVICE_NAME }}" "start_service.sh" "stop_service.sh" "${{ env.UNINSTALLER_NAME }}")
+          scripts=("start_service.sh" "stop_service.sh" "${{ env.UNINSTALLER_NAME }}")
 
           for file in "${files[@]}"; do
             if [ ! -f "$file" ]; then
@@ -225,15 +229,20 @@ jobs:
 
           **A template FastAPI server with production-ready configuration.**
 
-          ### Quick Start with Docker
+          ### Quick Start
+
+          Download the latest release tarball from the [Releases](https://github.com/${{ github.repository }}/releases) page.
 
           ```bash
-          # Download docker-compose.yml
-          curl -O https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml
+          # Extract the tarball
+          tar -xzf ${{ env.PACKAGE_NAME }}_*.tar.gz
+          cd ${{ env.PACKAGE_NAME }}_*/
 
-          # Run
-          docker compose up -d
+          # Run the installer
+          ./${{ env.INSTALLER_NAME }}
           ```
+
+          This will install the server as a systemd service and start it automatically.
 
           Access the application at `https://localhost:443`
 

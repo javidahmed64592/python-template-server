@@ -10,7 +10,7 @@ LOG_FILE="python-template-server.log"
 SERVICE_FILE="python-template-server.service"
 START_SERVICE_FILE="start_service.sh"
 STOP_SERVICE_FILE="stop_service.sh"
-UNINSTALL_FILE="uninstall_python_template_server.sh"
+UNINSTALL_FILE="uninstall_template_server.sh"
 
 LOG_PATH="${WD}/${LOG_FILE}"
 SERVICE_PATH="${WD}/${SERVICE_FILE}"
