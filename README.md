@@ -23,7 +23,6 @@ This repository provides a solid foundation for building secure, observable Fast
   - [Generate API Token](#generate-api-token)
   - [Run the Server](#run-the-server)
 - [Using as a Template](#using-as-a-template)
-- [Docker Deployment](#docker-deployment)
 - [Documentation](#documentation)
 - [License](#license)
 
@@ -106,24 +105,11 @@ To create your own server:
 
 See the [Software Maintenance Guide](./docs/SMG.md) for detailed setup instructions.
 
-## Docker Deployment
-
-```sh
-# Start all services
-docker compose up -d
-
-# View logs
-docker compose logs -f python-template-server
-
-# Access services:
-# - API: https://localhost:443/api
-```
-
 ## Documentation
 
 - **[API Documentation](./docs/API.md)**: API architecture and endpoints
-- **[Software Maintenance Guide](./docs/SMG.md)**: Development setup, configuration
 - **[Docker Deployment Guide](./docs/DOCKER_DEPLOYMENT.md)**: Container orchestration
+- **[Software Maintenance Guide](./docs/SMG.md)**: Development setup, configuration
 - **[Workflows](./docs/WORKFLOWS.md)**: CI/CD pipeline details
 
 ## License
