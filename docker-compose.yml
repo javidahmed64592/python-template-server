@@ -13,8 +13,6 @@ services:
     volumes:
       - certs:/app/certs
       - logs:/app/logs
-    networks:
-      - monitoring
     restart: unless-stopped
     healthcheck:
       test:
