@@ -30,15 +30,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "bandit>=1.9.2",
-    "mypy>=1.19.1",
-    "pip-audit>=2.10.0",
-    "pre-commit>=4.5.1",
-    "pytest>=8.4.2",
+    "template-python[dev] @ git+https://github.com/javidahmed64592/template-python.git",
     "pytest-asyncio>=1.2.0",
-    "pytest-cov>=7.0.0",
-    "ruff>=0.14.10",
-    "validate-pyproject>=0.24.1",
 ]
 
 [project.urls]
