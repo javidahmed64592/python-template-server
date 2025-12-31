@@ -66,7 +66,6 @@ It consists of the following jobs:
 - Download wheel artifact
 - Install wheel using `uv pip install`
 - Verify installed package structure in site-packages
-- Display directory structure with tree views for verification
 
 ## Docker Workflow
 
