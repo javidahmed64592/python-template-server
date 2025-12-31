@@ -14,7 +14,7 @@ COPY pyproject.toml .here LICENSE README.md ./
 # Build the wheel
 RUN uv build --wheel
 
-# Stage 3: Runtime stage
+# Stage 2: Runtime stage
 FROM python:3.13-slim
 
 WORKDIR /app
