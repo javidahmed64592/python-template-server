@@ -41,9 +41,10 @@ python_template_server/
 The Python Template Server uses a **`TemplateServer` base class** that provides reusable infrastructure for building FastAPI applications:
 
 **TemplateServer Responsibilities:**
-- **Middleware Setup**: Request logging and security headers
+- **Middleware Setup**: Request logging, security headers, and optional CORS
 - **Authentication**: API key verification with SHA-256 hashing
 - **Rate Limiting**: Configurable request throttling per endpoint
+- **Static File Serving**: Optional SPA hosting with automatic routing fallback
 - **Configuration**: JSON-based config loading and validation
 
 **Application-Specific Servers** (like `ExampleServer` in `main.py`) extend `TemplateServer` to:

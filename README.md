@@ -28,8 +28,10 @@ This repository provides a solid foundation for building secure, observable Fast
 
 ## Features
 
-- **TemplateServer Base Class**: Reusable foundation
+- **TemplateServer Base Class**: Reusable foundation with middleware, auth, and rate limiting
 - **FastAPI Framework**: Modern, fast, async-ready web framework
+- **CORS Support**: Configurable cross-origin resource sharing for frontend integration
+- **Static File Serving**: Built-in SPA hosting with automatic routing fallback
 - **Docker Support**: Multi-stage builds with docker-compose orchestration
 - **Production Patterns**: Token generation, SSL certificate handling, health checks
 
@@ -41,6 +43,8 @@ This project uses a **`TemplateServer` base class** that encapsulates cross-cutt
 - **Security Headers**: HSTS/CSP/X-Frame-Options automatically applied
 - **API Key Verification**: SHA-256 hashed tokens with secure validation
 - **Rate Limiting**: Configurable limits using `slowapi` (in-memory/Redis/Memcached)
+- **CORS Middleware**: Optional cross-origin support for frontend applications
+- **Static File Serving**: Serve SPAs or static assets with automatic routing fallback
 
 **Application-specific servers** (like `ExampleServer` in `main.py`) extend `TemplateServer` to implement domain-specific endpoints and business logic. The base class handles all infrastructure concerns, letting you focus on your API functionality.
 
