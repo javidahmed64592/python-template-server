@@ -1,13 +1,18 @@
 """Constants used across the server."""
 
+from pathlib import Path
+
 from pyhere import here
 
 # General constants
-ROOT_DIR = here()
 CONFIG_DIR_NAME = "configuration"
 LOG_DIR_NAME = "logs"
+STATIC_DIR_NAME = "static"
+
+ROOT_DIR = Path(here())
 CONFIG_DIR = ROOT_DIR / CONFIG_DIR_NAME
 LOG_DIR = ROOT_DIR / LOG_DIR_NAME
+STATIC_DIR = ROOT_DIR / STATIC_DIR_NAME
 
 CONFIG_FILE_NAME = "config.json"
 LOG_FILE_NAME = "server.log"

@@ -66,6 +66,12 @@ def mock_tmp_config_path(tmp_path: Path) -> Path:
     return tmp_path / "config.json"
 
 
+@pytest.fixture
+def mock_tmp_static_path(tmp_path: Path) -> Path:
+    """Provide a temporary static file path."""
+    return tmp_path / "static"
+
+
 # Template Server Configuration Models
 @pytest.fixture
 def mock_server_config_dict() -> dict:

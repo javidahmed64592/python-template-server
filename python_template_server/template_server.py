@@ -14,6 +14,7 @@ from typing import Any
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from pydantic_core import ValidationError
@@ -23,7 +24,7 @@ from slowapi.util import get_remote_address
 
 from python_template_server.authentication_handler import load_hashed_token, verify_token
 from python_template_server.certificate_handler import CertificateHandler
-from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_FILE_PATH, PACKAGE_NAME
+from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_FILE_PATH, PACKAGE_NAME, STATIC_DIR
 from python_template_server.logging_setup import setup_logging
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
@@ -56,6 +57,7 @@ class TemplateServer(ABC):
         api_key_header_name: str = API_KEY_HEADER_NAME,
         config_filepath: Path = CONFIG_FILE_PATH,
         config: TemplateServerConfig | None = None,
+        static_dir: Path = STATIC_DIR,
     ) -> None:
         """Initialize the TemplateServer.
 
@@ -71,6 +73,7 @@ class TemplateServer(ABC):
         self.config_filepath = config_filepath
         self.config = config or self.load_config(self.config_filepath)
         self.cert_handler = CertificateHandler(self.config.certificate)
+        self.static_dir = static_dir
 
         CustomJSONResponse.configure(self.config.json_response)
 
@@ -91,6 +94,14 @@ class TemplateServer(ABC):
         self._setup_cors()
         self._setup_rate_limiting()
         self.setup_routes()
+
+    @property
+    def static_dir_exists(self) -> bool:
+        """Check if the static directory exists.
+
+        :return bool: True if the static directory exists, False otherwise
+        """
+        return self.static_dir.exists()
 
     @staticmethod
     @asynccontextmanager
@@ -344,6 +355,8 @@ class TemplateServer(ABC):
         """
         self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse, ["GET"], limited=False)
         self.add_authenticated_route("/login", self.get_login, GetLoginResponse, methods=["GET"])
+        if self.static_dir_exists:
+            self.add_unauthenticated_route("/{full_path:path}", self.serve_spa, None, methods=["GET"], limited=False)
 
     async def get_health(self, request: Request) -> GetHealthResponse:
         """Get server health.
@@ -374,3 +387,19 @@ class TemplateServer(ABC):
             message="Login successful.",
             timestamp=GetLoginResponse.current_timestamp(),
         )
+
+    async def serve_spa(self, request: Request, full_path: str) -> FileResponse:
+        """Serve the SPA for all non-API routes."""
+        file_path = self.static_dir / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+
+        if file_path.is_dir():
+            index_path = file_path / "index.html"
+            if index_path.is_file():
+                return FileResponse(index_path)
+
+        if (not_found_page := (self.static_dir / "404.html")).is_file():
+            return FileResponse(not_found_page)
+
+        raise HTTPException(status_code=ResponseCode.NOT_FOUND, detail="File not found")
