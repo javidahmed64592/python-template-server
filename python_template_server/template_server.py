@@ -13,6 +13,7 @@ from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Security
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from pydantic_core import ValidationError
@@ -87,6 +88,7 @@ class TemplateServer(ABC):
         self.hashed_token = load_hashed_token()
         self._setup_request_logging()
         self._setup_security_headers()
+        self._setup_cors()
         self._setup_rate_limiting()
         self.setup_routes()
 
@@ -184,6 +186,30 @@ class TemplateServer(ABC):
             "Security headers enabled: HSTS max-age=%s, CSP=%s",
             self.config.security.hsts_max_age,
             self.config.security.content_security_policy,
+        )
+
+    def _setup_cors(self) -> None:
+        """Set up CORS middleware."""
+        if not self.config.cors.enabled:
+            logger.info("CORS is disabled")
+            return
+
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=self.config.cors.allow_origins,
+            allow_credentials=self.config.cors.allow_credentials,
+            allow_methods=self.config.cors.allow_methods,
+            allow_headers=self.config.cors.allow_headers,
+            expose_headers=self.config.cors.expose_headers,
+            max_age=self.config.cors.max_age,
+        )
+
+        logger.info(
+            "CORS enabled: origins=%s, credentials=%s, methods=%s, headers=%s",
+            self.config.cors.allow_origins,
+            self.config.cors.allow_credentials,
+            self.config.cors.allow_methods,
+            self.config.cors.allow_headers,
         )
 
     async def _rate_limit_exception_handler(self, request: Request, exc: RateLimitExceeded) -> CustomJSONResponse:

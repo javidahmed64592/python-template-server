@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from fastapi.security import APIKeyHeader
 from fastapi.testclient import TestClient
@@ -154,6 +155,26 @@ class TestTemplateServer:
         middlewares = [middleware.cls for middleware in mock_template_server.app.user_middleware]
         assert RequestLoggingMiddleware in middlewares
         assert SecurityHeadersMiddleware in middlewares
+
+    def test_cors_middleware_added_when_enabled(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    ) -> None:
+        """Test that CORS middleware is added when enabled."""
+        mock_template_server_config.cors.enabled = True
+        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
+
+        middlewares = [middleware.cls for middleware in server.app.user_middleware]
+        assert CORSMiddleware in middlewares
+
+    def test_cors_middleware_not_added_when_disabled(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    ) -> None:
+        """Test that CORS middleware is not added when disabled."""
+        mock_template_server_config.cors.enabled = False
+        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
+
+        middlewares = [middleware.cls for middleware in server.app.user_middleware]
+        assert CORSMiddleware not in middlewares
 
     def test_json_response_configured(
         self, mock_template_server: TemplateServer, mock_template_server_config: TemplateServerConfig
