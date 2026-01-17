@@ -7,11 +7,6 @@
     "hsts_max_age": 31536000,
     "content_security_policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https://cdn.jsdelivr.net https://fastapi.tiangolo.com"
   },
-  "rate_limit": {
-    "enabled": true,
-    "rate_limit": "100/minute",
-    "storage_uri": ""
-  },
   "cors": {
     "enabled": false,
     "allow_origins": ["*"],
@@ -20,6 +15,11 @@
     "allow_headers": ["*"],
     "expose_headers": [],
     "max_age": 600
+  },
+  "rate_limit": {
+    "enabled": true,
+    "rate_limit": "100/minute",
+    "storage_uri": ""
   },
   "certificate": {
     "directory": "certs",
