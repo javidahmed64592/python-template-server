@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from python_template_server.models import (
     BaseResponse,
     CertificateConfigModel,
+    CORSConfigModel,
     CustomJSONResponse,
     GetHealthResponse,
     GetLoginResponse,
@@ -52,6 +53,14 @@ class TestSecurityConfigModel:
     def test_model_dump(self, mock_security_config_dict: dict, mock_security_config: SecurityConfigModel) -> None:
         """Test the model_dump method."""
         assert mock_security_config.model_dump() == mock_security_config_dict
+
+
+class TestCORSConfigModel:
+    """Unit tests for the CORSConfigModel class."""
+
+    def test_model_dump(self, mock_cors_config_dict: dict, mock_cors_config: CORSConfigModel) -> None:
+        """Test the model_dump method."""
+        assert mock_cors_config.model_dump() == mock_cors_config_dict
 
 
 class TestRateLimitConfigModel:
@@ -108,6 +117,7 @@ class TestTemplateServerConfig:
         mock_template_server_config: TemplateServerConfig,
         mock_server_config_dict: dict,
         mock_security_config_dict: dict,
+        mock_cors_config_dict: dict,
         mock_rate_limit_config_dict: dict,
         mock_certificate_config_dict: dict,
         mock_json_response_config_dict: dict,
@@ -116,6 +126,7 @@ class TestTemplateServerConfig:
         expected_dict = {
             "server": mock_server_config_dict,
             "security": mock_security_config_dict,
+            "cors": mock_cors_config_dict,
             "rate_limit": mock_rate_limit_config_dict,
             "certificate": mock_certificate_config_dict,
             "json_response": mock_json_response_config_dict,
