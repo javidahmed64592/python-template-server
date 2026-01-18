@@ -258,29 +258,34 @@ project-root/
 │   └── ...
 ```
 
+**Implementation**:
+The server uses FastAPI's built-in `StaticFiles` mounting for optimized static file serving:
+- Mounted at root (`/`) with `html=True` to automatically serve `index.html` for directories
+- Custom exception handler intercepts 404 errors to serve `404.html` when available
+
 **Routing Behavior**:
-1. **Exact file match**: If the requested path matches a file, it's served directly
-2. **Directory with index.html**: If the path is a directory containing `index.html`, that file is served
-3. **404.html fallback**: If the file doesn't exist and `404.html` exists, it's served
-4. **HTTP 404 error**: If no fallback exists, returns standard 404 error
+1. **Exact file match**: If the requested path matches a file, it's served directly by `StaticFiles`
+2. **Directory with index.html**: Automatically served when `html=True` is enabled
+3. **404.html fallback**: Custom exception handler catches 404 errors and serves `404.html` if present
+4. **HTTP 404 error**: If no fallback exists, returns standard FastAPI 404 error
 
 **Example Requests**:
 ```bash
 # Serve index.html
 curl -k https://localhost:443/index.html
 
-# Serve directory index
+# Serve directory index (automatically serves index.html)
 curl -k https://localhost:443/app/
 
-# 404 fallback
-curl -k https://localhost:443/nonexistent/path  # Returns 404.html if present
+# 404 fallback (custom exception handler serves 404.html if present)
+curl -k https://localhost:443/nonexistent/path
 ```
 
 **Important Notes**:
 - **No Authentication**: Static files are served **without** API key verification
-- **No Rate Limiting**: Static file routes bypass rate limiting for performance
-- **Priority**: API routes (`/api/*`) take precedence over static file routes
-- **SPA Support**: The catch-all route `/{full_path:path}` enables client-side routing for SPAs
+- **No Rate Limiting**: Static file mounting bypasses rate limiting for performance
+- **Priority**: API routes (`/api/*`) registered before mounting take precedence
+- **SPA Support**: Automatic `index.html` serving enables client-side routing for SPAs
 
 ## Request and Response Models (Pydantic)
 

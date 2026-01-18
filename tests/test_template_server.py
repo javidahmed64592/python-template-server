@@ -69,6 +69,11 @@ def mock_timestamp() -> Generator[str]:
         yield fixed_timestamp
 
 
+MOCK_INDEX_CONTENT = "<html><body><h1>Test SPA</h1></body></html>"
+MOCK_NOT_FOUND_CONTENT = "<html><body><h1>404 Not Found</h1></body></html>"
+MOCK_DIRECTORY_INDEX_CONTENT = "<html><body><h1>Directory Index</h1></body></html>"
+
+
 @pytest.fixture
 def mock_template_server(
     mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
@@ -79,11 +84,11 @@ def mock_template_server(
         patch("python_template_server.template_server.TemplateServer.static_dir_exists", return_value=True),
     ):
         mock_tmp_static_path.mkdir(parents=True, exist_ok=True)
-        (mock_tmp_static_path / "index.html").write_text("<html><body>Test SPA</body></html>")
-        (mock_tmp_static_path / "404.html").write_text("<html><body>404 Not Found</body></html>")
+        (mock_tmp_static_path / "index.html").write_text(MOCK_INDEX_CONTENT)
+        (mock_tmp_static_path / "404.html").write_text(MOCK_NOT_FOUND_CONTENT)
 
         (mock_tmp_static_path / "directory").mkdir(parents=True, exist_ok=True)
-        (mock_tmp_static_path / "directory" / "index.html").write_text("<html><body>Directory Index</body></html>")
+        (mock_tmp_static_path / "directory" / "index.html").write_text(MOCK_DIRECTORY_INDEX_CONTENT)
         yield MockTemplateServer(
             config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
         )
@@ -611,24 +616,6 @@ class TestGetLoginEndpoint:
 class TestServeSPA:
     """Tests for the SPA serving functionality."""
 
-    def test_serve_spa_success(self, mock_template_server: TemplateServer) -> None:
-        """Test serve_spa successfully returns static files."""
-        request = MagicMock(spec=Request)
-        response = asyncio.run(mock_template_server.serve_spa(request, "index.html"))
-        assert str(response.path) == str(mock_template_server.static_dir / "index.html")
-
-    def test_serve_spa_directory_index(self, mock_template_server: TemplateServer) -> None:
-        """Test serve_spa returns index.html for a directory path."""
-        request = MagicMock(spec=Request)
-        response = asyncio.run(mock_template_server.serve_spa(request, "directory"))
-        assert str(response.path) == str(mock_template_server.static_dir / "directory" / "index.html")
-
-    def test_serve_spa_404(self, mock_template_server: TemplateServer) -> None:
-        """Test serve_spa returns 404 when no static files exist."""
-        request = MagicMock(spec=Request)
-        response = asyncio.run(mock_template_server.serve_spa(request, "nonexistent/path"))
-        assert str(response.path) == str(mock_template_server.static_dir / "404.html")
-
     def test_serve_spa_endpoint(self, mock_template_server: TemplateServer, mock_verify_token: MagicMock) -> None:
         """Test SPA serving endpoint returns static file."""
         mock_verify_token.return_value = True
@@ -637,16 +624,28 @@ class TestServeSPA:
 
         response = client.get("index.html")
         assert response.status_code == ResponseCode.OK
+        assert response.content.decode() == MOCK_INDEX_CONTENT
 
-    def test_serve_spa_endpoint_not_found(
+    def test_serve_spa_directory_index(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock
     ) -> None:
-        """Test SPA serving endpoint returns 404 for nonexistent file."""
+        """Test SPA serving endpoint returns directory index file."""
         mock_verify_token.return_value = True
         app = mock_template_server.app
         client = TestClient(app)
 
-        (mock_template_server.static_dir / "404.html").unlink()
+        response = client.get("/directory/")
+        assert response.status_code == ResponseCode.OK
+        assert response.content.decode() == MOCK_DIRECTORY_INDEX_CONTENT
 
-        response = client.get("nonexistent/path")
+    def test_serve_spa_endpoint_404_redirect(
+        self, mock_template_server: TemplateServer, mock_verify_token: MagicMock
+    ) -> None:
+        """Test SPA serving endpoint returns custom 404 page."""
+        mock_verify_token.return_value = True
+        app = mock_template_server.app
+        client = TestClient(app)
+
+        response = client.get("/nonexistent-page")
         assert response.status_code == ResponseCode.NOT_FOUND
+        assert response.content.decode() == MOCK_NOT_FOUND_CONTENT

@@ -16,11 +16,13 @@ from fastapi import FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.security import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pydantic_core import ValidationError
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from python_template_server.authentication_handler import load_hashed_token, verify_token
 from python_template_server.certificate_handler import CertificateHandler
@@ -356,7 +358,17 @@ class TemplateServer(ABC):
         self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse, ["GET"], limited=False)
         self.add_authenticated_route("/login", self.get_login, GetLoginResponse, methods=["GET"])
         if self.static_dir_exists:
-            self.add_unauthenticated_route("/{full_path:path}", self.serve_spa, None, methods=["GET"], limited=False)
+            logger.info("Mounting static directory: %s", self.static_dir)
+            self.app.mount("/", StaticFiles(directory=str(self.static_dir), html=True), name="static")
+
+            @self.app.exception_handler(StarletteHTTPException)
+            async def custom_404_handler(request: Request, exc: StarletteHTTPException) -> FileResponse:
+                """Handle 404 errors by serving custom 404.html if available."""
+                if exc.status_code == ResponseCode.NOT_FOUND and self.static_dir_exists:
+                    not_found_page = self.static_dir / "404.html"
+                    if not_found_page.is_file():
+                        return FileResponse(not_found_page, status_code=ResponseCode.NOT_FOUND)
+                raise exc
 
     async def get_health(self, request: Request) -> GetHealthResponse:
         """Get server health.
@@ -387,19 +399,3 @@ class TemplateServer(ABC):
             message="Login successful.",
             timestamp=GetLoginResponse.current_timestamp(),
         )
-
-    async def serve_spa(self, request: Request, full_path: str) -> FileResponse:
-        """Serve the SPA for all non-API routes."""
-        file_path = self.static_dir / full_path
-        if file_path.is_file():
-            return FileResponse(file_path)
-
-        if file_path.is_dir():
-            index_path = file_path / "index.html"
-            if index_path.is_file():
-                return FileResponse(index_path)
-
-        if (not_found_page := (self.static_dir / "404.html")).is_file():
-            return FileResponse(not_found_page)
-
-        raise HTTPException(status_code=ResponseCode.NOT_FOUND, detail="File not found")
