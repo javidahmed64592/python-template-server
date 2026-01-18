@@ -12,10 +12,12 @@ All endpoints are mounted under the `/api` prefix.
 - [Logging Configuration](#logging-configuration)
 - [Request Logging](#request-logging)
 - [Security Headers](#security-headers)
+- [CORS (Cross-Origin Resource Sharing)](#cors-cross-origin-resource-sharing)
 - [Rate Limiting](#rate-limiting)
 - [Endpoints](#endpoints)
   - [GET /api/health](#get-apihealth)
   - [GET /api/login](#get-apilogin)
+- [Static File Serving](#static-file-serving)
 - [Request and Response Models (Pydantic)](#request-and-response-models-pydantic)
 - [API Documentation](#api-documentation)
   - [Swagger UI (/api/docs)](#swagger-ui-apidocs)
@@ -101,6 +103,54 @@ All API responses include security headers to protect against common web vulnera
 
 - `hsts_max_age`: Duration in seconds that browsers should remember to only access the site via HTTPS (default: 1 year)
 - `content_security_policy`: CSP directive controlling resource loading (default: only allow resources from same origin)
+
+## CORS (Cross-Origin Resource Sharing)
+
+CORS allows controlled access to the API from web applications hosted on different domains. By default, CORS is **disabled** for security.
+
+**Configuration** (`config.json`):
+```json
+{
+  "cors": {
+    "enabled": false,
+    "allow_origins": ["*"],
+    "allow_credentials": true,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+    "expose_headers": [],
+    "max_age": 600
+  }
+}
+```
+
+**Configuration Options**:
+- `enabled`: Enable/disable CORS (default: `false`)
+- `allow_origins`: List of allowed origins (use `["*"]` for all, or specify domains like `["https://example.com"]`)
+- `allow_credentials`: Whether to allow credentials (cookies, authorization headers) in cross-origin requests
+- `allow_methods`: HTTP methods allowed for cross-origin requests (default: all)
+- `allow_headers`: Headers allowed in cross-origin requests (default: all)
+- `expose_headers`: Headers exposed to the browser in responses
+- `max_age`: Maximum age (in seconds) for CORS preflight cache (default: 600 seconds)
+
+**Security Considerations**:
+- For production, specify exact origins instead of `["*"]` to prevent unauthorized access
+- Set `allow_credentials: true` only if your application requires authentication cookies or headers
+- Limit `allow_methods` and `allow_headers` to only what your frontend needs
+
+**Example Production Configuration**:
+```json
+{
+  "cors": {
+    "enabled": true,
+    "allow_origins": ["https://yourdomain.com", "https://app.yourdomain.com"],
+    "allow_credentials": true,
+    "allow_methods": ["GET", "POST", "PUT", "DELETE"],
+    "allow_headers": ["Content-Type", "X-API-Key"],
+    "expose_headers": ["X-RateLimit-Limit", "X-RateLimit-Remaining"],
+    "max_age": 3600
+  }
+}
+```
 
 ## Rate Limiting
 
@@ -194,6 +244,43 @@ curl -k https://localhost:443/api/login \
 **Error Responses**:
 - `401 Unauthorized`: Missing or invalid API key
 - `429 Too Many Requests`: Rate limit exceeded
+
+## Static File Serving
+
+The server can optionally serve static files (HTML, CSS, JavaScript, images) from a `static/` directory if it exists, enabling you to host Single Page Applications (SPAs) alongside the API.
+
+**Directory Structure**:
+```
+project-root/
+├── static/           # Static files directory
+│   ├── index.html    # Main entry point
+│   ├── 404.html      # Custom 404 page (optional)
+│   └── ...
+```
+
+**Routing Behavior**:
+1. **Exact file match**: If the requested path matches a file, it's served directly
+2. **Directory with index.html**: If the path is a directory containing `index.html`, that file is served
+3. **404.html fallback**: If the file doesn't exist and `404.html` exists, it's served
+4. **HTTP 404 error**: If no fallback exists, returns standard 404 error
+
+**Example Requests**:
+```bash
+# Serve index.html
+curl -k https://localhost:443/index.html
+
+# Serve directory index
+curl -k https://localhost:443/app/
+
+# 404 fallback
+curl -k https://localhost:443/nonexistent/path  # Returns 404.html if present
+```
+
+**Important Notes**:
+- **No Authentication**: Static files are served **without** API key verification
+- **No Rate Limiting**: Static file routes bypass rate limiting for performance
+- **Priority**: API routes (`/api/*`) take precedence over static file routes
+- **SPA Support**: The catch-all route `/{full_path:path}` enables client-side routing for SPAs
 
 ## Request and Response Models (Pydantic)
 

@@ -43,6 +43,18 @@ class SecurityConfigModel(BaseModel):
     )
 
 
+class CORSConfigModel(BaseModel):
+    """CORS (Cross-Origin Resource Sharing) configuration model."""
+
+    enabled: bool = Field(default=False, description="Whether CORS is enabled")
+    allow_origins: list[str] = Field(default_factory=lambda: ["*"], description="List of allowed origins")
+    allow_credentials: bool = Field(default=True, description="Whether to allow credentials")
+    allow_methods: list[str] = Field(default_factory=lambda: ["*"], description="List of allowed HTTP methods")
+    allow_headers: list[str] = Field(default_factory=lambda: ["*"], description="List of allowed headers")
+    expose_headers: list[str] = Field(default_factory=list, description="List of headers to expose")
+    max_age: int = Field(default=600, ge=0, description="Maximum age (in seconds) for CORS preflight cache")
+
+
 class RateLimitConfigModel(BaseModel):
     """Rate limit configuration model."""
 
@@ -84,6 +96,7 @@ class TemplateServerConfig(BaseModel):
 
     server: ServerConfigModel = Field(default_factory=ServerConfigModel)
     security: SecurityConfigModel = Field(default_factory=SecurityConfigModel)
+    cors: CORSConfigModel = Field(default_factory=CORSConfigModel)
     rate_limit: RateLimitConfigModel = Field(default_factory=RateLimitConfigModel)
     certificate: CertificateConfigModel = Field(default_factory=CertificateConfigModel)
     json_response: JSONResponseConfigModel = Field(default_factory=JSONResponseConfigModel)

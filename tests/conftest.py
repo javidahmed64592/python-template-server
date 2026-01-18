@@ -8,6 +8,7 @@ import pytest
 
 from python_template_server.models import (
     CertificateConfigModel,
+    CORSConfigModel,
     JSONResponseConfigModel,
     RateLimitConfigModel,
     SecurityConfigModel,
@@ -65,6 +66,12 @@ def mock_tmp_config_path(tmp_path: Path) -> Path:
     return tmp_path / "config.json"
 
 
+@pytest.fixture
+def mock_tmp_static_path(tmp_path: Path) -> Path:
+    """Provide a temporary static file path."""
+    return tmp_path / "static"
+
+
 # Template Server Configuration Models
 @pytest.fixture
 def mock_server_config_dict() -> dict:
@@ -78,6 +85,20 @@ def mock_security_config_dict() -> dict:
     return {
         "hsts_max_age": 31536000,
         "content_security_policy": "default-src 'self'",
+    }
+
+
+@pytest.fixture
+def mock_cors_config_dict() -> dict:
+    """Provide a mock CORS configuration dictionary."""
+    return {
+        "enabled": True,
+        "allow_origins": ["https://example.com", "https://app.example.com"],
+        "allow_credentials": True,
+        "allow_methods": ["GET", "POST", "PUT"],
+        "allow_headers": ["Authorization", "Content-Type"],
+        "expose_headers": ["X-Custom-Header"],
+        "max_age": 3600,
     }
 
 
@@ -126,6 +147,12 @@ def mock_security_config(mock_security_config_dict: dict) -> SecurityConfigModel
 
 
 @pytest.fixture
+def mock_cors_config(mock_cors_config_dict: dict) -> CORSConfigModel:
+    """Provide a mock CORSConfigModel instance."""
+    return CORSConfigModel.model_validate(mock_cors_config_dict)
+
+
+@pytest.fixture
 def mock_rate_limit_config(mock_rate_limit_config_dict: dict) -> RateLimitConfigModel:
     """Provide a mock RateLimitConfigModel instance."""
     return RateLimitConfigModel.model_validate(mock_rate_limit_config_dict)
@@ -147,6 +174,7 @@ def mock_json_response_config(mock_json_response_config_dict: dict) -> JSONRespo
 def mock_template_server_config(
     mock_server_config: ServerConfigModel,
     mock_security_config: SecurityConfigModel,
+    mock_cors_config: CORSConfigModel,
     mock_rate_limit_config: RateLimitConfigModel,
     mock_certificate_config: CertificateConfigModel,
     mock_json_response_config: JSONResponseConfigModel,
@@ -155,6 +183,7 @@ def mock_template_server_config(
     return TemplateServerConfig(
         server=mock_server_config,
         security=mock_security_config,
+        cors=mock_cors_config,
         rate_limit=mock_rate_limit_config,
         certificate=mock_certificate_config,
         json_response=mock_json_response_config,

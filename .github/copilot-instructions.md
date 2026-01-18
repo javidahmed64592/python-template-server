@@ -12,7 +12,7 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 
 - Entry: `main.py:run()` → instantiates `ExampleServer` (subclass of `TemplateServer`) → calls `.run()`
 - `TemplateServer.__init__()` sets up middleware, rate limiting, and calls `setup_routes()`
-- **Critical**: Middleware order matters - request logging → security headers → rate limiting
+- **Critical**: Middleware order matters - request logging → security headers → CORS → rate limiting
 - **Extensibility**: Subclasses implement `setup_routes()` to add custom endpoints and `validate_config()` for config validation
 
 ### Configuration System
@@ -22,6 +22,8 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 - Subclasses override `validate_config()` to provide custom config models
 - Logging configured automatically on `logging_setup.py` import with rotating file handler
 - Environment variables stored in `.env` (API_TOKEN_HASH only, never commit)
+- CORS configuration: Enable cross-origin requests via `config.cors` settings
+- Static files: Served from `static/` directory when present (automatically registers catch-all route)
 
 ### Authentication Architecture
 
@@ -32,12 +34,29 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 - **Health Endpoint**: `/api/health` does NOT require authentication, reports unhealthy if token not configured
 - Header: `X-API-Key` (defined in `constants.API_KEY_HEADER_NAME`)
 
+### CORS Middleware
+
+- Optional cross-origin resource sharing support via FastAPI's `CORSMiddleware`
+- Controlled by `config.cors.enabled` flag (disabled by default)
+- Configurable origins, methods, headers, credentials, and preflight cache duration
+- When enabled, logs configuration details (origins, credentials, methods, headers)
+- Typical use: Allow frontend applications on different domains to access the API
+
 ### Rate Limiting
 
 - Uses `slowapi` with configurable storage (in-memory/Redis/Memcached)
 - Applied via `_limit_route()` wrapper when `config.rate_limit.enabled=true`
 - Custom exception handler increments `rate_limit_exceeded_counter` per endpoint
 - Format: `"100/minute"` (supports /second, /minute, /hour)
+
+### Static File Serving
+
+- Serves static files from `static/` directory (configurable via `STATIC_DIR` constant)
+- Automatically registers catch-all route `/{full_path:path}` when `static_dir_exists=True`
+- **Routing Logic**: Exact file → directory index.html → 404.html → HTTP 404 error
+- **No Authentication**: Static files served without API key verification
+- **No Rate Limiting**: Static file route excludes rate limiting for performance
+- Use case: Serve Single Page Applications (SPAs) alongside the API
 
 ### Observability Stack
 
@@ -89,8 +108,9 @@ docker compose down              # Stop and remove containers
 
 - **Handlers**: Separate modules for auth (`authentication_handler.py`), certs (`certificate_handler.py`)
 - **Middleware**: Dedicated package `middleware/` with base classes extending `BaseHTTPMiddleware`
-- **Constants**: All magic strings/numbers in `constants.py` (ports, file names, log config)
+- **Constants**: All magic strings/numbers in `constants.py` (ports, file names, log config, static directory)
 - **Models**: Pydantic models for config + API responses, use `@property` for derived values
+- **Static Files**: Optional `static/` directory for serving SPAs or static assets
 
 ### Security Patterns
 
@@ -113,13 +133,6 @@ docker compose down              # Stop and remove containers
 - Auth failures: `"Invalid API key attempt!"`
 
 ## Development Constraints
-
-### What's NOT Implemented Yet
-
-- Database/metadata storage (users implement as needed in subclasses)
-- CORS configuration (can be added by subclasses)
-- API key rotation/expiry
-- Multi-user auth (JWT/OAuth2)
 
 ### Testing Requirements
 

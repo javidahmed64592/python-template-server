@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from fastapi.security import APIKeyHeader
 from fastapi.testclient import TestClient
@@ -70,19 +71,30 @@ def mock_timestamp() -> Generator[str]:
 
 @pytest.fixture
 def mock_template_server(
-    mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+    mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
 ) -> Generator[MockTemplateServer]:
     """Provide a MockTemplateServer instance for testing."""
-    with patch("python_template_server.template_server.CertificateHandler", return_value=MagicMock(), autospec=True):
-        yield MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
+    with (
+        patch("python_template_server.template_server.CertificateHandler", return_value=MagicMock(), autospec=True),
+        patch("python_template_server.template_server.TemplateServer.static_dir_exists", return_value=True),
+    ):
+        mock_tmp_static_path.mkdir(parents=True, exist_ok=True)
+        (mock_tmp_static_path / "index.html").write_text("<html><body>Test SPA</body></html>")
+        (mock_tmp_static_path / "404.html").write_text("<html><body>404 Not Found</body></html>")
+
+        (mock_tmp_static_path / "directory").mkdir(parents=True, exist_ok=True)
+        (mock_tmp_static_path / "directory" / "index.html").write_text("<html><body>Directory Index</body></html>")
+        yield MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
 
 
 class MockTemplateServer(TemplateServer):
     """Mock subclass of TemplateServer for testing."""
 
-    def __init__(self, config_filepath: Path, config: TemplateServerConfig | None = None) -> None:
+    def __init__(self, config_filepath: Path, static_dir: Path, config: TemplateServerConfig | None = None) -> None:
         """Initialize MockTemplateServer."""
-        super().__init__(config_filepath=config_filepath, config=config)
+        super().__init__(config_filepath=config_filepath, config=config, static_dir=static_dir)
 
     def mock_unprotected_method(self, request: Request) -> BaseResponse:
         """Mock unprotected method."""
@@ -155,6 +167,30 @@ class TestTemplateServer:
         assert RequestLoggingMiddleware in middlewares
         assert SecurityHeadersMiddleware in middlewares
 
+    def test_cors_middleware_added_when_enabled(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
+    ) -> None:
+        """Test that CORS middleware is added when enabled."""
+        mock_template_server_config.cors.enabled = True
+        server = MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
+
+        middlewares = [middleware.cls for middleware in server.app.user_middleware]
+        assert CORSMiddleware in middlewares
+
+    def test_cors_middleware_not_added_when_disabled(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
+    ) -> None:
+        """Test that CORS middleware is not added when disabled."""
+        mock_template_server_config.cors.enabled = False
+        server = MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
+
+        middlewares = [middleware.cls for middleware in server.app.user_middleware]
+        assert CORSMiddleware not in middlewares
+
     def test_json_response_configured(
         self, mock_template_server: TemplateServer, mock_template_server_config: TemplateServerConfig
     ) -> None:
@@ -178,66 +214,67 @@ class TestLoadConfig:
     """Tests for the load_config function."""
 
     def test_load_config_with_filepath_success(
-        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
     ) -> None:
         """Test that load_config is called with the specified filepath when config is None."""
         with patch.object(
             MockTemplateServer, "load_config", return_value=mock_template_server_config
         ) as mock_load_config:
-            server = MockTemplateServer(config_filepath=mock_tmp_config_path)
+            server = MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
 
             mock_load_config.assert_called_once_with(mock_tmp_config_path)
             assert server.config == mock_template_server_config
 
     def test_load_config_file_not_found(
-        self,
-        mock_exists: MagicMock,
-        mock_tmp_config_path: Path,
+        self, mock_exists: MagicMock, mock_tmp_config_path: Path, mock_tmp_static_path: Path
     ) -> None:
         """Test loading config when the file does not exist."""
         mock_exists.return_value = False
 
         with pytest.raises(SystemExit):
-            MockTemplateServer(config_filepath=mock_tmp_config_path)
+            MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
 
     def test_load_config_invalid_json(
         self,
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
         mock_tmp_config_path: Path,
+        mock_tmp_static_path: Path,
     ) -> None:
         """Test loading config with invalid JSON content."""
         mock_exists.return_value = True
         mock_open_file.return_value.read.return_value = "invalid json"
 
         with pytest.raises(SystemExit):
-            MockTemplateServer(config_filepath=mock_tmp_config_path)
+            MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
 
     def test_load_config_os_error(
         self,
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
         mock_tmp_config_path: Path,
+        mock_tmp_static_path: Path,
     ) -> None:
         """Test loading config that raises an OSError."""
         mock_exists.return_value = True
         mock_open_file.side_effect = OSError("File read error")
 
         with pytest.raises(SystemExit):
-            MockTemplateServer(config_filepath=mock_tmp_config_path)
+            MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
 
     def test_load_config_validation_error(
         self,
         mock_exists: MagicMock,
         mock_open_file: MagicMock,
         mock_tmp_config_path: Path,
+        mock_tmp_static_path: Path,
     ) -> None:
         """Test loading config that fails validation."""
         mock_exists.return_value = True
         mock_open_file.return_value.read.return_value = json.dumps({"server": {"host": "localhost", "port": 999999}})
 
         with pytest.raises(SystemExit):
-            MockTemplateServer(config_filepath=mock_tmp_config_path)
+            MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
 
 
 class TestVerifyApiKey:
@@ -302,41 +339,49 @@ class TestRateLimiting:
         assert response.headers.get("Retry-After") == str(exc.retry_after)
 
     def test_setup_rate_limiting_enabled(
-        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
     ) -> None:
         """Test rate limiting setup when enabled."""
         mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
+        server = MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
 
         assert server.limiter is not None
         assert server.app.state.limiter is not None
 
     def test_setup_rate_limiting_disabled(
-        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
     ) -> None:
         """Test rate limiting setup when disabled."""
-        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
+        server = MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
 
         assert server.limiter is None
 
     def test_limit_route_with_limiter_enabled(
-        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
     ) -> None:
         """Test _limit_route when rate limiting is enabled."""
         mock_template_server_config.rate_limit.enabled = True
 
-        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
+        server = MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route != server.mock_unprotected_method
         assert hasattr(limited_route, "__wrapped__")
 
     def test_limit_route_with_limiter_disabled(
-        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
     ) -> None:
         """Test _limit_route when rate limiting is disabled."""
-        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
+        server = MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
 
         limited_route = server._limit_route(server.mock_unprotected_method)
         assert limited_route == server.mock_unprotected_method
@@ -428,12 +473,13 @@ class TestTemplateServerRoutes:
         assert test_route.response_model == BaseResponse
 
     def test_limited_parameter_with_rate_limiting_enabled(
-        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
     ) -> None:
         """Test that limited=True applies rate limiting when limiter is enabled."""
         mock_template_server_config.rate_limit.enabled = True
-        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
-
+        server = MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
         # Get the limited routes
         api_routes = [route for route in server.app.routes if isinstance(route, APIRoute)]
         limited_route = next((route for route in api_routes if route.path == "/unauthenticated-endpoint"), None)
@@ -450,11 +496,13 @@ class TestTemplateServerRoutes:
         assert not hasattr(unlimited_route.endpoint, "__wrapped__")
 
     def test_authenticated_route_limited_parameter(
-        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
     ) -> None:
         """Test that limited parameter works correctly for authenticated routes."""
         mock_template_server_config.rate_limit.enabled = True
-        server = MockTemplateServer(config_filepath=mock_tmp_config_path, config=mock_template_server_config)
+        server = MockTemplateServer(
+            config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path, config=mock_template_server_config
+        )
 
         # Get the authenticated routes
         api_routes = [route for route in server.app.routes if isinstance(route, APIRoute)]
@@ -558,3 +606,47 @@ class TestGetLoginEndpoint:
             "message": "Login successful.",
             "timestamp": mock_timestamp,
         }
+
+
+class TestServeSPA:
+    """Tests for the SPA serving functionality."""
+
+    def test_serve_spa_success(self, mock_template_server: TemplateServer) -> None:
+        """Test serve_spa successfully returns static files."""
+        request = MagicMock(spec=Request)
+        response = asyncio.run(mock_template_server.serve_spa(request, "index.html"))
+        assert str(response.path) == str(mock_template_server.static_dir / "index.html")
+
+    def test_serve_spa_directory_index(self, mock_template_server: TemplateServer) -> None:
+        """Test serve_spa returns index.html for a directory path."""
+        request = MagicMock(spec=Request)
+        response = asyncio.run(mock_template_server.serve_spa(request, "directory"))
+        assert str(response.path) == str(mock_template_server.static_dir / "directory" / "index.html")
+
+    def test_serve_spa_404(self, mock_template_server: TemplateServer) -> None:
+        """Test serve_spa returns 404 when no static files exist."""
+        request = MagicMock(spec=Request)
+        response = asyncio.run(mock_template_server.serve_spa(request, "nonexistent/path"))
+        assert str(response.path) == str(mock_template_server.static_dir / "404.html")
+
+    def test_serve_spa_endpoint(self, mock_template_server: TemplateServer, mock_verify_token: MagicMock) -> None:
+        """Test SPA serving endpoint returns static file."""
+        mock_verify_token.return_value = True
+        app = mock_template_server.app
+        client = TestClient(app)
+
+        response = client.get("index.html")
+        assert response.status_code == ResponseCode.OK
+
+    def test_serve_spa_endpoint_not_found(
+        self, mock_template_server: TemplateServer, mock_verify_token: MagicMock
+    ) -> None:
+        """Test SPA serving endpoint returns 404 for nonexistent file."""
+        mock_verify_token.return_value = True
+        app = mock_template_server.app
+        client = TestClient(app)
+
+        (mock_template_server.static_dir / "404.html").unlink()
+
+        response = client.get("nonexistent/path")
+        assert response.status_code == ResponseCode.NOT_FOUND
