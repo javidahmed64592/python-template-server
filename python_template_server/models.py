@@ -49,8 +49,10 @@ class CORSConfigModel(BaseModel):
     enabled: bool = Field(default=False, description="Whether CORS is enabled")
     allow_origins: list[str] = Field(default_factory=lambda: ["*"], description="List of allowed origins")
     allow_credentials: bool = Field(default=True, description="Whether to allow credentials")
-    allow_methods: list[str] = Field(default_factory=lambda: ["*"], description="List of allowed HTTP methods")
-    allow_headers: list[str] = Field(default_factory=lambda: ["*"], description="List of allowed headers")
+    allow_methods: list[str] = Field(default_factory=lambda: ["GET"], description="List of allowed HTTP methods")
+    allow_headers: list[str] = Field(
+        default_factory=lambda: ["Content-Type", "X-API-Key"], description="List of allowed headers"
+    )
     expose_headers: list[str] = Field(default_factory=list, description="List of headers to expose")
     max_age: int = Field(default=600, ge=0, description="Maximum age (in seconds) for CORS preflight cache")
 

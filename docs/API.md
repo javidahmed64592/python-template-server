@@ -115,8 +115,8 @@ CORS allows controlled access to the API from web applications hosted on differe
     "enabled": false,
     "allow_origins": ["*"],
     "allow_credentials": true,
-    "allow_methods": ["*"],
-    "allow_headers": ["*"],
+    "allow_methods": ["GET"],
+    "allow_headers": ["Content-Type", "X-API-Key"],
     "expose_headers": [],
     "max_age": 600
   }
@@ -126,9 +126,9 @@ CORS allows controlled access to the API from web applications hosted on differe
 **Configuration Options**:
 - `enabled`: Enable/disable CORS (default: `false`)
 - `allow_origins`: List of allowed origins (use `["*"]` for all, or specify domains like `["https://example.com"]`)
-- `allow_credentials`: Whether to allow credentials (cookies, authorization headers) in cross-origin requests
-- `allow_methods`: HTTP methods allowed for cross-origin requests (default: all)
-- `allow_headers`: Headers allowed in cross-origin requests (default: all)
+- `allow_credentials`: Whether to allow credentials (cookies, authorization headers) in cross-origin requests (default: `true`)
+- `allow_methods`: HTTP methods allowed for cross-origin requests (default: `["GET"]`)
+- `allow_headers`: Headers allowed in cross-origin requests (default: `["Content-Type", "X-API-Key"]`)
 - `expose_headers`: Headers exposed to the browser in responses
 - `max_age`: Maximum age (in seconds) for CORS preflight cache (default: 600 seconds)
 

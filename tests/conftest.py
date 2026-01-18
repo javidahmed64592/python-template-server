@@ -93,12 +93,12 @@ def mock_cors_config_dict() -> dict:
     """Provide a mock CORS configuration dictionary."""
     return {
         "enabled": True,
-        "allow_origins": ["https://example.com", "https://app.example.com"],
+        "allow_origins": ["https://example.com"],
         "allow_credentials": True,
-        "allow_methods": ["GET", "POST", "PUT"],
-        "allow_headers": ["Authorization", "Content-Type"],
+        "allow_methods": ["GET"],
+        "allow_headers": ["Content-Type", "X-API-Key"],
         "expose_headers": ["X-Custom-Header"],
-        "max_age": 3600,
+        "max_age": 600,
     }
 
 
