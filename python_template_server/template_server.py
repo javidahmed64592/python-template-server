@@ -297,7 +297,7 @@ class TemplateServer(ABC):
         self,
         endpoint: str,
         handler_function: Callable,
-        response_model: type[BaseModel],
+        response_model: type[BaseModel] | None,
         methods: list[str],
         limited: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
