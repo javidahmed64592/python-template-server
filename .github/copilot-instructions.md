@@ -23,7 +23,7 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 - Logging configured automatically on `logging_setup.py` import with rotating file handler
 - Environment variables stored in `.env` (API_TOKEN_HASH only, never commit)
 - CORS configuration: Enable cross-origin requests via `config.cors` settings
-- Static files: Served from `static/` directory when present (automatically registers catch-all route)
+- Static files: Served from `static/` directory using FastAPI's `StaticFiles` mounting with custom 404 handler
 
 ### Authentication Architecture
 
@@ -51,11 +51,13 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 
 ### Static File Serving
 
-- Serves static files from `static/` directory (configurable via `STATIC_DIR` constant)
-- Automatically registers catch-all route `/{full_path:path}` when `static_dir_exists=True`
-- **Routing Logic**: Exact file → directory index.html → 404.html → HTTP 404 error
+- Serves static files from `static/` directory using FastAPI's `StaticFiles` class (configurable via `STATIC_DIR` constant)
+- Automatically mounts `StaticFiles` at root (`/`) when `static_dir_exists=True` with `html=True` parameter
+- **Custom 404 Handler**: Exception handler intercepts 404 errors to serve custom `404.html` if present
+- **Routing Logic**: StaticFiles handles exact files and directory index.html → 404 exception handler serves 404.html → HTTP 404 error
 - **No Authentication**: Static files served without API key verification
-- **No Rate Limiting**: Static file route excludes rate limiting for performance
+- **No Rate Limiting**: Static file mounting excludes rate limiting for performance
+- **Implementation**: `app.mount("/", StaticFiles(directory=str(self.static_dir), html=True), name="static")`
 - Use case: Serve Single Page Applications (SPAs) alongside the API
 
 ### Observability Stack

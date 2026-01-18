@@ -358,6 +358,7 @@ class TemplateServer(ABC):
         self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse, ["GET"], limited=False)
         self.add_authenticated_route("/login", self.get_login, GetLoginResponse, methods=["GET"])
         if self.static_dir_exists:
+            logger.info("Mounting static directory: %s", self.static_dir)
             self.app.mount("/", StaticFiles(directory=str(self.static_dir), html=True), name="static")
 
             @self.app.exception_handler(StarletteHTTPException)

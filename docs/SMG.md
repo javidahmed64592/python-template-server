@@ -44,7 +44,7 @@ The Python Template Server uses a **`TemplateServer` base class** that provides 
 - **Middleware Setup**: Request logging, security headers, and optional CORS
 - **Authentication**: API key verification with SHA-256 hashing
 - **Rate Limiting**: Configurable request throttling per endpoint
-- **Static File Serving**: Optional SPA hosting with automatic routing fallback
+- **Static File Serving**: FastAPI's StaticFiles mounting with custom 404.html support
 - **Configuration**: JSON-based config loading and validation
 
 **Application-Specific Servers** (like `ExampleServer` in `main.py`) extend `TemplateServer` to:
@@ -57,12 +57,6 @@ This separation ensures that cross-cutting concerns (security, logging etc.) are
 ### Installing Dependencies
 
 This repository is managed using the `uv` Python project manager: https://docs.astral.sh/uv/
-
-To install `uv`:
-
-```sh
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex" # Windows
-```
 
 Install the required dependencies:
 
