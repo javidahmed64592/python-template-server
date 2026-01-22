@@ -22,9 +22,13 @@ echo ${SEPARATOR}
 if [ -t 0 ]; then
     read -p "Enter the port number (default 443): " port
     port=${port:-443}
+    echo
+    echo "Enter the API token hash (leave blank to auto-generate on first run):"
+    read -p "API_TOKEN_HASH: " api_token_hash
 else
-    echo "No terminal detected. Using default port 443."
+    echo "No terminal detected. Using default port 443 and auto-generating token."
     port=443
+    api_token_hash=""
 fi
 
 echo "Creating service..."
@@ -40,6 +44,7 @@ RemainAfterExit=yes
 WorkingDirectory=${WD}
 User=${USER}
 Environment=PORT=${port}
+Environment=API_TOKEN_HASH=${api_token_hash}
 ExecStart=docker compose up -d
 ExecStop=docker compose down
 Restart=on-failure
@@ -130,7 +135,7 @@ echo "Python Template Server has been installed successfully."
 echo
 echo "To create a start-up service for the Python Template Server, run: './${START_SERVICE_FILE}'"
 echo "To stop the service, run: './${STOP_SERVICE_FILE}'"
-echo "To change the port, edit the service file and then run the start service script: ${SERVICE_PATH}"
+echo "To change the port or API token, edit the service file and then run the start service script: ${SERVICE_PATH}"
 echo "To view the logs: 'cat ${LOG_FILE}'"
 echo "To uninstall, run: './${UNINSTALL_FILE}'"
 echo
