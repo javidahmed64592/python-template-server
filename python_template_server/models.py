@@ -1,7 +1,7 @@
 """Pydantic models for the server."""
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import IntEnum, StrEnum, auto
 from pathlib import Path
 from typing import Any
@@ -175,7 +175,7 @@ class BaseResponse(BaseModel):
     @staticmethod
     def current_timestamp() -> str:
         """Get the current timestamp in ISO 8601 format."""
-        return datetime.now().isoformat() + "Z"
+        return datetime.now(UTC).isoformat() + "Z"
 
 
 class GetHealthResponse(BaseResponse):
