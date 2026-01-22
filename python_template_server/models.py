@@ -175,7 +175,7 @@ class BaseResponse(BaseModel):
     @staticmethod
     def current_timestamp() -> str:
         """Get the current timestamp in ISO 8601 format."""
-        return datetime.now().isoformat(UTC) + "Z"
+        return datetime.now(UTC).isoformat() + "Z"
 
 
 class GetHealthResponse(BaseResponse):
