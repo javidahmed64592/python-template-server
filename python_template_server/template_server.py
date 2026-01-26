@@ -25,7 +25,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from python_template_server.authentication_handler import load_hashed_token, verify_token
+from python_template_server.authentication_handler import verify_token
 from python_template_server.certificate_handler import CertificateHandler
 from python_template_server.constants import (
     API_KEY_HEADER_NAME,
@@ -100,7 +100,8 @@ class TemplateServer(ABC):
 
         self.host = os.getenv("HOST", "localhost")
         self.port = int(os.getenv("PORT", "443"))
-        self.hashed_token = load_hashed_token()
+        self.hashed_token = os.getenv("API_TOKEN_HASH", "")
+
         self._setup_request_logging()
         self._setup_security_headers()
         self._setup_cors()
