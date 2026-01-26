@@ -53,13 +53,6 @@ def mock_set_key() -> Generator[MagicMock]:
 
 
 @pytest.fixture
-def mock_os_getenv() -> Generator[MagicMock]:
-    """Mock the os.getenv function."""
-    with patch("os.getenv") as mock_getenv:
-        yield mock_getenv
-
-
-@pytest.fixture
 def mock_tmp_config_path(tmp_path: Path) -> Path:
     """Provide a temporary config file path."""
     return tmp_path / "config.json"
