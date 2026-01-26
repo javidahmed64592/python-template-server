@@ -49,7 +49,6 @@ def load_hashed_token() -> str:
 
     :return str: The hashed token string, or an empty string if not found
     """
-    dotenv.load_dotenv(ENV_FILE_PATH)
     return os.getenv(ENV_VAR_NAME, "")
 
 
