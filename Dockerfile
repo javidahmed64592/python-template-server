@@ -43,7 +43,6 @@ RUN mkdir -p /app/logs
 
 # Copy included files from installed wheel to app directory
 RUN SITE_PACKAGES_DIR=$(find /usr/local/lib -name "site-packages" -type d | head -1) && \
-    cp -r "${SITE_PACKAGES_DIR}/static" /app/ && \
     cp "${SITE_PACKAGES_DIR}/.here" /app/.here
 
 # Create startup script
