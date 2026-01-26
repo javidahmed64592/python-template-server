@@ -96,13 +96,13 @@ docker compose down              # Stop and remove containers
 
 ### Docker Multi-Stage Build
 
-- **Stage 1 (builder)**: Uses `uv` to build wheel, copies required files
-- **Stage 2 (runtime)**: Installs wheel, copies runtime files (.here, configs, LICENSE, README.md) from wheel to /app
-- **Startup Script**: `/app/start.sh` generates token if missing, starts server
-- **Config Selection**: Uses `config.json` for all environments
-- **Build Args**: `PORT=443` (exposes port)
-- **Health Check**: Curls `/api/health` with unverified SSL context (no auth required)
-- **User**: Switches to non-root user `templateserver` (UID 1000)
+- **Stage 1 (backend-builder)**: Uses `uv` to build wheel with pyproject.toml, source code, and metadata files
+- **Stage 2 (runtime)**: Installs wheel, copies configuration from host, copies static files and `.here` from installed package to /app
+- **Startup Script**: Created inline in Dockerfile as `/app/start.sh`, generates token if missing, starts server with --port arg
+- **Config Selection**: Uses `config.json` copied from host configuration directory
+- **Environment Variables**: `PORT` (default: 443 in .env.example), `API_TOKEN_HASH` (auto-generated if not set)
+- **Health Check**: Python urllib request to `/api/health` with unverified SSL context (no auth required)
+- **Note**: No user switching - runs as root (could be security improvement)
 
 ## Project-Specific Conventions
 
@@ -180,10 +180,12 @@ All PRs must pass:
 
 ### Environment Variables
 
-- `API_TOKEN_HASH` - SHA-256 hash of API token (only var required)
+- `PORT` - Server port (default: 443, configurable in config.json via --port arg)
+- `API_TOKEN_HASH` - SHA-256 hash of API token (auto-generated if not provided)
 
 ### Configuration Files
 
-- `configuration/config.json` - Configuration (used for all environments)
-- `.env` - API token hash (auto-created by generate-new-token)
-- **Docker**: Startup script uses config.json for all environments
+- `configuration/config.json` - Server configuration (rate limiting, security, CORS, etc.)
+- `.env.example` - Template for environment variables (PORT, API_TOKEN_HASH)
+- `.env` - API token hash (auto-created by generate-new-token or Docker startup script)
+- **Docker**: Startup script auto-generates token if .env doesn't exist or API_TOKEN_HASH is empty
