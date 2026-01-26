@@ -18,10 +18,9 @@ This repository provides a solid foundation for building secure, observable Fast
 - [Features](#features)
 - [Architecture](#architecture)
 - [Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Generate API Token](#generate-api-token)
-  - [Run the Server](#run-the-server)
+  - [Configuration](#configuration)
+  - [Managing the Container](#managing-the-container)
 - [Using as a Template](#using-as-a-template)
 - [Documentation](#documentation)
 - [License](#license)
@@ -50,50 +49,37 @@ This project uses a **`TemplateServer` base class** that encapsulates cross-cutt
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.13+
-- [uv](https://docs.astral.sh/uv/) package manager
-
-Install `uv`:
-
-```sh
-# Linux/Mac
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows (PowerShell)
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
 ### Installation
 
-```sh
-# Clone the repository
-git clone https://github.com/javidahmed64592/python-template-server.git
-cd python-template-server
+Download the latest release from [GitHub Releases](https://github.com/javidahmed64592/python-template-server/releases).
 
-# Install dependencies
-uv sync --extra dev
+### Configuration
+
+Rename `.env.example` to `.env` and edit it to configure the server.
+
+**Configuration Options:**
+- `PORT`: Server port (default: 443)
+- `API_TOKEN_HASH`: Leave blank to auto-generate on first run, or provide your own token hash
+
+### Managing the Container
+
+```sh
+# Start the container
+docker compose up -d
+
+# Stop the container
+docker compose down
+
+# Update to the latest version
+docker compose pull && docker compose up -d
+
+# View the logs
+docker compose logs -f python-template-server
 ```
 
-### Generate API Token
-
+**Note:** You may need to add your user to the Docker group and log out/in for permission changes to take effect:
 ```sh
-uv run generate-new-token
-# ⚠️ Save the displayed token - you'll need it for API requests!
-```
-
-### Run the Server
-
-```sh
-# Start the server
-uv run python-template-server
-
-# Server runs at https://localhost:443/api
-# Swagger UI: https://localhost:443/api/docs
-# Redoc: https://localhost:443/api/redoc
-# Health check: curl -k https://localhost:443/api/health
-# Login (requires authentication): curl -k -H "X-API-Key: your-token-here" https://localhost:443/api/login
+sudo usermod -aG docker ${USER}
 ```
 
 ## Using as a Template
@@ -112,7 +98,6 @@ See the [Software Maintenance Guide](./docs/SMG.md) for detailed setup instructi
 ## Documentation
 
 - **[API Documentation](./docs/API.md)**: API architecture and endpoints
-- **[Docker Deployment Guide](./docs/DOCKER_DEPLOYMENT.md)**: Container orchestration
 - **[Software Maintenance Guide](./docs/SMG.md)**: Development setup, configuration
 - **[Workflows](./docs/WORKFLOWS.md)**: CI/CD pipeline details
 
