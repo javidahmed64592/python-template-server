@@ -53,20 +53,13 @@ def mock_verify_token() -> Generator[MagicMock]:
         yield mock_verify
 
 
-@pytest.fixture(autouse=True)
-def mock_load_hashed_token() -> Generator[MagicMock]:
-    """Mock the load_hashed_token function."""
-    with patch("python_template_server.template_server.load_hashed_token") as mock_load:
-        mock_load.return_value = "mock_hashed_token"
-        yield mock_load
-
-
 @pytest.fixture
 def mock_timestamp() -> Generator[str]:
     """Mock the current_timestamp method to return a fixed timestamp."""
-    fixed_timestamp = "2025-11-22T12:00:00.000000Z"
-    with patch("python_template_server.models.BaseResponse.current_timestamp", return_value=fixed_timestamp):
-        yield fixed_timestamp
+    with patch(
+        "python_template_server.models.BaseResponse.current_timestamp", return_value=BaseResponse.current_timestamp()
+    ) as mock_time:
+        yield mock_time.return_value
 
 
 MOCK_INDEX_CONTENT = "<html><body><h1>Test SPA</h1></body></html>"
