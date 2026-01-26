@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Pi Dashboard
+# Multi-stage Dockerfile for Python Template Server
 # Stage 1: Backend build stage - build wheel using uv
 FROM python:3.13-slim AS backend-builder
 
