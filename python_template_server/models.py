@@ -11,23 +11,6 @@ from pydantic import BaseModel, Field
 
 
 # Template Server Configuration Models
-class ServerConfigModel(BaseModel):
-    """Server configuration model."""
-
-    host: str = Field(default="0.0.0.0", description="Server hostname or IP address")  # noqa: S104
-    port: int = Field(default=443, ge=1, le=65535, description="Server port number")
-
-    @property
-    def address(self) -> str:
-        """Get the server address in host:port format."""
-        return f"{self.host}:{self.port}"
-
-    @property
-    def url(self) -> str:
-        """Get the server URL."""
-        return f"https://{self.address}"
-
-
 class SecurityConfigModel(BaseModel):
     """Security headers configuration model."""
 
@@ -96,7 +79,6 @@ class JSONResponseConfigModel(BaseModel):
 class TemplateServerConfig(BaseModel):
     """Template server configuration."""
 
-    server: ServerConfigModel = Field(default_factory=ServerConfigModel)
     security: SecurityConfigModel = Field(default_factory=SecurityConfigModel)
     cors: CORSConfigModel = Field(default_factory=CORSConfigModel)
     rate_limit: RateLimitConfigModel = Field(default_factory=RateLimitConfigModel)

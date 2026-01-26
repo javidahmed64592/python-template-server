@@ -9,11 +9,10 @@ from python_template_server.authentication_handler import (
     generate_new_token,
     generate_token,
     hash_token,
-    load_hashed_token,
     save_hashed_token,
     verify_token,
 )
-from python_template_server.constants import ENV_FILE_PATH, ENV_VAR_NAME, TOKEN_LENGTH
+from python_template_server.constants import ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, TOKEN_LENGTH
 
 
 @pytest.fixture
@@ -59,7 +58,7 @@ class TestAuthenticationHandler:
         """Test the save_hashed_token function."""
         mock_exists.return_value = True
         save_hashed_token("testtoken")
-        mock_set_key.assert_called_once_with(ENV_FILE_PATH, ENV_VAR_NAME, mock_hash_token.return_value)
+        mock_set_key.assert_called_once_with(ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, mock_hash_token.return_value)
 
     def test_save_hashed_token_file_creation(
         self, mock_hash_token: MagicMock, mock_exists: MagicMock, mock_touch: MagicMock, mock_set_key: MagicMock
@@ -68,17 +67,7 @@ class TestAuthenticationHandler:
         mock_exists.return_value = False
         save_hashed_token("testtoken")
         mock_touch.assert_called_once()
-        mock_set_key.assert_called_once_with(ENV_FILE_PATH, ENV_VAR_NAME, mock_hash_token.return_value)
-
-    @pytest.mark.parametrize(
-        ("token", "expected"),
-        [("token", "token"), (None, None)],
-    )
-    def test_load_hashed_token(self, mock_os_getenv: MagicMock, token: str, expected: str) -> None:
-        """Test the load_hashed_token function."""
-        mock_os_getenv.return_value = token
-        result = load_hashed_token()
-        assert result == expected
+        mock_set_key.assert_called_once_with(ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, mock_hash_token.return_value)
 
     @pytest.mark.parametrize(
         ("input_token", "stored_hash", "expected"),

@@ -12,7 +12,6 @@ from python_template_server.models import (
     JSONResponseConfigModel,
     RateLimitConfigModel,
     SecurityConfigModel,
-    ServerConfigModel,
     TemplateServerConfig,
 )
 
@@ -54,13 +53,6 @@ def mock_set_key() -> Generator[MagicMock]:
 
 
 @pytest.fixture
-def mock_os_getenv() -> Generator[MagicMock]:
-    """Mock the os.getenv function."""
-    with patch("os.getenv") as mock_getenv:
-        yield mock_getenv
-
-
-@pytest.fixture
 def mock_tmp_config_path(tmp_path: Path) -> Path:
     """Provide a temporary config file path."""
     return tmp_path / "config.json"
@@ -73,12 +65,6 @@ def mock_tmp_static_path(tmp_path: Path) -> Path:
 
 
 # Template Server Configuration Models
-@pytest.fixture
-def mock_server_config_dict() -> dict:
-    """Provide a mock server configuration dictionary."""
-    return {"host": "localhost", "port": 8080}
-
-
 @pytest.fixture
 def mock_security_config_dict() -> dict:
     """Provide a mock security configuration dictionary."""
@@ -135,12 +121,6 @@ def mock_json_response_config_dict() -> dict:
 
 
 @pytest.fixture
-def mock_server_config(mock_server_config_dict: dict) -> ServerConfigModel:
-    """Provide a mock ServerConfigModel instance."""
-    return ServerConfigModel.model_validate(mock_server_config_dict)
-
-
-@pytest.fixture
 def mock_security_config(mock_security_config_dict: dict) -> SecurityConfigModel:
     """Provide a mock SecurityConfigModel instance."""
     return SecurityConfigModel.model_validate(mock_security_config_dict)
@@ -172,7 +152,6 @@ def mock_json_response_config(mock_json_response_config_dict: dict) -> JSONRespo
 
 @pytest.fixture
 def mock_template_server_config(
-    mock_server_config: ServerConfigModel,
     mock_security_config: SecurityConfigModel,
     mock_cors_config: CORSConfigModel,
     mock_rate_limit_config: RateLimitConfigModel,
@@ -181,7 +160,6 @@ def mock_template_server_config(
 ) -> TemplateServerConfig:
     """Provide a mock TemplateServerConfig instance."""
     return TemplateServerConfig(
-        server=mock_server_config,
         security=mock_security_config,
         cors=mock_cors_config,
         rate_limit=mock_rate_limit_config,

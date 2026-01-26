@@ -16,37 +16,12 @@ from python_template_server.models import (
     RateLimitConfigModel,
     ResponseCode,
     SecurityConfigModel,
-    ServerConfigModel,
     ServerHealthStatus,
     TemplateServerConfig,
 )
 
 
 # Template Server Configuration Models
-class TestServerConfigModel:
-    """Unit tests for the ServerConfigModel class."""
-
-    def test_model_dump(self, mock_server_config_dict: dict, mock_server_config: ServerConfigModel) -> None:
-        """Test the model_dump method."""
-        assert mock_server_config.model_dump() == mock_server_config_dict
-
-    def test_address_property(self, mock_server_config: ServerConfigModel) -> None:
-        """Test the address property."""
-        assert mock_server_config.address == "localhost:8080"
-
-    def test_url_property(self, mock_server_config: ServerConfigModel) -> None:
-        """Test the url property."""
-        assert mock_server_config.url == "https://localhost:8080"
-
-    @pytest.mark.parametrize("port", [0, 70000])
-    def test_port_field(self, mock_server_config_dict: dict, port: int) -> None:
-        """Test the port field validation."""
-        invalid_config_data = mock_server_config_dict.copy()
-        invalid_config_data["port"] = port  # Invalid port number
-        with pytest.raises(ValidationError):
-            ServerConfigModel(**invalid_config_data)
-
-
 class TestSecurityConfigModel:
     """Unit tests for the SecurityConfigModel class."""
 
@@ -115,7 +90,6 @@ class TestTemplateServerConfig:
     def test_model_dump(
         self,
         mock_template_server_config: TemplateServerConfig,
-        mock_server_config_dict: dict,
         mock_security_config_dict: dict,
         mock_cors_config_dict: dict,
         mock_rate_limit_config_dict: dict,
@@ -124,7 +98,6 @@ class TestTemplateServerConfig:
     ) -> None:
         """Test the model_dump method."""
         expected_dict = {
-            "server": mock_server_config_dict,
             "security": mock_security_config_dict,
             "cors": mock_cors_config_dict,
             "rate_limit": mock_rate_limit_config_dict,

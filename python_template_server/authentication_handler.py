@@ -2,12 +2,11 @@
 
 import hashlib
 import logging
-import os
 import secrets
 
 import dotenv
 
-from python_template_server.constants import ENV_FILE_PATH, ENV_VAR_NAME, TOKEN_LENGTH
+from python_template_server.constants import ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, TOKEN_LENGTH
 from python_template_server.logging_setup import setup_logging
 
 setup_logging()
@@ -41,16 +40,7 @@ def save_hashed_token(token: str) -> None:
     if not ENV_FILE_PATH.exists():
         ENV_FILE_PATH.touch()
 
-    dotenv.set_key(ENV_FILE_PATH, ENV_VAR_NAME, hashed)
-
-
-def load_hashed_token() -> str:
-    """Load the hashed token from environment variable.
-
-    :return str: The hashed token string, or an empty string if not found
-    """
-    dotenv.load_dotenv(ENV_FILE_PATH)
-    return os.getenv(ENV_VAR_NAME, "")
+    dotenv.set_key(ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, hashed)
 
 
 def verify_token(token: str, hashed_token: str) -> bool:

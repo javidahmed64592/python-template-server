@@ -57,6 +57,8 @@ The server uses Python's built-in logging system with both console and rotating 
 [22/11/2025 | 14:30:46] (INFO) request_logging_middleware: Response: GET /api/health -> 200
 ```
 
+**Note:** The server host and port are configured via `HOST` and `PORT` environment variables in `.env` (default: `localhost:443`).
+
 ## Request Logging
 
 All incoming requests and responses are automatically logged for monitoring and debugging purposes.

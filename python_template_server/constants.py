@@ -30,7 +30,7 @@ API_PREFIX = "/api"
 API_KEY_HEADER_NAME = "X-API-Key"
 
 # Authentication constants
-ENV_VAR_NAME = "API_TOKEN_HASH"
+TOKEN_ENV_VAR_NAME = "API_TOKEN_HASH"  # noqa: S105
 TOKEN_LENGTH = 32
 
 # Logging constants

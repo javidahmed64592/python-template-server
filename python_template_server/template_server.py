@@ -1,8 +1,8 @@
 """Template FastAPI server module."""
 
-import argparse
 import json
 import logging
+import os
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator, Callable
@@ -11,6 +11,7 @@ from importlib.metadata import metadata
 from pathlib import Path
 from typing import Any
 
+import dotenv
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,9 +25,16 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from python_template_server.authentication_handler import load_hashed_token, verify_token
+from python_template_server.authentication_handler import verify_token
 from python_template_server.certificate_handler import CertificateHandler
-from python_template_server.constants import API_KEY_HEADER_NAME, API_PREFIX, CONFIG_FILE_PATH, PACKAGE_NAME, STATIC_DIR
+from python_template_server.constants import (
+    API_KEY_HEADER_NAME,
+    API_PREFIX,
+    CONFIG_FILE_PATH,
+    ENV_FILE_PATH,
+    PACKAGE_NAME,
+    STATIC_DIR,
+)
 from python_template_server.logging_setup import setup_logging
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
@@ -40,7 +48,6 @@ from python_template_server.models import (
 
 setup_logging()
 logger = logging.getLogger(__name__)
-argparser = argparse.ArgumentParser(description="Template FastAPI Server")
 
 
 class TemplateServer(ABC):
@@ -69,6 +76,7 @@ class TemplateServer(ABC):
         :param Path config_filepath: Path to the configuration file
         :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
+        dotenv.load_dotenv(ENV_FILE_PATH)
         self.package_name = package_name
         self.api_prefix = api_prefix
         self.api_key_header_name = api_key_header_name
@@ -90,7 +98,10 @@ class TemplateServer(ABC):
         )
         self.api_key_header = APIKeyHeader(name=self.api_key_header_name, auto_error=False)
 
-        self.hashed_token = load_hashed_token()
+        self.host = os.getenv("HOST", "localhost")
+        self.port = int(os.getenv("PORT", "443"))
+        self.hashed_token = os.getenv("API_TOKEN_HASH", "")
+
         self._setup_request_logging()
         self._setup_security_headers()
         self._setup_cors()
@@ -136,9 +147,6 @@ class TemplateServer(ABC):
             with config_filepath.open() as f:
                 config_data = json.load(f)
             config = self.validate_config(config_data)
-            argparser.add_argument("--port", type=int, default=config.server.port, help="Port to run the server on")
-            args = argparser.parse_args()
-            config.server.port = args.port
             config.save_to_file(config_filepath)
         except json.JSONDecodeError:
             logger.exception("JSON parsing error: %s", config_filepath)
@@ -280,11 +288,11 @@ class TemplateServer(ABC):
                 logger.warning("SSL certificate or key file not found, generating self-signed certificate...")
                 self.cert_handler.generate_self_signed_cert()
 
-            logger.info("Starting server: %s%s", self.config.server.url, self.api_prefix)
+            logger.info("Starting server: https://%s:%s%s", self.host, self.port, self.api_prefix)
             uvicorn.run(
-                self.app,
-                host=self.config.server.host,
-                port=self.config.server.port,
+                app=self.app,
+                host=self.host,
+                port=self.port,
                 ssl_keyfile=str(key_file),
                 ssl_certfile=str(cert_file),
                 log_level="warning",
