@@ -276,7 +276,7 @@ class TestLoadConfig:
     ) -> None:
         """Test loading config that fails validation."""
         mock_exists.return_value = True
-        mock_open_file.return_value.read.return_value = json.dumps({"server": {"host": "localhost", "port": 999999}})
+        mock_open_file.return_value.read.return_value = json.dumps({"security": {"hsts_max_age": -1}})
 
         with pytest.raises(SystemExit):
             MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
@@ -411,8 +411,9 @@ class TestTemplateServerRun:
 
         mock_uvicorn_run.assert_called_once()
         call_kwargs = mock_uvicorn_run.call_args.kwargs
-        assert call_kwargs["host"] == mock_template_server.config.server.host
-        assert call_kwargs["port"] == mock_template_server.config.server.port
+        assert call_kwargs["app"] == mock_template_server.app
+        assert call_kwargs["host"] == mock_template_server.host
+        assert call_kwargs["port"] == mock_template_server.port
 
     def test_run_generates_cert_when_missing(
         self, mock_template_server: TemplateServer, mock_exists: MagicMock, mock_uvicorn_run: MagicMock
