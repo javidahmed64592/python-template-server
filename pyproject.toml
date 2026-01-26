@@ -49,8 +49,6 @@ allow-direct-references = true
 include = [
   "python_template_server/**",
   ".here",
-  "LICENSE",
-  "README.md",
 ]
 
 [tool.pytest.ini_options]

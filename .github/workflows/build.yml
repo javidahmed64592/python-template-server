@@ -76,8 +76,6 @@ jobs:
           # Check for required files in site-packages
           echo "Checking required files in site-packages..."
           REQUIRED_FILES=(
-            "${SITE_PACKAGES}/README.md"
-            "${SITE_PACKAGES}/LICENSE"
             "${SITE_PACKAGES}/.here"
           )
 

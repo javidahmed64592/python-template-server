@@ -13,6 +13,7 @@ services:
       - API_TOKEN_HASH=${API_TOKEN_HASH:-}
       - PORT=${PORT:-443}
     volumes:
+      - ./.env:/app/.env
       - certs:/app/certs
       - logs:/app/logs
     restart: unless-stopped
