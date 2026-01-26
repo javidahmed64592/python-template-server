@@ -57,7 +57,7 @@ Download the latest release from [GitHub Releases](https://github.com/javidahmed
 
 Rename `.env.example` to `.env` and edit it to configure the server.
 
-**Configuration Options:**
+- `HOST`: Server host address (default: localhost)
 - `PORT`: Server port (default: 443)
 - `API_TOKEN_HASH`: Leave blank to auto-generate on first run, or provide your own token hash
 

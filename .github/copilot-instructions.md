@@ -21,7 +21,7 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 - Validated using Pydantic models in `models.py` (TemplateServerConfig hierarchy)
 - Subclasses override `validate_config()` to provide custom config models
 - Logging configured automatically on `logging_setup.py` import with rotating file handler
-- Environment variables stored in `.env` (API_TOKEN_HASH only, never commit)
+- Environment variables stored in `.env` (HOST, PORT, API_TOKEN_HASH)
 - CORS configuration: Enable cross-origin requests via `config.cors` settings
 - Static files: Served from `static/` directory using FastAPI's `StaticFiles` mounting with custom 404 handler
 
@@ -98,9 +98,9 @@ docker compose down              # Stop and remove containers
 
 - **Stage 1 (backend-builder)**: Uses `uv` to build wheel with pyproject.toml, source code, and metadata files
 - **Stage 2 (runtime)**: Installs wheel, copies configuration from host, copies static files and `.here` from installed package to /app
-- **Startup Script**: Created inline in Dockerfile as `/app/start.sh`, generates token if missing, starts server with --port arg
+- **Startup Script**: Created inline in Dockerfile as `/app/start.sh`, generates token if missing, starts server with host/port from environment variables
 - **Config Selection**: Uses `config.json` copied from host configuration directory
-- **Environment Variables**: `PORT` (default: 443 in .env.example), `API_TOKEN_HASH` (auto-generated if not set)
+- **Environment Variables**: `HOST` (default: 0.0.0.0), `PORT` (default: 443), `API_TOKEN_HASH` (auto-generated if not set)
 - **Health Check**: Python urllib request to `/api/health` with unverified SSL context (no auth required)
 - **Note**: No user switching - runs as root (could be security improvement)
 
@@ -180,12 +180,13 @@ All PRs must pass:
 
 ### Environment Variables
 
-- `PORT` - Server port (default: 443, configurable in config.json via --port arg)
+- `HOST` - Server host address (default: localhost)
+- `PORT` - Server port (default: 443)
 - `API_TOKEN_HASH` - SHA-256 hash of API token (auto-generated if not provided)
 
 ### Configuration Files
 
-- `configuration/config.json` - Server configuration (rate limiting, security, CORS, etc.)
-- `.env.example` - Template for environment variables (PORT, API_TOKEN_HASH)
-- `.env` - API token hash (auto-created by generate-new-token or Docker startup script)
+- `configuration/config.json` - Server configuration (rate limiting, security, CORS, certificate, etc.)
+- `.env.example` - Template for environment variables (HOST, PORT, API_TOKEN_HASH)
+- `.env` - Environment variables including host, port, and API token hash (auto-created by generate-new-token or Docker startup script)
 - **Docker**: Startup script auto-generates token if .env doesn't exist or API_TOKEN_HASH is empty
