@@ -60,7 +60,7 @@ RUN echo '#!/bin/sh\n\
     export $(grep -v "^#" .env | xargs)\n\
     fi\n\
     \n\
-    exec python-template-server > /app/start.sh && \
+    exec python-template-server' > /app/start.sh && \
     chmod +x /app/start.sh
 
 # Expose server port
