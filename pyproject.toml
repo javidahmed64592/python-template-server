@@ -33,6 +33,7 @@ dependencies = [
 dev = [
     "template-python[dev] @ git+https://github.com/javidahmed64592/template-python.git",
     "pytest-asyncio>=1.2.0",
+    "pytest-env>=1.1.5",
 ]
 
 [project.urls]
@@ -57,6 +58,9 @@ addopts = [
     "--cov",
     "--cov-report",
     "term-missing",
+]
+env = [
+    "API_TOKEN_HASH=token",
 ]
 
 [tool.coverage.run]
