@@ -16,7 +16,6 @@ from python_template_server.models import (
     RateLimitConfigModel,
     ResponseCode,
     SecurityConfigModel,
-    ServerHealthStatus,
     TemplateServerConfig,
 )
 
@@ -195,29 +194,13 @@ class TestResponseCode:
         assert response_code.value == status_code
 
 
-class TestServerHealthStatus:
-    """Unit tests for the ServerHealthStatus enum."""
-
-    @pytest.mark.parametrize(
-        ("server_health_status", "status"),
-        [
-            (ServerHealthStatus.HEALTHY, "HEALTHY"),
-            (ServerHealthStatus.DEGRADED, "DEGRADED"),
-            (ServerHealthStatus.UNHEALTHY, "UNHEALTHY"),
-        ],
-    )
-    def test_enum_values(self, server_health_status: ServerHealthStatus, status: str) -> None:
-        """Test the enum values."""
-        assert server_health_status.name == status
-
-
 class TestBaseResponse:
     """Unit tests for the BaseResponse class."""
 
     def test_model_dump(self) -> None:
         """Test the model_dump method."""
         timestamp = BaseResponse.current_timestamp()
-        config_dict: dict = {"code": ResponseCode.OK, "message": "Success", "timestamp": timestamp}
+        config_dict: dict = {"message": "Success", "timestamp": timestamp}
         response = BaseResponse(**config_dict)
         assert response.model_dump() == config_dict
 
@@ -229,10 +212,8 @@ class TestGetHealthResponse:
         """Test the model_dump method."""
         timestamp = GetHealthResponse.current_timestamp()
         config_dict: dict = {
-            "code": ResponseCode.OK,
             "message": "Server is healthy",
             "timestamp": timestamp,
-            "status": ServerHealthStatus.HEALTHY,
         }
         response = GetHealthResponse(**config_dict)
         assert response.model_dump() == config_dict
@@ -245,7 +226,6 @@ class TestGetLoginResponse:
         """Test the model_dump method."""
         timestamp = GetLoginResponse.current_timestamp()
         config_dict: dict = {
-            "code": ResponseCode.OK,
             "message": "Login successful",
             "timestamp": timestamp,
         }

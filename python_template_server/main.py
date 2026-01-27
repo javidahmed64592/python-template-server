@@ -27,7 +27,7 @@ class ExampleServer(TemplateServer):
 
     def setup_routes(self) -> None:
         """Set up API routes."""
-        super().setup_routes()
+        pass
 
 
 def run() -> None:

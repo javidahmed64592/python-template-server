@@ -25,7 +25,6 @@ from python_template_server.models import (
     BaseResponse,
     CustomJSONResponse,
     ResponseCode,
-    ServerHealthStatus,
     TemplateServerConfig,
 )
 from python_template_server.template_server import TemplateServer
@@ -96,27 +95,19 @@ class MockTemplateServer(TemplateServer):
 
     def mock_unprotected_method(self, request: Request) -> BaseResponse:
         """Mock unprotected method."""
-        return BaseResponse(
-            code=ResponseCode.OK, message="unprotected endpoint", timestamp=BaseResponse.current_timestamp()
-        )
+        return BaseResponse(message="unprotected endpoint", timestamp=BaseResponse.current_timestamp())
 
     def mock_protected_method(self, request: Request) -> BaseResponse:
         """Mock protected method."""
-        return BaseResponse(
-            code=ResponseCode.OK, message="protected endpoint", timestamp=BaseResponse.current_timestamp()
-        )
+        return BaseResponse(message="protected endpoint", timestamp=BaseResponse.current_timestamp())
 
     def mock_unlimited_unprotected_method(self, request: Request) -> BaseResponse:
         """Mock unlimited unprotected method."""
-        return BaseResponse(
-            code=ResponseCode.OK, message="unlimited unprotected endpoint", timestamp=BaseResponse.current_timestamp()
-        )
+        return BaseResponse(message="unlimited unprotected endpoint", timestamp=BaseResponse.current_timestamp())
 
     def mock_unlimited_protected_method(self, request: Request) -> BaseResponse:
         """Mock unlimited protected method."""
-        return BaseResponse(
-            code=ResponseCode.OK, message="unlimited protected endpoint", timestamp=BaseResponse.current_timestamp()
-        )
+        return BaseResponse(message="unlimited protected endpoint", timestamp=BaseResponse.current_timestamp())
 
     def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
         """Validate configuration from the config.json file.
@@ -128,7 +119,6 @@ class MockTemplateServer(TemplateServer):
 
     def setup_routes(self) -> None:
         """Set up mock routes for testing."""
-        super().setup_routes()
         self.add_unauthenticated_route("/unauthenticated-endpoint", self.mock_unprotected_method, BaseResponse, ["GET"])
         self.add_authenticated_route("/authenticated-endpoint", self.mock_protected_method, BaseResponse, ["POST"])
         self.add_unauthenticated_route(
@@ -546,20 +536,17 @@ class TestGetHealthEndpoint:
         request = MagicMock()
         response = asyncio.run(mock_template_server.get_health(request))
 
-        assert response.code == ResponseCode.OK
         assert response.message == "Server is healthy"
-        assert response.status == ServerHealthStatus.HEALTHY
 
     def test_get_health_token_not_configured(self, mock_template_server: TemplateServer) -> None:
         """Test the /health endpoint method when token is not configured."""
         mock_template_server.hashed_token = ""
         request = MagicMock()
 
-        response = asyncio.run(mock_template_server.get_health(request))
-
-        assert response.code == ResponseCode.INTERNAL_SERVER_ERROR
-        assert response.message == "Server token is not configured"
-        assert response.status == ServerHealthStatus.UNHEALTHY
+        with pytest.raises(
+            HTTPException, match=f"{ResponseCode.INTERNAL_SERVER_ERROR}: Server token is not configured"
+        ):
+            asyncio.run(mock_template_server.get_health(request))
 
     def test_get_health_endpoint(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock, mock_timestamp: str
@@ -572,10 +559,8 @@ class TestGetHealthEndpoint:
         response = client.get("/health")
         assert response.status_code == ResponseCode.OK
         assert response.json() == {
-            "code": ResponseCode.OK,
             "message": "Server is healthy",
             "timestamp": mock_timestamp,
-            "status": ServerHealthStatus.HEALTHY,
         }
 
 
@@ -585,10 +570,20 @@ class TestGetLoginEndpoint:
     def test_get_login(self, mock_template_server: TemplateServer) -> None:
         """Test the /login endpoint method."""
         request = MagicMock()
+
         response = asyncio.run(mock_template_server.get_login(request))
 
-        assert response.code == ResponseCode.OK
         assert response.message == "Login successful."
+
+    def test_get_login_token_not_configured(self, mock_template_server: TemplateServer) -> None:
+        """Test the /login endpoint method when token is not configured."""
+        mock_template_server.hashed_token = ""
+        request = MagicMock()
+
+        with pytest.raises(
+            HTTPException, match=f"{ResponseCode.INTERNAL_SERVER_ERROR}: Server token is not configured"
+        ):
+            asyncio.run(mock_template_server.get_login(request))
 
     def test_get_login_endpoint(
         self, mock_template_server: TemplateServer, mock_verify_token: MagicMock, mock_timestamp: str
@@ -601,7 +596,6 @@ class TestGetLoginEndpoint:
         response = client.get("/login", headers={"X-API-Key": "test-token"})
         assert response.status_code == ResponseCode.OK
         assert response.json() == {
-            "code": ResponseCode.OK,
             "message": "Login successful.",
             "timestamp": mock_timestamp,
         }
