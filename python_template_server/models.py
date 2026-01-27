@@ -2,7 +2,7 @@
 
 import json
 from datetime import UTC, datetime
-from enum import IntEnum, StrEnum, auto
+from enum import IntEnum
 from pathlib import Path
 from typing import Any
 
@@ -139,18 +139,9 @@ class ResponseCode(IntEnum):
     SERVICE_UNAVAILABLE = 503
 
 
-class ServerHealthStatus(StrEnum):
-    """Server health status indicators."""
-
-    HEALTHY = auto()
-    DEGRADED = auto()
-    UNHEALTHY = auto()
-
-
 class BaseResponse(BaseModel):
     """Base response model for all API endpoints."""
 
-    code: ResponseCode = Field(..., description="Response code indicating the result status")
     message: str = Field(..., description="Human-readable message describing the response")
     timestamp: str = Field(..., description="Timestamp of the response in ISO 8601 format")
 
@@ -162,8 +153,6 @@ class BaseResponse(BaseModel):
 
 class GetHealthResponse(BaseResponse):
     """Response model for the health endpoint."""
-
-    status: ServerHealthStatus = Field(..., description="Health status of the server")
 
 
 class GetLoginResponse(BaseResponse):

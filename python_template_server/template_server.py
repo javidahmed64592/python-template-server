@@ -42,7 +42,6 @@ from python_template_server.models import (
     GetHealthResponse,
     GetLoginResponse,
     ResponseCode,
-    ServerHealthStatus,
     TemplateServerConfig,
 )
 
@@ -106,7 +105,7 @@ class TemplateServer(ABC):
         self._setup_security_headers()
         self._setup_cors()
         self._setup_rate_limiting()
-        self.setup_routes()
+        self._setup_routes()
 
     @property
     def static_dir_exists(self) -> bool:
@@ -350,21 +349,23 @@ class TemplateServer(ABC):
             dependencies=[Security(self._verify_api_key)],
         )
 
-    @abstractmethod
-    def setup_routes(self) -> None:
-        """Set up API routes.
-
-        This method must be implemented by subclasses to define API endpoints.
-
-        Examples:
-        ```python
-        self.add_unauthenticated_route("/unprotected-endpoint", self.unprotected_endpoint, PublicResponseModel, ["GET"])
-        self.add_authenticated_route("/protected-endpoint", self.protected_endpoint, PrivateResponseModel, ["POST"])
-        ```
-
-        """
-        self.add_unauthenticated_route("/health", self.get_health, GetHealthResponse, ["GET"], limited=False)
-        self.add_authenticated_route("/login", self.get_login, GetLoginResponse, methods=["GET"])
+    def _setup_routes(self) -> None:
+        """Set up API routes."""
+        self.add_unauthenticated_route(
+            endpoint="/health",
+            handler_function=self.get_health,
+            response_model=GetHealthResponse,
+            methods=["GET"],
+            limited=False,
+        )
+        self.add_authenticated_route(
+            endpoint="/login",
+            handler_function=self.get_login,
+            response_model=GetLoginResponse,
+            methods=["GET"],
+            limited=True,
+        )
+        self.setup_routes()
         if self.static_dir_exists:
             logger.info("Mounting static directory: %s", self.static_dir)
             self.app.mount("/", StaticFiles(directory=str(self.static_dir), html=True), name="static")
@@ -378,32 +379,48 @@ class TemplateServer(ABC):
                         return FileResponse(not_found_page, status_code=ResponseCode.NOT_FOUND)
                 raise exc
 
+    @abstractmethod
+    def setup_routes(self) -> None:
+        """Add custom API routes.
+
+        This method must be implemented by subclasses to define API endpoints
+        using `add_unauthenticated_route` and `add_authenticated_route`.
+        """
+        pass
+
     async def get_health(self, request: Request) -> GetHealthResponse:
         """Get server health.
 
         :param Request request: The incoming HTTP request
         :return GetHealthResponse: Health status response
+        :raise HTTPException: If the server token is not configured
         """
         if not self.hashed_token:
-            return GetHealthResponse(
-                code=ResponseCode.INTERNAL_SERVER_ERROR,
-                message="Server token is not configured",
-                timestamp=GetHealthResponse.current_timestamp(),
-                status=ServerHealthStatus.UNHEALTHY,
+            raise HTTPException(
+                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
+                detail="Server token is not configured",
             )
 
         return GetHealthResponse(
-            code=ResponseCode.OK,
             message="Server is healthy",
             timestamp=GetHealthResponse.current_timestamp(),
-            status=ServerHealthStatus.HEALTHY,
         )
 
     async def get_login(self, request: Request) -> GetLoginResponse:
-        """Handle user login and return a success response."""
+        """Handle user login and return a success response.
+
+        :param Request request: The incoming HTTP request
+        :return GetLoginResponse: Login success response
+        :raise HTTPException: If the server token is not configured
+        """
+        if not self.hashed_token:
+            raise HTTPException(
+                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
+                detail="Server token is not configured",
+            )
+
         logger.info("User login successful.")
         return GetLoginResponse(
-            code=ResponseCode.OK,
             message="Login successful.",
             timestamp=GetLoginResponse.current_timestamp(),
         )

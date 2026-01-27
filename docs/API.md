@@ -179,14 +179,8 @@ Rate limits can be configured in `config.json`.
 **Request**: None
 
 **Response Model**: `GetHealthResponse`
-- `code` (int): HTTP status code
 - `message` (string): Status message
 - `timestamp` (string): ISO 8601 timestamp
-- `status` (string): Health status indicator (HEALTHY/DEGRADED/UNHEALTHY)
-
-**Health Status Indicators**:
-- `HEALTHY`: Server is fully operational and token is configured
-- `UNHEALTHY`: Server token is not configured (returns 500 status code)
 
 **Example Request**:
 ```bash
@@ -196,20 +190,8 @@ curl -k https://localhost:443/api/health
 **Example Response** (200 OK - Healthy):
 ```json
 {
-  "code": 200,
   "message": "Server is healthy",
-  "timestamp": "2025-11-22T12:00:00.000000Z",
-  "status": "HEALTHY"
-}
-```
-
-**Example Response** (500 Internal Server Error - Unhealthy):
-```json
-{
-  "code": 500,
-  "message": "Server token is not configured",
-  "timestamp": "2025-11-22T12:00:00.000000Z",
-  "status": "UNHEALTHY"
+  "timestamp": "2025-11-22T12:00:00.000000Z"
 }
 ```
 
@@ -224,7 +206,6 @@ curl -k https://localhost:443/api/health
 **Request**: None
 
 **Response Model**: `GetLoginResponse`
-- `code` (int): HTTP status code
 - `message` (string): Login status message
 - `timestamp` (string): ISO 8601 timestamp
 
@@ -237,15 +218,10 @@ curl -k https://localhost:443/api/login \
 **Example Response** (200 OK):
 ```json
 {
-  "code": 200,
   "message": "Login successful.",
   "timestamp": "2025-11-22T12:00:00.000000Z"
 }
 ```
-
-**Error Responses**:
-- `401 Unauthorized`: Missing or invalid API key
-- `429 Too Many Requests`: Rate limit exceeded
 
 ## Static File Serving
 
@@ -292,8 +268,8 @@ curl -k https://localhost:443/nonexistent/path
 ## Request and Response Models (Pydantic)
 
 The primary Pydantic models are defined in `python_template_server/models.py`:
-- `BaseResponse`: Base model with code, message, and timestamp fields
-- `GetHealthResponse`: Extends BaseResponse with status field (HEALTHY/UNHEALTHY)
+- `BaseResponse`: Base model with message and timestamp fields
+- `GetHealthResponse`: Extends BaseResponse for health endpoint responses
 - `GetLoginResponse`: Extends BaseResponse for login endpoint responses
 - `TemplateServerConfig`: Configuration model for server settings (security, rate limiting, JSON response)
 
