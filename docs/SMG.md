@@ -73,7 +73,7 @@ uv sync --extra dev
 After installing dev dependencies, set up pre-commit hooks:
 
 ```sh
-    uv run pre-commit install
+uv run pre-commit install
 ```
 
 ### Setting Up Authentication
@@ -81,7 +81,8 @@ After installing dev dependencies, set up pre-commit hooks:
 Before running the server, you need to generate an API authentication token.
 
 ```sh
-uv run generate-new-token
+cp .env.example .env       # Set HOST and PORT to override defaults
+uv run generate-new-token  # Set API_TOKEN_HASH variable
 ```
 
 This command:
