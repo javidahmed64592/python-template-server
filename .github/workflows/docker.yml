@@ -177,6 +177,9 @@ jobs:
           tar -xzf ${{ env.PACKAGE_NAME }}_${{ steps.get_version.outputs.version }}.tar.gz
           cd ${{ env.PACKAGE_NAME }}_${{ steps.get_version.outputs.version }}
 
+          # Set up environment variables
+          cp .env.example .env
+
           # Run the container using Docker Compose
           docker compose up -d
           ```
