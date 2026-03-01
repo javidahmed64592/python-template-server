@@ -4,8 +4,6 @@ import hashlib
 import logging
 import secrets
 
-import dotenv
-
 from python_template_server.constants import ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, TOKEN_LENGTH
 from python_template_server.logging_setup import setup_logging
 
@@ -40,7 +38,15 @@ def save_hashed_token(token: str) -> None:
     if not ENV_FILE_PATH.exists():
         ENV_FILE_PATH.touch()
 
-    dotenv.set_key(ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, hashed)
+    content = ENV_FILE_PATH.read_text()
+    lines = content.splitlines(keepends=True)
+    new_lines = []
+    for line in lines:
+        if line.startswith(f"{TOKEN_ENV_VAR_NAME}="):
+            new_lines.append(f"{TOKEN_ENV_VAR_NAME}={hashed}\n")
+        else:
+            new_lines.append(line)
+    ENV_FILE_PATH.write_text("".join(new_lines))
 
 
 def verify_token(token: str, hashed_token: str) -> bool:

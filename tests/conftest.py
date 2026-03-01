@@ -46,10 +46,17 @@ def mock_touch() -> Generator[MagicMock]:
 
 
 @pytest.fixture
-def mock_set_key() -> Generator[MagicMock]:
-    """Mock the set_key function."""
-    with patch("dotenv.set_key") as mock_set_key:
-        yield mock_set_key
+def mock_read_text() -> Generator[MagicMock]:
+    """Mock the Path.read_text() method."""
+    with patch("pathlib.Path.read_text") as mock_read:
+        yield mock_read
+
+
+@pytest.fixture
+def mock_write_text() -> Generator[MagicMock]:
+    """Mock the Path.write_text() method."""
+    with patch("pathlib.Path.write_text") as mock_write:
+        yield mock_write
 
 
 @pytest.fixture
