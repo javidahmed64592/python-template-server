@@ -12,7 +12,7 @@ from python_template_server.authentication_handler import (
     save_hashed_token,
     verify_token,
 )
-from python_template_server.constants import ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, TOKEN_LENGTH
+from python_template_server.constants import TOKEN_ENV_VAR_NAME, TOKEN_LENGTH
 
 
 @pytest.fixture
@@ -53,21 +53,34 @@ class TestAuthenticationHandler:
         assert len(hashed) == expected_length
 
     def test_save_hashed_token(
-        self, mock_hash_token: MagicMock, mock_exists: MagicMock, mock_set_key: MagicMock
+        self,
+        mock_hash_token: MagicMock,
+        mock_exists: MagicMock,
+        mock_read_text: MagicMock,
+        mock_write_text: MagicMock,
     ) -> None:
         """Test the save_hashed_token function."""
         mock_exists.return_value = True
+        mock_read_text.return_value = f"{TOKEN_ENV_VAR_NAME}=oldhash\n"
         save_hashed_token("testtoken")
-        mock_set_key.assert_called_once_with(ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, mock_hash_token.return_value)
+        expected = f"{TOKEN_ENV_VAR_NAME}={mock_hash_token.return_value}\n"
+        mock_write_text.assert_called_once_with(expected)
 
     def test_save_hashed_token_file_creation(
-        self, mock_hash_token: MagicMock, mock_exists: MagicMock, mock_touch: MagicMock, mock_set_key: MagicMock
+        self,
+        mock_hash_token: MagicMock,
+        mock_exists: MagicMock,
+        mock_touch: MagicMock,
+        mock_read_text: MagicMock,
+        mock_write_text: MagicMock,
     ) -> None:
         """Test the save_hashed_token function creates the .env file if it does not exist."""
         mock_exists.return_value = False
+        mock_read_text.return_value = f"{TOKEN_ENV_VAR_NAME}=\n"
         save_hashed_token("testtoken")
         mock_touch.assert_called_once()
-        mock_set_key.assert_called_once_with(ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, mock_hash_token.return_value)
+        expected = f"{TOKEN_ENV_VAR_NAME}={mock_hash_token.return_value}\n"
+        mock_write_text.assert_called_once_with(expected)
 
     @pytest.mark.parametrize(
         ("input_token", "stored_hash", "expected"),
