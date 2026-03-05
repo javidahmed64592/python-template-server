@@ -1,0 +1,26 @@
+name: Check Tag
+description: Checks if a Git tag already exists for the given version.
+
+inputs:
+  version:
+    description: Version to check (without the v prefix)
+    required: true
+
+outputs:
+  tag_exists:
+    description: Whether the tag already exists (true/false)
+    value: ${{ steps.check.outputs.tag_exists }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check if tag exists
+      id: check
+      run: |
+        if git rev-parse "v${{ inputs.version }}" >/dev/null 2>&1; then
+          echo "Tag v${{ inputs.version }} already exists, skipping release creation"
+          echo "tag_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "tag_exists=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash

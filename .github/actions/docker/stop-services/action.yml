@@ -1,0 +1,9 @@
+name: Stop Services
+description: Stops Docker Compose services and removes volumes and orphans.
+
+runs:
+  using: composite
+  steps:
+    - name: Stop services
+      run: docker compose down --volumes --remove-orphans
+      shell: bash
