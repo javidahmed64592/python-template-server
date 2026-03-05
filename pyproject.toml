@@ -22,10 +22,10 @@ dependencies = [
     "fastapi>=0.135.1",
     "httpx>=0.28.1",
     "pydantic>=2.12.5",
-    "pyhere>=1.0.3",
     "python-dotenv>=1.2.2",
     "python-multipart>=0.0.21",
     "slowapi>=0.1.9",
+    "template-python @ git+https://github.com/javidahmed64592/template-python.git",
     "uvicorn[standard]>=0.41.0",
 ]
 
