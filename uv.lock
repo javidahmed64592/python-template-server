@@ -990,6 +990,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "python-multipart" },
     { name = "slowapi" },
+    { name = "template-python" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -1011,6 +1012,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "python-multipart", specifier = ">=0.0.21" },
     { name = "slowapi", specifier = ">=0.1.9" },
+    { name = "template-python", git = "https://github.com/javidahmed64592/template-python.git" },
     { name = "template-python", extras = ["dev"], marker = "extra == 'dev'", git = "https://github.com/javidahmed64592/template-python.git" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.41.0" },
 ]
