@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-python-dev
+      - uses: javidahmed64592/template-python/.github/actions/setup/install-python-dev@main
 
       - name: Get package name and version from pyproject.toml
         id: get_package_info
@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-python-core
+      - uses: javidahmed64592/template-python/.github/actions/setup/install-python-core@main
 
       - name: Check if repository name matches package name
         id: check_repo_name
