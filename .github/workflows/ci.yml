@@ -8,69 +8,70 @@ on:
     branches:
       - main
 
-env:
-  PACKAGE_NAME: python_template_server
-
 jobs:
   validate-pyproject:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/ci/validate-pyproject
-        if: ${{ github.repository == 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name == 'template-python' }}
       - uses: javidahmed64592/template-python/.github/actions/ci/validate-pyproject@main
-        if: ${{ github.repository != 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name != 'template-python' }}
 
   ruff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/ci/ruff
-        if: ${{ github.repository == 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name == 'template-python' }}
       - uses: javidahmed64592/template-python/.github/actions/ci/ruff@main
-        if: ${{ github.repository != 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name != 'template-python' }}
 
   mypy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/ci/mypy
-        if: ${{ github.repository == 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name == 'template-python' }}
       - uses: javidahmed64592/template-python/.github/actions/ci/mypy@main
-        if: ${{ github.repository != 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name != 'template-python' }}
 
   pytest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/ci/pytest
-        if: ${{ github.repository == 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name == 'template-python' }}
       - uses: javidahmed64592/template-python/.github/actions/ci/pytest@main
-        if: ${{ github.repository != 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name != 'template-python' }}
 
   bandit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup/set-package-name
+        if: ${{ github.event.repository.name == 'template-python' }}
+      - uses: javidahmed64592/template-python/.github/actions/setup/set-package-name@main
+        if: ${{ github.event.repository.name != 'template-python' }}
       - uses: ./.github/actions/ci/bandit
-        if: ${{ github.repository == 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name == 'template-python' }}
       - uses: javidahmed64592/template-python/.github/actions/ci/bandit@main
-        if: ${{ github.repository != 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name != 'template-python' }}
 
   pip-audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/ci/pip-audit
-        if: ${{ github.repository == 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name == 'template-python' }}
       - uses: javidahmed64592/template-python/.github/actions/ci/pip-audit@main
-        if: ${{ github.repository != 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name != 'template-python' }}
 
   version-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/ci/version-check
-        if: ${{ github.repository == 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name == 'template-python' }}
       - uses: javidahmed64592/template-python/.github/actions/ci/version-check@main
-        if: ${{ github.repository != 'javidahmed64592/template-python' }}
+        if: ${{ github.event.repository.name != 'template-python' }}

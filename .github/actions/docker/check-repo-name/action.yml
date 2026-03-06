@@ -1,11 +1,6 @@
 name: Check Repository Name
 description: Checks if the repository name matches the package name to prevent template-derived repositories from publishing releases.
 
-inputs:
-  repository:
-    description: Full repository name (owner/repo)
-    required: true
-
 outputs:
   should_release:
     description: Whether to proceed with the release (true/false)
@@ -18,7 +13,7 @@ runs:
       id: check
       run: |
         PACKAGE_NAME=$(uv run ci-pyproject-name)
-        REPO_NAME="${{ inputs.repository }}"
+        REPO_NAME="${{ github.repository }}"
         REPO_NAME_ONLY="${REPO_NAME##*/}"
 
         echo "Package name: $PACKAGE_NAME"
