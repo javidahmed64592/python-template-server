@@ -49,10 +49,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup/set-package-name
-        if: ${{ github.event.repository.name == 'template-python' }}
-      - uses: javidahmed64592/template-python/.github/actions/setup/set-package-name@main
-        if: ${{ github.event.repository.name != 'template-python' }}
       - uses: ./.github/actions/ci/bandit
         if: ${{ github.event.repository.name == 'template-python' }}
       - uses: javidahmed64592/template-python/.github/actions/ci/bandit@main
