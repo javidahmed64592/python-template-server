@@ -17,28 +17,28 @@ jobs:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/docker/build-start-services
-        if: ${{ github.event.repository.name == 'python-template-server' }}
+        if: github.event.repository.name == 'python-template-server'
       - uses: javidahmed64592/python-template-server/.github/actions/docker/build-start-services@main
-        if: ${{ github.event.repository.name != 'python-template-server' }}
+        if: github.event.repository.name != 'python-template-server'
 
       - uses: ./.github/actions/docker/show-logs
-        if: ${{ github.event.repository.name == 'python-template-server' }}
+        if: github.event.repository.name == 'python-template-server'
       - uses: javidahmed64592/python-template-server/.github/actions/docker/show-logs@main
-        if: ${{ github.event.repository.name != 'python-template-server' }}
+        if: github.event.repository.name != 'python-template-server'
 
       - uses: ./.github/actions/docker/check-containers
-        if: ${{ github.event.repository.name == 'python-template-server' }}
+        if: github.event.repository.name == 'python-template-server'
         with:
           port: 443
       - uses: javidahmed64592/python-template-server/.github/actions/docker/check-containers@main
-        if: ${{ github.event.repository.name != 'python-template-server' }}
+        if: github.event.repository.name != 'python-template-server'
         with:
           port: 443
 
       - uses: ./.github/actions/docker/stop-services
-        if: ${{ github.event.repository.name == 'python-template-server' }}
+        if: github.event.repository.name == 'python-template-server'
       - uses: javidahmed64592/python-template-server/.github/actions/docker/stop-services@main
-        if: ${{ github.event.repository.name != 'python-template-server' }}
+        if: github.event.repository.name != 'python-template-server'
 
   prepare-release:
     runs-on: ubuntu-latest
@@ -49,9 +49,9 @@ jobs:
       - uses: javidahmed64592/template-python/.github/actions/setup/install-python-dev@main
 
       - uses: ./.github/actions/docker/prepare-release
-        if: ${{ github.event.repository.name == 'python-template-server' }}
+        if: github.event.repository.name == 'python-template-server'
       - uses: javidahmed64592/python-template-server/.github/actions/docker/prepare-release@main
-        if: ${{ github.event.repository.name != 'python-template-server' }}
+        if: github.event.repository.name != 'python-template-server'
 
   publish-release:
     runs-on: ubuntu-latest
@@ -66,10 +66,10 @@ jobs:
       - uses: javidahmed64592/template-python/.github/actions/setup/install-python-core@main
 
       - uses: ./.github/actions/docker/check-repo-name
-        if: ${{ github.event.repository.name == 'python-template-server' }}
+        if: github.event.repository.name == 'python-template-server'
         id: check_repo_name_local
       - uses: javidahmed64592/python-template-server/.github/actions/docker/check-repo-name@main
-        if: ${{ github.event.repository.name != 'python-template-server' }}
+        if: github.event.repository.name != 'python-template-server'
         id: check_repo_name_remote
       - id: check_repo_name
         run: echo "should_release=${{ steps.check_repo_name_local.outputs.should_release || steps.check_repo_name_remote.outputs.should_release }}" >> $GITHUB_OUTPUT
