@@ -6,6 +6,10 @@ inputs:
     description: Seconds to wait for services to start
     required: false
     default: "5"
+  build-args:
+    description: Build arguments for Docker Compose
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -13,6 +17,6 @@ runs:
     - name: Build and start services with docker compose
       run: |
         mv .env.example .env
-        docker compose up --build -d
+        docker compose ${{ inputs.build-args }} up --build -d
         sleep ${{ inputs.wait-seconds }}
       shell: bash

@@ -1,10 +1,12 @@
 <!-- omit from toc -->
 # GitHub Workflows
 
-Refer to the `template-python` workflow documentation for information about the CI and build workflows: https://github.com/javidahmed64592/template-python/blob/main/docs/WORKFLOWS.md
+This document describes all GitHub workflows and reusable actions for the Python Template Server project.
 
-This document details the Docker-specific workflow and reusable actions to build and release the application.
-They run automated checks to ensure the Docker image builds correctly and can be released reliably.
+The repository includes CI and Build workflows that reference actions from the `template-python` repository.
+For detailed information about these shared actions, refer to: https://github.com/javidahmed64592/template-python/blob/main/docs/WORKFLOWS.md
+
+This document focuses on the Docker-specific workflow and reusable actions unique to this project, which handle building and releasing the containerized application.
 
 <!-- omit from toc -->
 ## Table of Contents
@@ -25,17 +27,18 @@ The following actions encapsulate the steps in the Docker workflow and can be re
 **build-start-services:**
 - Description: Creates `.env` file from `.env.example` and starts Docker Compose services.
 - Location: `build-start-services/action.yml`
-- Inputs:
-  - `wait-seconds` (default: `"5"`) - Seconds to wait after starting services
 - Steps:
-  - Renames `.env.example` to `.env`
-  - Runs `docker compose up --build -d`
+  - Moves `.env.example` to `.env`
+  - Runs `docker compose [build-args] up --build -d`
   - Sleeps for `wait-seconds`
 
 Usage:
 ```yaml
 steps:
   - uses: ./.github/actions/docker/build-start-services
+    with:
+      wait-seconds: "5"
+      build-args: ""
 ```
 
 ---
@@ -43,15 +46,13 @@ steps:
 **show-logs:**
 - Description: Shows logs from a Docker Compose container.
 - Location: `show-logs/action.yml`
-- Inputs:
-  - `container-name` (required) - Name of the container
+- Steps:
+  - Displays logs using `docker compose logs` for the repository name
 
 Usage:
 ```yaml
 steps:
   - uses: ./.github/actions/docker/show-logs
-    with:
-      container-name: my-container
 ```
 
 ---
@@ -59,10 +60,6 @@ steps:
 **check-containers:**
 - Description: Health checks the server by polling the `/api/health` endpoint.
 - Location: `check-containers/action.yml`
-- Inputs:
-  - `port` (required) - Port to check
-  - `num-retries` (default: `"5"`) - Number of retry attempts
-  - `timeout-seconds` (default: `"5"`) - Seconds between retries
 
 Usage:
 ```yaml
@@ -70,6 +67,8 @@ steps:
   - uses: ./.github/actions/docker/check-containers
     with:
       port: 443
+      num-retries: "5"
+      timeout-seconds: "5"
 ```
 
 ---
@@ -89,23 +88,20 @@ steps:
 **prepare-release:**
 - Description: Gets the package version, creates a release directory with essential files, builds a tarball, and uploads it as a workflow artifact.
 - Location: `prepare-release/action.yml`
-- Inputs:
-  - `package-name` (required) - Python package name
 - Outputs:
   - `package-dir` - Release directory name (e.g. `python_template_server_1.2.3`)
 - Steps:
   - Extracts version via `uv run ci-pyproject-version`
   - Creates release directory and copies `docker-compose.yml`, `README.md`, `LICENSE`, `.env.example`
   - Creates compressed tarball
-  - Uploads tarball as artifact named `{package-name}_release`
+  - Uploads tarball as artifact named `{PACKAGE_NAME}_release`
+- Note: Requires `PACKAGE_NAME` environment variable to be set
 
 Usage:
 ```yaml
 steps:
   - uses: javidahmed64592/template-python/.github/actions/setup/install-python-dev@main
   - uses: ./.github/actions/docker/prepare-release
-    with:
-      package-name: my_package
 ```
 
 ---
@@ -113,18 +109,18 @@ steps:
 **check-repo-name:**
 - Description: Compares the repository name against the package name in `pyproject.toml` to prevent template-derived repositories from accidentally publishing releases.
 - Location: `check-repo-name/action.yml`
-- Inputs:
-  - `repository` (required) - Full repository name (`owner/repo`)
 - Outputs:
   - `should_release` - `"true"` if names match, `"false"` otherwise
+- Steps:
+  - Extracts package name via `uv run ci-pyproject-name`
+  - Compares repository name with package name
+  - Sets output based on match result
 
 Usage:
 ```yaml
 steps:
   - uses: ./.github/actions/docker/check-repo-name
     id: check_repo_name
-    with:
-      repository: ${{ github.repository }}
 ```
 
 ---
@@ -148,8 +144,6 @@ steps:
 **check-tag:**
 - Description: Checks if a Git tag already exists for the given version to avoid duplicate releases.
 - Location: `check-tag/action.yml`
-- Inputs:
-  - `version` (required) - Version string without the `v` prefix
 - Outputs:
   - `tag_exists` - `"true"` if the tag exists, `"false"` otherwise
 
@@ -167,13 +161,12 @@ steps:
 **generate-release-notes:**
 - Description: Generates a `release_notes.md` file by substituting placeholders in `docs/RELEASE-NOTES.md`.
 - Location: `generate-release-notes/action.yml`
-- Inputs:
-  - `version` (required) - Release version (without `v` prefix)
-  - `container-name` (required) - Docker container name
-  - `package-name` (required) - Python package name
-  - `repository` (required) - Full repository name (`owner/repo`)
 - Outputs:
   - `release_notes_file` - Path to the generated file (`release_notes.md`)
+- Steps:
+  - Substitutes `{{VERSION}}`, `{{CONTAINER_NAME}}`, `{{PACKAGE_NAME}}`, and `{{REPOSITORY}}` placeholders
+  - Container name and repository are derived from GitHub context
+  - Package name is taken from `PACKAGE_NAME` environment variable
 
 Usage:
 ```yaml
@@ -182,16 +175,13 @@ steps:
     id: release_notes
     with:
       version: ${{ steps.get_version.outputs.version }}
-      container-name: my-container
-      package-name: my_package
-      repository: ${{ github.repository }}
 ```
 
 ## Workflows (`./github/workflows`)
 
 ### Docker Workflow (`docker.yml`)
 
-The Docker workflow runs on pushes and pull requests to the `main` branch, and manual dispatch.
+The Docker workflow runs on pushes and pull requests to the `main` branch, and supports manual dispatch.
 It consists of 3 jobs to build, verify, and publish the Docker image.
 
 **Jobs:**
