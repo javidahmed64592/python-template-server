@@ -1,5 +1,5 @@
 name: Check Docker Containers
-description: Checks the status of Docker containers
+description: Checks the status of Docker containers.
 
 inputs:
   port:
@@ -13,6 +13,7 @@ inputs:
     description: Timeout in seconds between retries
     required: false
     default: "5"
+
 runs:
   using: composite
   steps:
