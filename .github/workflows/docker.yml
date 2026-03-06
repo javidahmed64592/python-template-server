@@ -47,11 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: javidahmed64592/template-python/.github/actions/setup/install-python-dev@main
-
-      - uses: ./.github/actions/setup/set-package-name
-        if: ${{ github.event.repository.name == 'python-template-server' }}
       - uses: javidahmed64592/template-python/.github/actions/setup/set-package-name@main
-        if: ${{ github.event.repository.name != 'python-template-server' }}
 
       - uses: ./.github/actions/docker/prepare-release
         if: ${{ github.event.repository.name == 'python-template-server' }}
@@ -69,11 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: javidahmed64592/template-python/.github/actions/setup/install-python-core@main
-
-      - uses: ./.github/actions/setup/set-package-name
-        if: ${{ github.event.repository.name == 'python-template-server' }}
       - uses: javidahmed64592/template-python/.github/actions/setup/set-package-name@main
-        if: ${{ github.event.repository.name != 'python-template-server' }}
 
       - uses: ./.github/actions/docker/check-repo-name
         if: ${{ github.event.repository.name == 'python-template-server' }}
