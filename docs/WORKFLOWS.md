@@ -10,7 +10,7 @@ They run automated checks to ensure the Docker image builds correctly and can be
 ## Table of Contents
 - [Reusable Actions (`./github/actions`)](#reusable-actions-githubactions)
   - [Docker Actions (`docker/**/action.yml`)](#docker-actions-dockeractionyml)
-- [Workflows](#workflows)
+- [Workflows (`./github/workflows`)](#workflows-githubworkflows)
   - [Docker Workflow (`docker.yml`)](#docker-workflow-dockeryml)
 
 
@@ -187,7 +187,7 @@ steps:
       repository: ${{ github.repository }}
 ```
 
-## Workflows
+## Workflows (`./github/workflows`)
 
 ### Docker Workflow (`docker.yml`)
 
