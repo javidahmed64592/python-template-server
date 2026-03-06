@@ -14,9 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/build/build-wheel
-        if: ${{ github.event.repository.name == 'template-python' }}
+        if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/build/build-wheel@main
-        if: ${{ github.event.repository.name != 'template-python' }}
+        if: github.event.repository.name != 'template-python'
 
   verify-structure:
     runs-on: ubuntu-latest
@@ -24,6 +24,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/build/verify-structure
-        if: ${{ github.event.repository.name == 'template-python' }}
+        if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/build/verify-structure@main
-        if: ${{ github.event.repository.name != 'template-python' }}
+        if: github.event.repository.name != 'template-python'
