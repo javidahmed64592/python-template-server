@@ -1,11 +1,6 @@
 name: Prepare Release
 description: Gets package version, prepares a release directory, creates a tarball, and uploads it as an artifact.
 
-inputs:
-  package-name:
-    description: Name of the Python package
-    required: true
-
 outputs:
   package-dir:
     description: Name of the release directory and tarball (without .tar.gz)
@@ -18,7 +13,7 @@ runs:
       id: get_package_info
       run: |
         VERSION=$(uv run ci-pyproject-version)
-        echo "package_dir=${{ inputs.package-name }}_${VERSION}" >> $GITHUB_OUTPUT
+        echo "package_dir=${PACKAGE_NAME}_${VERSION}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Prepare release directory
@@ -38,5 +33,5 @@ runs:
     - name: Upload release tarball
       uses: actions/upload-artifact@v7
       with:
-        name: ${{ inputs.package-name }}_release
+        name: ${{ env.PACKAGE_NAME }}_release
         path: ${{ steps.get_package_info.outputs.package_dir }}.tar.gz

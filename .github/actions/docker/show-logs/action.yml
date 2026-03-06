@@ -1,14 +1,9 @@
 name: Show Container Logs
 description: Shows logs from a Docker Compose container.
 
-inputs:
-  container-name:
-    description: Name of the container to show logs for
-    required: true
-
 runs:
   using: composite
   steps:
     - name: Show container logs
-      run: docker compose logs ${{ inputs.container-name }}
+      run: docker compose logs ${{ github.event.repository.name }}
       shell: bash
