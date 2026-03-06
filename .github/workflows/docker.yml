@@ -21,32 +21,16 @@ jobs:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/docker/build-start-services
-        if: ${{ github.repository == 'javidahmed64592/python-template-server' }}
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/build-start-services@main
-        if: ${{ github.repository != 'javidahmed64592/python-template-server' }}
 
       - uses: ./.github/actions/docker/show-logs
-        if: ${{ github.repository == 'javidahmed64592/python-template-server' }}
-        with:
-          container-name: ${{ env.CONTAINER_NAME }}
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/show-logs@main
-        if: ${{ github.repository != 'javidahmed64592/python-template-server' }}
         with:
           container-name: ${{ env.CONTAINER_NAME }}
 
       - uses: ./.github/actions/docker/check-containers
-        if: ${{ github.repository == 'javidahmed64592/python-template-server' }}
-        with:
-          port: 443
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/check-containers@main
-        if: ${{ github.repository != 'javidahmed64592/python-template-server' }}
         with:
           port: 443
 
       - uses: ./.github/actions/docker/stop-services
-        if: ${{ github.repository == 'javidahmed64592/python-template-server' }}
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/stop-services@main
-        if: ${{ github.repository != 'javidahmed64592/python-template-server' }}
 
   prepare-release:
     runs-on: ubuntu-latest
@@ -57,11 +41,6 @@ jobs:
       - uses: javidahmed64592/template-python/.github/actions/setup/install-python-dev@main
 
       - uses: ./.github/actions/docker/prepare-release
-        if: ${{ github.repository == 'javidahmed64592/python-template-server' }}
-        with:
-          package-name: ${{ env.PACKAGE_NAME }}
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/prepare-release@main
-        if: ${{ github.repository != 'javidahmed64592/python-template-server' }}
         with:
           package-name: ${{ env.PACKAGE_NAME }}
 
@@ -78,46 +57,19 @@ jobs:
       - uses: javidahmed64592/template-python/.github/actions/setup/install-python-core@main
 
       - uses: ./.github/actions/docker/check-repo-name
-        if: ${{ github.repository == 'javidahmed64592/python-template-server' }}
-        id: check_repo_name_local
+        id: check_repo_name
         with:
           repository: ${{ github.repository }}
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/check-repo-name@main
-        if: ${{ github.repository != 'javidahmed64592/python-template-server' }}
-        id: check_repo_name_remote
-        with:
-          repository: ${{ github.repository }}
-      - id: check_repo_name
-        run: echo "should_release=${{ steps.check_repo_name_local.outputs.should_release || steps.check_repo_name_remote.outputs.should_release }}" >> $GITHUB_OUTPUT
-        shell: bash
 
       - uses: ./.github/actions/docker/get-version
-        if: steps.check_repo_name.outputs.should_release == 'true' && github.repository == 'javidahmed64592/python-template-server'
-        id: get_version_local
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/get-version@main
-        if: steps.check_repo_name.outputs.should_release == 'true' && github.repository != 'javidahmed64592/python-template-server'
-        id: get_version_remote
-      - id: get_version
         if: steps.check_repo_name.outputs.should_release == 'true'
-        run: |
-          echo "version=${{ steps.get_version_local.outputs.version || steps.get_version_remote.outputs.version }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ steps.get_version_local.outputs.tag || steps.get_version_remote.outputs.tag }}" >> $GITHUB_OUTPUT
-        shell: bash
+        id: get_version
 
       - uses: ./.github/actions/docker/check-tag
-        if: steps.check_repo_name.outputs.should_release == 'true' && github.repository == 'javidahmed64592/python-template-server'
-        id: check_tag_local
-        with:
-          version: ${{ steps.get_version.outputs.version }}
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/check-tag@main
-        if: steps.check_repo_name.outputs.should_release == 'true' && github.repository != 'javidahmed64592/python-template-server'
-        id: check_tag_remote
-        with:
-          version: ${{ steps.get_version.outputs.version }}
-      - id: check_tag
         if: steps.check_repo_name.outputs.should_release == 'true'
-        run: echo "tag_exists=${{ steps.check_tag_local.outputs.tag_exists || steps.check_tag_remote.outputs.tag_exists }}" >> $GITHUB_OUTPUT
-        shell: bash
+        id: check_tag
+        with:
+          version: ${{ steps.get_version.outputs.version }}
 
       - name: Download release tarball
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
@@ -162,25 +114,13 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
       - uses: ./.github/actions/docker/generate-release-notes
-        if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false' && github.repository == 'javidahmed64592/python-template-server'
-        id: release_notes_local
-        with:
-          version: ${{ steps.get_version.outputs.version }}
-          container-name: ${{ env.CONTAINER_NAME }}
-          package-name: ${{ env.PACKAGE_NAME }}
-          repository: ${{ github.repository }}
-      - uses: javidahmed64592/python-template-server/.github/actions/docker/generate-release-notes@main
-        if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false' && github.repository != 'javidahmed64592/python-template-server'
-        id: release_notes_remote
-        with:
-          version: ${{ steps.get_version.outputs.version }}
-          container-name: ${{ env.CONTAINER_NAME }}
-          package-name: ${{ env.PACKAGE_NAME }}
-          repository: ${{ github.repository }}
-      - id: release_notes
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
-        run: echo "release_notes_file=${{ steps.release_notes_local.outputs.release_notes_file || steps.release_notes_remote.outputs.release_notes_file }}" >> $GITHUB_OUTPUT
-        shell: bash
+        id: release_notes
+        with:
+          version: ${{ steps.get_version.outputs.version }}
+          container-name: ${{ env.CONTAINER_NAME }}
+          package-name: ${{ env.PACKAGE_NAME }}
+          repository: ${{ github.repository }}
 
       - name: Create GitHub Release
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
