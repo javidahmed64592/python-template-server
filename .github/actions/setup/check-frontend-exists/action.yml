@@ -1,6 +1,11 @@
 name: Check Frontend Exists
 description: Check if the frontend directory exists in the repository.
 
+outputs:
+  exists:
+    description: Whether the frontend directory exists
+    value: ${{ steps.check-frontend.outputs.exists }}
+
 runs:
   using: composite
   steps:
