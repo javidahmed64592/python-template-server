@@ -1,0 +1,21 @@
+name: Build Frontend
+description: Build the frontend and upload the build artifacts for use in other jobs.
+
+runs:
+  using: composite
+  steps:
+      - uses: ./.github/actions/setup/setup-node
+        if: github.event.repository.name == 'python-template-server'
+      - uses: javidahmed64592/python-template-server/.github/actions/setup/setup-node@main
+        if: github.event.repository.name != 'python-template-server'
+
+      - name: Build frontend
+        run: |
+          npm run build
+        working-directory: ${{ github.event.repository.name }}-frontend
+        shell: bash
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ github.event.repository.name }}-frontend-build
+          path: ${{ github.event.repository.name }}-frontend/out
