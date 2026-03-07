@@ -12,6 +12,8 @@ This document focuses on the Docker-specific workflow and reusable actions uniqu
 ## Table of Contents
 - [Reusable Actions (`./github/actions`)](#reusable-actions-githubactions)
   - [Setup Actions (`/setup/**/action.yml`)](#setup-actions-setupactionyml)
+  - [CI Actions (`/ci/**/action.yml`)](#ci-actions-ciactionyml)
+  - [Build Actions (`/build/**/action.yml`)](#build-actions-buildactionyml)
   - [Docker Actions (`docker/**/action.yml`)](#docker-actions-dockeractionyml)
 - [Workflows (`./github/workflows`)](#workflows-githubworkflows)
   - [Docker Workflow (`docker.yml`)](#docker-workflow-dockeryml)
@@ -34,6 +36,41 @@ Usage:
 ```yaml
 steps:
   - uses: javidahmed64592/python-template-server/.github/actions/setup/setup-node@main
+```
+
+### CI Actions (`/ci/**/action.yml`)
+
+**frontend:**
+- Description: Build the frontend and upload the build artifacts for use in other jobs.
+- Location: `frontend/action.yml`
+- Steps:
+  - Uses the `setup-node` action
+  - Runs `npm run type-check` for type checking
+  - Runs `npm run lint` for static code analysis
+  - Runs `npm run format` to tidy up scripts
+  - Runs `npm run test:coverage` for frontend unit tests
+  - Uploads unit test coverage report using `actions/upload-artifact@v7`
+
+Usage:
+```yaml
+steps:
+  - uses: javidahmed64592/template-python/.github/actions/ci/frontend@main
+```
+
+### Build Actions (`/build/**/action.yml`)
+
+**build-frontend:**
+- Description: Build the frontend and upload the build artifacts for use in other jobs.
+- Location: `build-frontend/action.yml`
+- Steps:
+  - Uses the `setup-node` action
+  - Runs `npm run build` to build frontend static files
+  - Uploads static files as build artifact using `actions/upload-artifact@v7`
+
+Usage:
+```yaml
+steps:
+  - uses: javidahmed64592/template-python/.github/actions/build/build-frontend@main
 ```
 
 ### Docker Actions (`docker/**/action.yml`)
