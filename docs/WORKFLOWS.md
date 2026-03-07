@@ -11,14 +11,30 @@ This document focuses on the Docker-specific workflow and reusable actions uniqu
 <!-- omit from toc -->
 ## Table of Contents
 - [Reusable Actions (`./github/actions`)](#reusable-actions-githubactions)
+  - [Setup Actions (`/setup/**/action.yml`)](#setup-actions-setupactionyml)
   - [Docker Actions (`docker/**/action.yml`)](#docker-actions-dockeractionyml)
 - [Workflows (`./github/workflows`)](#workflows-githubworkflows)
   - [Docker Workflow (`docker.yml`)](#docker-workflow-dockeryml)
 
-
 ## Reusable Actions (`./github/actions`)
 
 The following actions can be referenced from other repositories using `javidahmed64592/python-template-server/.github/actions/{category}/{action}@main`.
+
+### Setup Actions (`/setup/**/action.yml`)
+
+**setup-node:**
+- Description: Set up Node.js with npm cache and install dependencies.
+- Location: `setup-node/action.yml`
+- Steps:
+  - Installs Node using `actions/setup-node@v4` with caching enabled
+  - Install npm packages
+- Note: Requires a frontend directory named `<repository name>-frontend`
+
+Usage:
+```yaml
+steps:
+  - uses: javidahmed64592/python-template-server/.github/actions/setup/setup-node@main
+```
 
 ### Docker Actions (`docker/**/action.yml`)
 
