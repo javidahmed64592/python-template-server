@@ -16,6 +16,8 @@ This document focuses on the Docker-specific workflow and reusable actions uniqu
   - [Build Actions (`/build/**/action.yml`)](#build-actions-buildactionyml)
   - [Docker Actions (`docker/**/action.yml`)](#docker-actions-dockeractionyml)
 - [Workflows (`./github/workflows`)](#workflows-githubworkflows)
+  - [CI Workflow (`ci.yml`)](#ci-workflow-ciyml)
+  - [Build Workflow (`build.yml`)](#build-workflow-buildyml)
   - [Docker Workflow (`docker.yml`)](#docker-workflow-dockeryml)
 
 ## Reusable Actions (`./github/actions`)
@@ -23,6 +25,26 @@ This document focuses on the Docker-specific workflow and reusable actions uniqu
 The following actions can be referenced from other repositories using `javidahmed64592/python-template-server/.github/actions/{category}/{action}@main`.
 
 ### Setup Actions (`/setup/**/action.yml`)
+
+**check-frontend-exists:**
+- Description: Check if the frontend directory exists in the repository to conditionally execute frontend CI and build jobs.
+- Location: `check-frontend-exists/action.yml`
+- Outputs:
+  - `exists` - `"true"` if frontend directory exists, `"false"` otherwise
+- Steps:
+  - Checks for directory named `<repository name>-frontend`
+  - Sets output to `true` or `false` based on directory existence
+  - Logs message if directory doesn't exist
+- Note: Used by CI and Build workflows to skip frontend jobs when no frontend directory is present
+
+Usage:
+```yaml
+steps:
+  - uses: javidahmed64592/python-template-server/.github/actions/setup/check-frontend-exists@main
+    id: check-frontend
+```
+
+---
 
 **setup-node:**
 - Description: Set up Node.js with npm cache and install dependencies.
@@ -41,7 +63,7 @@ steps:
 ### CI Actions (`/ci/**/action.yml`)
 
 **frontend:**
-- Description: Build the frontend and upload the build artifacts for use in other jobs.
+- Description: Runs frontend validation checks (type-checking, linting, formatting, testing) and uploads coverage reports.
 - Location: `frontend/action.yml`
 - Steps:
   - Uses the `setup-node` action
@@ -54,7 +76,7 @@ steps:
 Usage:
 ```yaml
 steps:
-  - uses: javidahmed64592/template-python/.github/actions/ci/frontend@main
+  - uses: javidahmed64592/python-template-server/.github/actions/ci/frontend@main
 ```
 
 ### Build Actions (`/build/**/action.yml`)
@@ -70,7 +92,7 @@ steps:
 Usage:
 ```yaml
 steps:
-  - uses: javidahmed64592/template-python/.github/actions/build/build-frontend@main
+  - uses: javidahmed64592/python-template-server/.github/actions/build/build-frontend@main
 ```
 
 ### Docker Actions (`docker/**/action.yml`)
@@ -231,6 +253,34 @@ steps:
 ```
 
 ## Workflows (`./github/workflows`)
+
+### CI Workflow (`ci.yml`)
+
+The CI workflow runs on pushes and pull requests to the `main` branch.
+It inherits all Python validation jobs from `template-python` and adds frontend-specific validation.
+
+**Additional Jobs:**
+- `frontend` - Conditionally executes validation checks on frontend if frontend directory exists
+  - Uses `check-frontend-exists` to detect frontend directory
+  - Runs `frontend` action only when frontend is present
+
+### Build Workflow (`build.yml`)
+
+The Build workflow runs on pushes and pull requests to the `main` branch.
+It extends the base `template-python` build process with optional frontend building.
+
+**Additional Jobs:**
+- `build-frontend` - Conditionally builds frontend and outputs existence flag
+  - Uses `check-frontend-exists` to detect frontend directory
+  - Builds frontend static files using `build-frontend` action if present
+  - Outputs `frontend-exists` flag for downstream jobs
+  - Uploads frontend build artifacts
+
+**Modified Jobs:**
+- `build-wheel` - Enhanced to include frontend builds
+  - Depends on `build-frontend` job
+  - Downloads frontend build artifacts to `static/` directory if `frontend-exists` is `true`
+  - Proceeds with standard wheel building from `template-python`
 
 ### Docker Workflow (`docker.yml`)
 

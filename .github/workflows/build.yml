@@ -9,10 +9,36 @@ on:
       - main
 
 jobs:
-  build-wheel:
+  build-frontend:
     runs-on: ubuntu-latest
+    outputs:
+      frontend-exists: ${{ steps.check-frontend.outputs.exists }}
     steps:
       - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup/check-frontend-exists
+        if: github.event.repository.name == 'python-template-server'
+      # - uses: javidahmed64592/python-template-server/.github/actions/setup/check-frontend-exists@main
+      #   if: github.event.repository.name != 'python-template-server'
+
+      - uses: ./.github/actions/build/build-frontend
+        if: steps.check-frontend.outputs.exists == 'true' && github.event.repository.name == 'python-template-server'
+      - uses: javidahmed64592/python-template-server/.github/actions/build/build-frontend@main
+        if: steps.check-frontend.outputs.exists == 'true' && github.event.repository.name != 'python-template-server'
+
+  build-wheel:
+    runs-on: ubuntu-latest
+    needs: build-frontend
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download frontend build
+        if: needs.build-frontend.outputs.frontend-exists == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ github.event.repository.name }}-frontend-build
+          path: static
+
       - uses: ./.github/actions/build/build-wheel
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/build/build-wheel@main
@@ -23,6 +49,7 @@ jobs:
     needs: build-wheel
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/build/verify-structure
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/build/verify-structure@main
