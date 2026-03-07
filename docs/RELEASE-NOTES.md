@@ -6,7 +6,7 @@
 
 ```bash
 # Download and extract
-wget https://github.com/javidahmed64592/{{CONTAINER_NAME}}/releases/download/v{{VERSION}}/{{PACKAGE_NAME}}_{{VERSION}}.tar.gz
+wget https://github.com/{{REPOSITORY}}/releases/download/v{{VERSION}}/{{PACKAGE_NAME}}_{{VERSION}}.tar.gz
 tar -xzf {{PACKAGE_NAME}}_{{VERSION}}.tar.gz
 cd {{PACKAGE_NAME}}_{{VERSION}}
 
