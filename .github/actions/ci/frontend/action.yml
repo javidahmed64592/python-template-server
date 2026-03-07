@@ -1,5 +1,5 @@
-name: Build Frontend
-description: Build the frontend and upload the build artifacts for use in other jobs.
+name: Frontend
+description: Runs frontend validation checks (type-checking, linting, formatting, testing) and uploads coverage reports.
 
 runs:
   using: composite

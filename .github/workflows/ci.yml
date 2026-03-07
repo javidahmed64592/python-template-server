@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/ci/validate-pyproject
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/ci/validate-pyproject@main
@@ -22,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/ci/ruff
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/ci/ruff@main
@@ -31,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/ci/mypy
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/ci/mypy@main
@@ -40,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/ci/pytest
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/ci/pytest@main
@@ -49,6 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/ci/bandit
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/ci/bandit@main
@@ -58,6 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/ci/pip-audit
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/ci/pip-audit@main
@@ -67,7 +73,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: ./.github/actions/ci/version-check
         if: github.event.repository.name == 'template-python'
       - uses: javidahmed64592/template-python/.github/actions/ci/version-check@main
         if: github.event.repository.name != 'template-python'
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup/check-frontend-exists
+        if: github.event.repository.name == 'python-template-server'
+      # - uses: javidahmed64592/python-template-server/.github/actions/setup/check-frontend-exists@main
+      #   if: github.event.repository.name != 'python-template-server'
+
+      - uses: ./.github/actions/ci/frontend
+        if: steps.check-frontend.outputs.exists == 'true' && github.event.repository.name == 'python-template-server'
+      - uses: javidahmed64592/python-template-server/.github/actions/ci/frontend@main
+        if: steps.check-frontend.outputs.exists == 'true' && github.event.repository.name != 'python-template-server'
