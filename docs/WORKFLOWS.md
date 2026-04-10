@@ -234,10 +234,8 @@ steps:
 ---
 
 **generate-release-notes:**
-- Description: Generates a `release_notes.md` file by substituting placeholders in `docs/RELEASE-NOTES.md`.
+- Description: Substitutes placeholders in `RELEASE-NOTES.md` with actual values.
 - Location: `generate-release-notes/action.yml`
-- Outputs:
-  - `release_notes_file` - Path to the generated file (`release_notes.md`)
 - Steps:
   - Substitutes `{{VERSION}}`, `{{CONTAINER_NAME}}`, `{{PACKAGE_NAME}}`, and `{{REPOSITORY}}` placeholders
   - Container name and repository are derived from GitHub context
