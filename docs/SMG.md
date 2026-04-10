@@ -70,12 +70,6 @@ To include development dependencies:
 uv sync --extra dev
 ```
 
-After installing dev dependencies, set up pre-commit hooks:
-
-```sh
-uv run pre-commit install
-```
-
 ### Setting Up Authentication
 
 Before running the server, you need to generate an API authentication token.
