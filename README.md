@@ -21,7 +21,6 @@ This repository provides a solid foundation for building secure, observable Fast
   - [Configuration](#configuration)
   - [Managing the Container](#managing-the-container)
 - [Using as a Template](#using-as-a-template)
-- [Documentation](#documentation)
 - [License](#license)
 
 ## Features
@@ -92,10 +91,6 @@ To create your own server:
    - `setup_routes()`: Define your API endpoints
 3. **Add custom routes** to the `setup_routes()` method
 4. **Configure** via `configuration/config.json`
-
-## Documentation
-
-Access the documentation at: https://javidahmed64592.github.io/python-template-server/
 
 ## License
 
