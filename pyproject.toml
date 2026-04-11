@@ -18,15 +18,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "cryptography>=46.0.5",
+    "cryptography>=46.0.7",
     "fastapi>=0.135.3",
     "httpx>=0.28.1",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.2",
-    "python-multipart>=0.0.21",
+    "python-multipart>=0.0.26",
     "slowapi>=0.1.9",
     "template-python @ git+https://github.com/javidahmed64592/template-python.git",
-    "uvicorn[standard]>=0.42.0",
+    "uvicorn[standard]>=0.44.0",
 ]
 
 [project.optional-dependencies]
@@ -35,9 +35,14 @@ dev = [
     "pytest-asyncio>=1.2.0",
     "pytest-env>=1.6.0",
 ]
+docs = [
+    "itsdangerous>=2.2.0",
+    "template-python[docs] @ git+https://github.com/javidahmed64592/template-python.git",
+]
 
 [project.urls]
 repository = "https://github.com/javidahmed64592/python-template-server"
+documentation = "https://javidahmed64592.github.io/python-template-server"
 
 [project.scripts]
 python-template-server = "python_template_server.main:run"
@@ -174,6 +179,7 @@ pretty = true
 
 [[tool.mypy.overrides]]
 module = [
-    "pyhere.*"
+    "pyhere.*",
+    "template_python.*",
 ]
 ignore_missing_imports = true

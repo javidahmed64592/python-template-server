@@ -113,7 +113,7 @@ class TemplateServer(ABC):
 
         :return bool: True if the static directory exists, False otherwise
         """
-        return self.static_dir.exists()
+        return self.static_dir.exists() and (self.static_dir / "index.html").exists()
 
     @staticmethod
     @asynccontextmanager

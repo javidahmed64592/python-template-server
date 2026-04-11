@@ -1,9 +1,8 @@
-[![python](https://img.shields.io/badge/Python-3.13-3776AB.svg?style=flat&logo=python&logoColor=ffd343)](https://docs.python.org/3.13/)
-[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB.svg?style=flat&logo=python&logoColor=ffd343)](https://docs.python.org/3.13/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![CI](https://img.shields.io/github/actions/workflow/status/javidahmed64592/python-template-server/ci.yml?branch=main&style=flat-square&label=CI&logo=github)](https://github.com/javidahmed64592/python-template-server/actions/workflows/ci.yml)
 [![Build](https://img.shields.io/github/actions/workflow/status/javidahmed64592/python-template-server/build.yml?branch=main&style=flat-square&label=Build&logo=github)](https://github.com/javidahmed64592/python-template-server/actions/workflows/build.yml)
+[![Docs](https://img.shields.io/github/actions/workflow/status/javidahmed64592/python-template-server/docs.yml?branch=main&style=flat-square&label=Docs&logo=github)](https://github.com/javidahmed64592/python-template-server/actions/workflows/docs.yml)
 [![Docker](https://img.shields.io/github/actions/workflow/status/javidahmed64592/python-template-server/docker.yml?branch=main&style=flat-square&label=Docker&logo=github)](https://github.com/javidahmed64592/python-template-server/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -45,7 +44,8 @@ This project uses a **`TemplateServer` base class** that encapsulates cross-cutt
 - **CORS Middleware**: Optional cross-origin support for frontend applications
 - **Static File Serving**: Serve SPAs or static assets using FastAPI's StaticFiles mounting
 
-**Application-specific servers** (like `ExampleServer` in `main.py`) extend `TemplateServer` to implement domain-specific endpoints and business logic. The base class handles all infrastructure concerns, letting you focus on your API functionality.
+**Application-specific servers** (like `ExampleServer` in `main.py`) extend `TemplateServer` to implement domain-specific endpoints and business logic.
+The base class handles all infrastructure concerns, letting you focus on your API functionality.
 
 ## Quick Start
 
@@ -90,16 +90,12 @@ To create your own server:
 2. **Implement required methods**:
    - `validate_config()`: Validate your config model
    - `setup_routes()`: Define your API endpoints
-3. **Add custom routes** using FastAPI decorators on `self.app`
+3. **Add custom routes** to the `setup_routes()` method
 4. **Configure** via `configuration/config.json`
-
-See the [Software Maintenance Guide](./docs/SMG.md) for detailed setup instructions.
 
 ## Documentation
 
-- **[API Documentation](./docs/API.md)**: API architecture and endpoints
-- **[Software Maintenance Guide](./docs/SMG.md)**: Development setup, configuration
-- **[Workflows](./docs/WORKFLOWS.md)**: CI/CD pipeline details
+Access the documentation at: https://javidahmed64592.github.io/python-template-server/
 
 ## License
 
