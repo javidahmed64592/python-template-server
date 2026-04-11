@@ -179,6 +179,7 @@ pretty = true
 
 [[tool.mypy.overrides]]
 module = [
-    "pyhere.*"
+    "pyhere.*",
+    "template_python.*",
 ]
 ignore_missing_imports = true
