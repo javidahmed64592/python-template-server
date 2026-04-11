@@ -12,9 +12,9 @@ runs:
     - name: Generate release notes
       id: generate
       run: |
-        sed \
+        sed -i \
           -e 's|{{VERSION}}|${{ inputs.version }}|g' \
           -e 's|{{REPOSITORY}}|${{ github.repository }}|g' \
           -e 's|{{PACKAGE_NAME}}|${{ env.PACKAGE_NAME }}|g' \
-          RELEASE-NOTES.md > RELEASE-NOTES.md
+          RELEASE-NOTES.md
       shell: bash
