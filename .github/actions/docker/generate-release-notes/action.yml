@@ -16,5 +16,5 @@ runs:
           -e 's|{{VERSION}}|${{ inputs.version }}|g' \
           -e 's|{{REPOSITORY}}|${{ github.repository }}|g' \
           -e 's|{{PACKAGE_NAME}}|${{ env.PACKAGE_NAME }}|g' \
-          RELEASE-NOTES.md > RELEASE-NOTES.md
+          RELEASE-NOTES.md > release_notes.md
       shell: bash

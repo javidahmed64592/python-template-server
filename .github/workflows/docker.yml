@@ -162,7 +162,7 @@ jobs:
         with:
           tag_name: ${{ steps.get_version.outputs.tag }}
           name: "${{ github.event.repository.name }} ${{ steps.get_version.outputs.version }}"
-          body_path: RELEASE-NOTES.md
+          body_path: release_notes.md
           draft: false
           prerelease: false
           generate_release_notes: false
