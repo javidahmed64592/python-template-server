@@ -90,6 +90,12 @@ jobs:
           echo "tag=${{ steps.get_version_local.outputs.tag || steps.get_version_remote.outputs.tag }}" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: Get package name
+        if: steps.check_repo_name.outputs.should_release == 'true'
+        id: get_package_name
+        run: echo "package_name=$(uv run ci-pyproject-name)" >> $GITHUB_OUTPUT
+        shell: bash
+
       - uses: ./.github/actions/docker/check-tag
         if: steps.check_repo_name.outputs.should_release == 'true' && github.event.repository.name == 'python-template-server'
         id: check_tag_local
@@ -109,7 +115,7 @@ jobs:
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         uses: actions/download-artifact@v8
         with:
-          name: ${{ env.PACKAGE_NAME }}_release
+          name: ${{ steps.get_package_name.outputs.package_name }}_release
 
       - name: Set up Docker Buildx
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
@@ -151,10 +157,12 @@ jobs:
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false' && github.event.repository.name == 'python-template-server'
         with:
           version: ${{ steps.get_version.outputs.version }}
+          package_name: ${{ steps.get_package_name.outputs.package_name }}
       - uses: javidahmed64592/python-template-server/.github/actions/docker/generate-release-notes@main
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false' && github.event.repository.name != 'python-template-server'
         with:
           version: ${{ steps.get_version.outputs.version }}
+          # package_name: ${{ steps.get_package_name.outputs.package_name }}
 
       - name: Create GitHub Release
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
@@ -162,8 +170,8 @@ jobs:
         with:
           tag_name: ${{ steps.get_version.outputs.tag }}
           name: "${{ github.event.repository.name }} ${{ steps.get_version.outputs.version }}"
-          body_path: release_notes.md
+          body_path: RELEASE-NOTES.md
           draft: false
           prerelease: false
           generate_release_notes: false
-          files: ${{ env.PACKAGE_NAME }}_${{ steps.get_version.outputs.version }}.tar.gz
+          files: ${{ steps.get_package_name.outputs.package_name }}_${{ steps.get_version.outputs.version }}.tar.gz
