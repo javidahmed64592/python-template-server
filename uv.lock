@@ -1466,7 +1466,7 @@ wheels = [
 [[package]]
 name = "template-python"
 version = "0.1.0"
-source = { git = "https://github.com/javidahmed64592/template-python.git#7b4f6cea13e3a968522ff7ae6a2cc450173d9a09" }
+source = { git = "https://github.com/javidahmed64592/template-python.git#c41c0063360e68f023b69f265f0a8e1d4871a77f" }
 dependencies = [
     { name = "pyhere" },
 ]
