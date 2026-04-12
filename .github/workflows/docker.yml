@@ -151,14 +151,20 @@ jobs:
 
       - uses: ./.github/actions/docker/generate-release-notes
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false' && github.event.repository.name == 'python-template-server'
+        id: release_notes_local
         with:
           version: ${{ steps.get_version.outputs.version }}
           package_name: ${{ steps.check_repo_name.outputs.package_name }}
       - uses: javidahmed64592/python-template-server/.github/actions/docker/generate-release-notes@main
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false' && github.event.repository.name != 'python-template-server'
+        id: release_notes_remote
         with:
           version: ${{ steps.get_version.outputs.version }}
           # package_name: ${{ steps.check_repo_name.outputs.package_name }}
+      - id: release_notes
+        if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: echo "release_notes_file=${{ steps.release_notes_local.outputs.release_notes_file || steps.release_notes_remote.outputs.release_notes_file }}" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Create GitHub Release
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
@@ -166,7 +172,7 @@ jobs:
         with:
           tag_name: ${{ steps.get_version.outputs.tag }}
           name: "${{ github.event.repository.name }} ${{ steps.get_version.outputs.version }}"
-          body_path: RELEASE-NOTES.md
+          body_path: ${{ steps.release_notes.outputs.release_notes_file }}
           draft: false
           prerelease: false
           generate_release_notes: false
