@@ -94,7 +94,7 @@ Start the server with:
 
 .. code-block:: sh
 
-   uv run python-template-server
+   uv run |repo_name|
 
 The backend will be available at ``https://localhost:443/api`` by default.
 

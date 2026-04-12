@@ -75,8 +75,8 @@ exclude_patterns: list[str] = []
 
 substitutions_default_enabled = True
 rst_prolog = get_rst_prolog(
-    keys=["project_name", "package_name"],
-    values=[project, package_name],
+    keys=["project_name", "package_name", "repo_name"],
+    values=[project, package_name, get_name_from_pyproject()],
 )
 
 # -- Options for HTML output -------------------------------------------------
