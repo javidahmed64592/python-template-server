@@ -4,10 +4,11 @@ import hashlib
 import logging
 import secrets
 
-from python_template_server.constants import ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, TOKEN_LENGTH
-from python_template_server.logging_setup import setup_logging
+from template_python.logging_setup import setup_default_logging
 
-setup_logging()
+from python_template_server.constants import ENV_FILE_PATH, TOKEN_ENV_VAR_NAME, TOKEN_LENGTH
+
+setup_default_logging()
 logger = logging.getLogger(__name__)
 
 

@@ -10,11 +10,11 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
+from template_python.logging_setup import setup_default_logging
 
-from python_template_server.logging_setup import setup_logging
 from python_template_server.models import CertificateConfigModel
 
-setup_logging()
+setup_default_logging()
 logger = logging.getLogger(__name__)
 
 
