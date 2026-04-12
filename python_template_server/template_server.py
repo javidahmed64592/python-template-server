@@ -25,7 +25,6 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from template_python.logging_setup import add_file_handler, setup_default_logging
-from template_python.workflows import get_name_from_pyproject
 
 from python_template_server.authentication_handler import verify_token
 from python_template_server.certificate_handler import CertificateHandler
@@ -69,6 +68,7 @@ class TemplateServer(ABC):
 
     def __init__(
         self,
+        package_name: str = "python-template-server",
         api_prefix: str = API_PREFIX,
         api_key_header_name: str = API_KEY_HEADER_NAME,
         config_filepath: Path = CONFIG_FILE_PATH,
@@ -92,7 +92,7 @@ class TemplateServer(ABC):
 
         CustomJSONResponse.configure(self.config.json_response)
 
-        self.package_metadata = metadata(get_name_from_pyproject())
+        self.package_metadata = metadata(package_name)
         self.app = FastAPI(
             title=self.package_metadata["Name"],
             description=self.package_metadata["Summary"],
