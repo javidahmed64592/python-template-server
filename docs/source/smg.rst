@@ -113,10 +113,25 @@ The backend will be available at ``https://localhost:443/api`` by default.
 Testing, Linting, and Type Checking
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **Lint code:** ``uv run ruff check .``
-- **Format code:** ``uv run ruff format .``
-- **Type check:** ``uv run mypy .``
-- **Run tests:** ``uv run pytest``
+.. code-block:: sh
+
+   # Lint code
+   uv run ruff check .
+
+   # Format code
+   uv run ruff format .
+
+   # Type check
+   uv run mypy .
+
+   # Run tests
+   uv run pytest
+
+   # Security scan
+   uv run bandit -r |package_name|/
+
+   # Audit dependencies
+   uv run pip-audit
 
 Building Documentation
 ~~~~~~~~~~~~~~~~~~~~~~

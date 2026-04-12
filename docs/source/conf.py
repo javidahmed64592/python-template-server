@@ -8,9 +8,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from template_python.constants import SPHINX_EXTENSIONS, SPHINX_HTML_THEME
 from template_python.workflows import (
     get_author_from_pyproject,
     get_name_from_pyproject,
+    get_rst_prolog,
     get_version_from_pyproject,
 )
 
@@ -29,14 +31,7 @@ package_name = get_name_from_pyproject().replace("-", "_")
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = [
-    "sphinx.ext.autodoc",  # Auto-generate API docs from docstrings
-    "sphinx.ext.autosummary",  # Generate summary tables
-    "sphinx.ext.napoleon",  # Support Google/NumPy style docstrings
-    "sphinx.ext.viewcode",  # Add links to highlighted source code
-    "sphinx.ext.intersphinx",  # Link to other project documentation
-    "sphinx_autodoc_typehints",  # Better type hint rendering
-]
+extensions = SPHINX_EXTENSIONS
 
 # Napoleon settings for Google-style docstrings
 napoleon_google_docstring = True
@@ -78,12 +73,13 @@ exclude_patterns: list[str] = []
 # -- RST substitutions -------------------------------------------------------
 # These variables are automatically available in all RST files as |variable_name|
 
-rst_prolog = f"""
-.. |project_name| replace:: {project}
-.. |package_name| replace:: {package_name}
-"""
+substitutions_default_enabled = True
+rst_prolog = get_rst_prolog(
+    keys=["project_name", "package_name"],
+    values=[project, package_name],
+)
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "furo"
+html_theme = SPHINX_HTML_THEME

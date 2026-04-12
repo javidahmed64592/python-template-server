@@ -24,6 +24,7 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from template_python.logging_setup import add_file_handler, setup_default_logging
 
 from python_template_server.authentication_handler import verify_token
 from python_template_server.certificate_handler import CertificateHandler
@@ -32,10 +33,12 @@ from python_template_server.constants import (
     API_PREFIX,
     CONFIG_FILE_PATH,
     ENV_FILE_PATH,
-    PACKAGE_NAME,
+    LOGGING_BACKUP_COUNT,
+    LOGGING_FILE_PATH,
+    LOGGING_MAX_BYTES_MB,
+    MB_TO_BYTES,
     STATIC_DIR,
 )
-from python_template_server.logging_setup import setup_logging
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
     CustomJSONResponse,
@@ -45,7 +48,12 @@ from python_template_server.models import (
     TemplateServerConfig,
 )
 
-setup_logging()
+setup_default_logging()
+add_file_handler(
+    logging_filepath=LOGGING_FILE_PATH,
+    max_bytes=LOGGING_MAX_BYTES_MB * MB_TO_BYTES,
+    backup_count=LOGGING_BACKUP_COUNT,
+)
 logger = logging.getLogger(__name__)
 
 
@@ -60,7 +68,7 @@ class TemplateServer(ABC):
 
     def __init__(
         self,
-        package_name: str = PACKAGE_NAME,
+        package_name: str = "python-template-server",
         api_prefix: str = API_PREFIX,
         api_key_header_name: str = API_KEY_HEADER_NAME,
         config_filepath: Path = CONFIG_FILE_PATH,
@@ -69,14 +77,12 @@ class TemplateServer(ABC):
     ) -> None:
         """Initialize the TemplateServer.
 
-        :param str package_name: The package name for metadata retrieval
         :param str api_prefix: The API prefix for the server
         :param str api_key_header_name: The API key header name
         :param Path config_filepath: Path to the configuration file
         :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
         dotenv.load_dotenv(ENV_FILE_PATH)
-        self.package_name = package_name
         self.api_prefix = api_prefix
         self.api_key_header_name = api_key_header_name
         self.config_filepath = config_filepath
@@ -86,7 +92,7 @@ class TemplateServer(ABC):
 
         CustomJSONResponse.configure(self.config.json_response)
 
-        self.package_metadata = metadata(self.package_name)
+        self.package_metadata = metadata(package_name)
         self.app = FastAPI(
             title=self.package_metadata["Name"],
             description=self.package_metadata["Summary"],
