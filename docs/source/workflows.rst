@@ -206,12 +206,13 @@ Docker Actions
 - **Outputs:**
 
   - ``should_release`` - ``"true"`` if names match, ``"false"`` otherwise
+  - ``package_name`` - Package name extracted from ``pyproject.toml``
 
 - **Steps:**
 
   - Extracts package name via ``uv run ci-pyproject-name``
   - Compares repository name with package name
-  - Sets output based on match result
+  - Sets outputs based on match result and package name
 
 **Usage:**
 
@@ -274,11 +275,15 @@ Docker Actions
 
 - **Description:** Substitutes placeholders in ``RELEASE-NOTES.md`` with actual values.
 - **Location:** ``generate-release-notes/action.yml``
+- **Inputs:**
+
+  - ``version`` - Release version (without the v prefix)
+  - ``package_name`` - Package name from ``pyproject.toml``
+
 - **Steps:**
 
-  - Substitutes ``{{VERSION}}``, ``{{CONTAINER_NAME}}``, ``{{PACKAGE_NAME}}``, and ``{{REPOSITORY}}`` placeholders
-  - Container name and repository are derived from GitHub context
-  - Package name is taken from `PACKAGE_NAME` environment variable
+  - Substitutes ``{{VERSION}}``, ``{{PACKAGE_NAME}}``, and ``{{REPOSITORY}}`` placeholders
+  - Repository is derived from GitHub context
 
 **Usage:**
 
@@ -286,9 +291,9 @@ Docker Actions
 
    steps:
      - uses: javidahmed64592/python-template-server/.github/actions/docker/generate-release-notes@main
-       id: release_notes
        with:
-         tag: ${{ steps.get_version.outputs.version }}
+         version: ${{ steps.get_version.outputs.version }}
+         package_name: ${{ steps.check_repo_name.outputs.package_name }}
 
 ----
 

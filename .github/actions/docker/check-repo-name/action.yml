@@ -5,6 +5,9 @@ outputs:
   should_release:
     description: Whether to proceed with the release (true/false)
     value: ${{ steps.check.outputs.should_release }}
+  package_name:
+    description: Package name from pyproject.toml
+    value: ${{ steps.check.outputs.package_name }}
 
 runs:
   using: composite
@@ -27,4 +30,5 @@ runs:
           echo "Repository name matches package name, proceeding with release"
           echo "should_release=true" >> $GITHUB_OUTPUT
         fi
+        echo "package_name=${PACKAGE_NAME}" >> $GITHUB_OUTPUT
       shell: bash
