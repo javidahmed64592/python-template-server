@@ -160,7 +160,7 @@ jobs:
         id: release_notes_remote
         with:
           version: ${{ steps.get_version.outputs.version }}
-          # package_name: ${{ steps.check_repo_name.outputs.package_name }}
+          package_name: ${{ steps.check_repo_name.outputs.package_name }}
       - id: release_notes
         if: steps.check_repo_name.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         run: echo "release_notes_file=${{ steps.release_notes_local.outputs.release_notes_file || steps.release_notes_remote.outputs.release_notes_file }}" >> $GITHUB_OUTPUT
