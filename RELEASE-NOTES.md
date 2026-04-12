@@ -22,8 +22,3 @@ docker compose up -d
 - **API Server**: https://localhost:443/api
 - **Swagger UI**: https://localhost:443/api/docs
 - **ReDoc**: https://localhost:443/api/redoc
-
-### Documentation
-
-- [README](https://github.com/{{REPOSITORY}}/blob/main/README.md)
-- [API Documentation](https://github.com/{{REPOSITORY}}/blob/main/docs/API.md)
