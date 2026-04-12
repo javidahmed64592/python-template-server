@@ -1,7 +1,7 @@
 Software Maintenance Guide
 ===========================
 
-This document outlines how to configure and setup a development environment to work on this Python server.
+This document outlines how to configure and setup a development environment to work on |project_name|.
 
 Backend (Python)
 ----------------
@@ -52,7 +52,7 @@ To include extra dependencies:
 Architecture Overview
 ~~~~~~~~~~~~~~~~~~~~~
 
-The Python Template Server uses a ``TemplateServer`` base class that provides reusable infrastructure for building FastAPI applications.
+This module uses a ``TemplateServer`` base class that provides reusable infrastructure for building FastAPI applications.
 
 **TemplateServer Responsibilities:**
 
