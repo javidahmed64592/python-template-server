@@ -5,6 +5,14 @@ inputs:
   version:
     description: Release version (without the v prefix)
     required: true
+  package_name:
+    description: Package name from pyproject.toml
+    required: true
+
+outputs:
+  release_notes_file:
+    description: Path to the generated release notes file
+    value: ${{ steps.generate.outputs.release_notes_file }}
 
 runs:
   using: composite
@@ -15,6 +23,7 @@ runs:
         sed -i \
           -e 's|{{VERSION}}|${{ inputs.version }}|g' \
           -e 's|{{REPOSITORY}}|${{ github.repository }}|g' \
-          -e 's|{{PACKAGE_NAME}}|${{ env.PACKAGE_NAME }}|g' \
-          RELEASE-NOTES.md > release_notes.md
+          -e 's|{{PACKAGE_NAME}}|${{ inputs.package_name }}|g' \
+          RELEASE-NOTES.md
+        echo "release_notes_file=RELEASE-NOTES.md" >> $GITHUB_OUTPUT
       shell: bash
