@@ -1,7 +1,7 @@
 Server Architecture
 ===================
 
-This document provides an overview of the architecture of the Python Template Server, a FastAPI-based backend framework.
+This document provides an overview of the architecture of the |project_name|, a FastAPI-based backend framework.
 All endpoints are mounted under the ``/api`` prefix.
 
 .. note::
