@@ -89,6 +89,7 @@ FastAPI automatically generates interactive API documentation, providing two dif
 - **Purpose**: Interactive API documentation with "Try it out" functionality
 
 **Features**:
+
 - Execute API calls directly from the browser
 - View request/response schemas
 - Test authentication with API keys
@@ -101,6 +102,7 @@ FastAPI automatically generates interactive API documentation, providing two dif
 - **Purpose**: Alternative API documentation with a clean, three-panel layout
 
 **Features**:
+
 - Read-only documentation interface
 - Clean, responsive design
 - Search functionality
