@@ -5,16 +5,9 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
 import sys
-from datetime import datetime
 from pathlib import Path
 
-from template_python.constants import SPHINX_EXTENSIONS, SPHINX_HTML_THEME
-from template_python.workflows import (
-    get_author_from_pyproject,
-    get_name_from_pyproject,
-    get_rst_prolog,
-    get_version_from_pyproject,
-)
+from template_python.workflows import get_rst_prolog, get_sphinx_config
 
 # Add the project root to sys.path for autodoc
 sys.path.insert(0, str(Path(__file__).parents[2].resolve()))
@@ -22,16 +15,17 @@ sys.path.insert(0, str(Path(__file__).parents[2].resolve()))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = get_name_from_pyproject().replace("-", " ").title()
-copyright = f"{datetime.now().year}, {get_author_from_pyproject()}"  # noqa: A001
-author = get_author_from_pyproject()
-release = get_version_from_pyproject()
-package_name = get_name_from_pyproject().replace("-", "_")
+sphinx_config = get_sphinx_config()
+project = sphinx_config.project_name
+copyright = sphinx_config.copyright  # noqa: A001
+author = sphinx_config.author
+release = sphinx_config.version
+package_name = sphinx_config.package_name
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = SPHINX_EXTENSIONS
+extensions = sphinx_config.extensions
 
 # Napoleon settings for Google-style docstrings
 napoleon_google_docstring = True
@@ -75,11 +69,11 @@ exclude_patterns: list[str] = []
 
 substitutions_default_enabled = True
 rst_prolog = get_rst_prolog(
-    keys=["project_name", "package_name", "repo_name"],
-    values=[project, package_name, get_name_from_pyproject()],
+    keys=sphinx_config.rst_prolog_keys,
+    values=sphinx_config.rst_prolog_values,
 )
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = SPHINX_HTML_THEME
+html_theme = sphinx_config.html_theme
