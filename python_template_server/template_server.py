@@ -48,6 +48,7 @@ from python_template_server.models import (
     TemplateServerConfig,
 )
 
+dotenv.load_dotenv(ENV_FILE_PATH)
 setup_default_logging()
 add_file_handler(
     logging_filepath=LOGGING_FILE_PATH,
@@ -82,7 +83,6 @@ class TemplateServer(ABC):
         :param Path config_filepath: Path to the configuration file
         :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
-        dotenv.load_dotenv(ENV_FILE_PATH)
         self.api_prefix = api_prefix
         self.api_key_header_name = api_key_header_name
         self.config_filepath = config_filepath
