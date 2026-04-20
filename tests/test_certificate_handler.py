@@ -104,7 +104,6 @@ class TestCertificateHandler:
         self,
         mock_certificate_config: CertificateConfigModel,
         mock_mkdir: MagicMock,
-        mock_open_file: MagicMock,
         mock_exists: MagicMock,
     ) -> None:
         """Test certificate generation when directory creation fails."""

@@ -225,13 +225,13 @@ class TestLoadConfig:
     def test_load_config_invalid_json(
         self,
         mock_exists: MagicMock,
-        mock_open_file: MagicMock,
+        mock_read_text: MagicMock,
         mock_tmp_config_path: Path,
         mock_tmp_static_path: Path,
     ) -> None:
         """Test loading config with invalid JSON content."""
         mock_exists.return_value = True
-        mock_open_file.return_value.read.return_value = "invalid json"
+        mock_read_text.return_value = "invalid json"
 
         with pytest.raises(SystemExit):
             MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
@@ -239,13 +239,13 @@ class TestLoadConfig:
     def test_load_config_os_error(
         self,
         mock_exists: MagicMock,
-        mock_open_file: MagicMock,
+        mock_read_text: MagicMock,
         mock_tmp_config_path: Path,
         mock_tmp_static_path: Path,
     ) -> None:
         """Test loading config that raises an OSError."""
         mock_exists.return_value = True
-        mock_open_file.side_effect = OSError("File read error")
+        mock_read_text.side_effect = OSError("File read error")
 
         with pytest.raises(SystemExit):
             MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
@@ -253,13 +253,13 @@ class TestLoadConfig:
     def test_load_config_validation_error(
         self,
         mock_exists: MagicMock,
-        mock_open_file: MagicMock,
+        mock_read_text: MagicMock,
         mock_tmp_config_path: Path,
         mock_tmp_static_path: Path,
     ) -> None:
         """Test loading config that fails validation."""
         mock_exists.return_value = True
-        mock_open_file.return_value.read.return_value = json.dumps({"security": {"hsts_max_age": -1}})
+        mock_read_text.return_value = json.dumps({"security": {"hsts_max_age": -1}})
 
         with pytest.raises(SystemExit):
             MockTemplateServer(config_filepath=mock_tmp_config_path, static_dir=mock_tmp_static_path)
