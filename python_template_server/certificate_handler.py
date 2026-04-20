@@ -52,8 +52,8 @@ class CertificateHandler:
     @staticmethod
     def _write_to_file(file_path: Path, data: bytes) -> None:
         """Write data to a file."""
-        with file_path.open("wb") as f:
-            f.write(data)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_bytes(data)
 
     def write_to_key_file(self, data: bytes) -> None:
         """Write data to the key file."""

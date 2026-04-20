@@ -2,7 +2,7 @@
 
 from collections.abc import Generator
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -29,13 +29,6 @@ def mock_mkdir() -> Generator[MagicMock]:
     """Mock Path.mkdir method."""
     with patch("pathlib.Path.mkdir") as mock_mkdir:
         yield mock_mkdir
-
-
-@pytest.fixture
-def mock_open_file() -> Generator[MagicMock]:
-    """Mock the Path.open() method."""
-    with patch("pathlib.Path.open", mock_open()) as mock_file:
-        yield mock_file
 
 
 @pytest.fixture

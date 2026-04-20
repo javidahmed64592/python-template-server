@@ -149,8 +149,7 @@ class TemplateServer(ABC):
             sys.exit(1)
 
         try:
-            with config_filepath.open() as f:
-                config_data = json.load(f)
+            config_data = json.loads(config_filepath.read_text(encoding="utf-8"))
             config = self.validate_config(config_data)
             config.save_to_file(config_filepath)
         except json.JSONDecodeError:
