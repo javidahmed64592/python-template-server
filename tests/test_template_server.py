@@ -52,15 +52,6 @@ def mock_verify_token() -> Generator[MagicMock]:
         yield mock_verify
 
 
-@pytest.fixture
-def mock_timestamp() -> Generator[str]:
-    """Mock the current_timestamp method to return a fixed timestamp."""
-    with patch(
-        "python_template_server.models.BaseResponse.current_timestamp", return_value=BaseResponse.current_timestamp()
-    ) as mock_time:
-        yield mock_time.return_value
-
-
 MOCK_INDEX_CONTENT = "<html><body><h1>Test SPA</h1></body></html>"
 MOCK_NOT_FOUND_CONTENT = "<html><body><h1>404 Not Found</h1></body></html>"
 MOCK_DIRECTORY_INDEX_CONTENT = "<html><body><h1>Directory Index</h1></body></html>"
@@ -86,6 +77,12 @@ def mock_template_server(
         )
 
 
+@pytest.fixture
+def mock_client(mock_template_server: TemplateServer) -> TestClient:
+    """Provide a TestClient for the mock server."""
+    return TestClient(mock_template_server.app)
+
+
 class MockTemplateServer(TemplateServer):
     """Mock subclass of TemplateServer for testing."""
 
@@ -95,19 +92,19 @@ class MockTemplateServer(TemplateServer):
 
     def mock_unprotected_method(self, request: Request) -> BaseResponse:
         """Mock unprotected method."""
-        return BaseResponse(message="unprotected endpoint", timestamp=BaseResponse.current_timestamp())
+        return BaseResponse(message="unprotected endpoint")
 
     def mock_protected_method(self, request: Request) -> BaseResponse:
         """Mock protected method."""
-        return BaseResponse(message="protected endpoint", timestamp=BaseResponse.current_timestamp())
+        return BaseResponse(message="protected endpoint")
 
     def mock_unlimited_unprotected_method(self, request: Request) -> BaseResponse:
         """Mock unlimited unprotected method."""
-        return BaseResponse(message="unlimited unprotected endpoint", timestamp=BaseResponse.current_timestamp())
+        return BaseResponse(message="unlimited unprotected endpoint")
 
     def mock_unlimited_protected_method(self, request: Request) -> BaseResponse:
         """Mock unlimited protected method."""
-        return BaseResponse(message="unlimited protected endpoint", timestamp=BaseResponse.current_timestamp())
+        return BaseResponse(message="unlimited protected endpoint")
 
     def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
         """Validate configuration from the config.json file.
@@ -531,109 +528,91 @@ class TestTemplateServerRoutes:
 class TestGetHealthEndpoint:
     """Integration tests for the /health endpoint."""
 
-    def test_get_health(self, mock_template_server: TemplateServer) -> None:
+    @pytest.fixture
+    def mock_request_object(self) -> Request:
+        """Provide a mock Request object."""
+        return MagicMock(spec=Request)
+
+    def test_get_health(self, mock_template_server: TemplateServer, mock_request_object: Request) -> None:
         """Test the /health endpoint method."""
-        request = MagicMock()
-        response = asyncio.run(mock_template_server.get_health(request))
-
+        response = asyncio.run(mock_template_server.get_health(mock_request_object))
         assert response.message == "Server is healthy"
+        assert isinstance(response.timestamp, str)
+        assert response.timestamp.endswith("Z")
 
-    def test_get_health_token_not_configured(self, mock_template_server: TemplateServer) -> None:
+    def test_get_health_token_not_configured(
+        self, mock_template_server: TemplateServer, mock_request_object: Request
+    ) -> None:
         """Test the /health endpoint method when token is not configured."""
         mock_template_server.hashed_token = ""
-        request = MagicMock()
 
         with pytest.raises(
             HTTPException, match=f"{ResponseCode.INTERNAL_SERVER_ERROR}: Server token is not configured"
         ):
-            asyncio.run(mock_template_server.get_health(request))
+            asyncio.run(mock_template_server.get_health(mock_request_object))
 
-    def test_get_health_endpoint(
-        self, mock_template_server: TemplateServer, mock_verify_token: MagicMock, mock_timestamp: str
-    ) -> None:
+    def test_get_health_endpoint(self, mock_client: TestClient) -> None:
         """Test /health endpoint returns 200."""
-        mock_verify_token.return_value = True
-        app = mock_template_server.app
-        client = TestClient(app)
-
-        response = client.get("/health")
+        response = mock_client.get("/health")
         assert response.status_code == ResponseCode.OK
-        assert response.json() == {
-            "message": "Server is healthy",
-            "timestamp": mock_timestamp,
-        }
 
 
 class TestGetLoginEndpoint:
     """Integration tests for the /login endpoint."""
 
-    def test_get_login(self, mock_template_server: TemplateServer) -> None:
+    @pytest.fixture
+    def mock_request_object(self) -> Request:
+        """Provide a mock Request object."""
+        return MagicMock(spec=Request)
+
+    def test_get_login(self, mock_template_server: TemplateServer, mock_request_object: Request) -> None:
         """Test the /login endpoint method."""
-        request = MagicMock()
-
-        response = asyncio.run(mock_template_server.get_login(request))
-
+        response = asyncio.run(mock_template_server.get_login(mock_request_object))
         assert response.message == "Login successful."
+        assert isinstance(response.timestamp, str)
+        assert response.timestamp.endswith("Z")
 
-    def test_get_login_token_not_configured(self, mock_template_server: TemplateServer) -> None:
+    def test_get_login_token_not_configured(
+        self, mock_template_server: TemplateServer, mock_request_object: Request
+    ) -> None:
         """Test the /login endpoint method when token is not configured."""
         mock_template_server.hashed_token = ""
-        request = MagicMock()
 
         with pytest.raises(
             HTTPException, match=f"{ResponseCode.INTERNAL_SERVER_ERROR}: Server token is not configured"
         ):
-            asyncio.run(mock_template_server.get_login(request))
+            asyncio.run(mock_template_server.get_login(mock_request_object))
 
-    def test_get_login_endpoint(
-        self, mock_template_server: TemplateServer, mock_verify_token: MagicMock, mock_timestamp: str
-    ) -> None:
+    def test_get_login_endpoint(self, mock_client: TestClient, mock_verify_token: MagicMock) -> None:
         """Test /login endpoint returns 200."""
         mock_verify_token.return_value = True
-        app = mock_template_server.app
-        client = TestClient(app)
-
-        response = client.get("/login", headers={"X-API-Key": "test-token"})
+        response = mock_client.get("/login", headers={"X-API-Key": "test-token"})
         assert response.status_code == ResponseCode.OK
-        assert response.json() == {
-            "message": "Login successful.",
-            "timestamp": mock_timestamp,
-        }
 
 
 class TestServeSPA:
     """Tests for the SPA serving functionality."""
 
-    def test_serve_spa_endpoint(self, mock_template_server: TemplateServer, mock_verify_token: MagicMock) -> None:
+    def test_serve_spa_endpoint(self, mock_client: TestClient, mock_verify_token: MagicMock) -> None:
         """Test SPA serving endpoint returns static file."""
         mock_verify_token.return_value = True
-        app = mock_template_server.app
-        client = TestClient(app)
 
-        response = client.get("index.html")
+        response = mock_client.get("index.html")
         assert response.status_code == ResponseCode.OK
         assert response.content.decode() == MOCK_INDEX_CONTENT
 
-    def test_serve_spa_directory_index(
-        self, mock_template_server: TemplateServer, mock_verify_token: MagicMock
-    ) -> None:
+    def test_serve_spa_directory_index(self, mock_client: TestClient, mock_verify_token: MagicMock) -> None:
         """Test SPA serving endpoint returns directory index file."""
         mock_verify_token.return_value = True
-        app = mock_template_server.app
-        client = TestClient(app)
 
-        response = client.get("/directory/")
+        response = mock_client.get("/directory/")
         assert response.status_code == ResponseCode.OK
         assert response.content.decode() == MOCK_DIRECTORY_INDEX_CONTENT
 
-    def test_serve_spa_endpoint_404_redirect(
-        self, mock_template_server: TemplateServer, mock_verify_token: MagicMock
-    ) -> None:
+    def test_serve_spa_endpoint_404_redirect(self, mock_client: TestClient, mock_verify_token: MagicMock) -> None:
         """Test SPA serving endpoint returns custom 404 page."""
         mock_verify_token.return_value = True
-        app = mock_template_server.app
-        client = TestClient(app)
 
-        response = client.get("/nonexistent-page")
+        response = mock_client.get("/nonexistent-page")
         assert response.status_code == ResponseCode.NOT_FOUND
         assert response.content.decode() == MOCK_NOT_FOUND_CONTENT

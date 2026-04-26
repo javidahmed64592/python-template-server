@@ -406,10 +406,7 @@ class TemplateServer(ABC):
                 detail="Server token is not configured",
             )
 
-        return GetHealthResponse(
-            message="Server is healthy",
-            timestamp=GetHealthResponse.current_timestamp(),
-        )
+        return GetHealthResponse(message="Server is healthy")
 
     async def get_login(self, request: Request) -> GetLoginResponse:
         """Handle user login and return a success response.
@@ -425,7 +422,4 @@ class TemplateServer(ABC):
             )
 
         logger.info("User login successful.")
-        return GetLoginResponse(
-            message="Login successful.",
-            timestamp=GetLoginResponse.current_timestamp(),
-        )
+        return GetLoginResponse(message="Login successful.")
