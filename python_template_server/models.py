@@ -141,12 +141,15 @@ class BaseResponse(BaseModel):
     """Base response model for all API endpoints."""
 
     message: str = Field(..., description="Human-readable message describing the response")
-    timestamp: str = Field(..., description="Timestamp of the response in ISO 8601 format")
+    timestamp: str = Field(
+        default_factory=lambda: f"{datetime.now(UTC).isoformat()}Z",
+        description="Timestamp of the response in ISO 8601 format",
+    )
 
     @staticmethod
     def current_timestamp() -> str:
         """Get the current timestamp in ISO 8601 format."""
-        return datetime.now(UTC).isoformat() + "Z"
+        return f"{datetime.now(UTC).isoformat()}Z"
 
 
 class GetHealthResponse(BaseResponse):
