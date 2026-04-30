@@ -116,21 +116,37 @@ class MockTemplateServer(TemplateServer):
 
     def setup_routes(self) -> None:
         """Set up mock routes for testing."""
-        self.add_unauthenticated_route("/unauthenticated-endpoint", self.mock_unprotected_method, BaseResponse, ["GET"])
-        self.add_authenticated_route("/authenticated-endpoint", self.mock_protected_method, BaseResponse, ["POST"])
-        self.add_unauthenticated_route(
-            "/unlimited-unauthenticated-endpoint",
-            self.mock_unlimited_unprotected_method,
-            BaseResponse,
-            ["GET"],
-            limited=False,
+        self.add_route(
+            endpoint="/unauthenticated-endpoint",
+            handler_function=self.mock_unprotected_method,
+            response_model=BaseResponse,
+            methods=["GET"],
+            limited=True,
+            authentication_required=False,
         )
-        self.add_authenticated_route(
-            "/unlimited-authenticated-endpoint",
-            self.mock_unlimited_protected_method,
-            BaseResponse,
-            ["POST"],
+        self.add_route(
+            endpoint="/authenticated-endpoint",
+            handler_function=self.mock_protected_method,
+            response_model=BaseResponse,
+            methods=["POST"],
+            limited=True,
+            authentication_required=True,
+        )
+        self.add_route(
+            endpoint="/unlimited-unauthenticated-endpoint",
+            handler_function=self.mock_unlimited_unprotected_method,
+            response_model=BaseResponse,
+            methods=["GET"],
             limited=False,
+            authentication_required=False,
+        )
+        self.add_route(
+            endpoint="/unlimited-authenticated-endpoint",
+            handler_function=self.mock_unlimited_protected_method,
+            response_model=BaseResponse,
+            methods=["POST"],
+            limited=False,
+            authentication_required=True,
         )
 
 
@@ -423,7 +439,7 @@ class TestTemplateServerRoutes:
     """Integration tests for the mock routes in MockTemplateServer."""
 
     def test_add_unauthenticated_route(self, mock_template_server: MockTemplateServer) -> None:
-        """Test add_unauthenticated_route adds routes without authentication."""
+        """Test add_route with authentication disabled adds routes without authentication."""
         api_routes = [route for route in mock_template_server.app.routes if isinstance(route, APIRoute)]
         routes = [route.path for route in api_routes]
         assert "/unauthenticated-endpoint" in routes
@@ -440,7 +456,7 @@ class TestTemplateServerRoutes:
         assert test_route.response_model == BaseResponse
 
     def test_add_authenticated_route(self, mock_template_server: MockTemplateServer) -> None:
-        """Test add_authenticated_route adds routes with authentication."""
+        """Test add_route with authentication enabled adds routes with authentication."""
         api_routes = [route for route in mock_template_server.app.routes if isinstance(route, APIRoute)]
         routes = [route.path for route in api_routes]
         assert "/authenticated-endpoint" in routes
