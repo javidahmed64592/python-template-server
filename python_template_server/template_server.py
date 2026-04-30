@@ -384,9 +384,11 @@ class TemplateServer(ABC):
         :raise HTTPException: If the server token is not configured
         """
         if not self.hashed_token:
+            error_msg = "Server token is not configured. Please set the API_TOKEN_HASH environment variable."
+            logger.error(error_msg)
             raise HTTPException(
                 status_code=ResponseCode.INTERNAL_SERVER_ERROR,
-                detail="Server token is not configured",
+                detail=error_msg,
             )
 
         return GetHealthResponse(message="Server is healthy")
@@ -399,9 +401,11 @@ class TemplateServer(ABC):
         :raise HTTPException: If the server token is not configured
         """
         if not self.hashed_token:
+            error_msg = "Server token is not configured. Please set the API_TOKEN_HASH environment variable."
+            logger.error(error_msg)
             raise HTTPException(
                 status_code=ResponseCode.INTERNAL_SERVER_ERROR,
-                detail="Server token is not configured",
+                detail=error_msg,
             )
 
         logger.info("User login successful.")
