@@ -204,6 +204,12 @@ class TestBaseResponse:
         response = BaseResponse(**config_dict)
         assert response.model_dump() == config_dict
 
+    def test_current_timestamp_format(self) -> None:
+        """Test the format of the current timestamp."""
+        timestamp = BaseResponse.current_timestamp()
+        assert timestamp.endswith("Z")
+        assert "T" in timestamp
+
 
 class TestGetHealthResponse:
     """Unit tests for the GetHealthResponse class."""

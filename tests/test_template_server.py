@@ -538,7 +538,6 @@ class TestGetHealthEndpoint:
         response = asyncio.run(mock_template_server.get_health(mock_request_object))
         assert response.message == "Server is healthy"
         assert isinstance(response.timestamp, str)
-        assert response.timestamp.endswith("Z")
 
     def test_get_health_token_not_configured(
         self, mock_template_server: TemplateServer, mock_request_object: Request
@@ -570,7 +569,6 @@ class TestGetLoginEndpoint:
         response = asyncio.run(mock_template_server.get_login(mock_request_object))
         assert response.message == "Login successful."
         assert isinstance(response.timestamp, str)
-        assert response.timestamp.endswith("Z")
 
     def test_get_login_token_not_configured(
         self, mock_template_server: TemplateServer, mock_request_object: Request
