@@ -90,8 +90,8 @@ class TemplateServer(ABC):
         self.cert_handler = CertificateHandler(self.config.certificate)
         self.static_dir = static_dir
 
+        logger.info("Configuring FastAPI server...")
         CustomJSONResponse.configure(self.config.json_response)
-
         self.package_metadata = metadata(package_name)
         self.app = FastAPI(
             title=self.package_metadata["Name"],
@@ -103,15 +103,25 @@ class TemplateServer(ABC):
         )
         self.api_key_header = APIKeyHeader(name=self.api_key_header_name, auto_error=False)
 
+        logger.info("Loading environment variables...")
         self.host = os.getenv("HOST", "localhost")
         self.port = int(os.getenv("PORT", "443"))
-        self.hashed_token = os.getenv("API_TOKEN_HASH", "")
+
+        if not (hashed_token := os.getenv("API_TOKEN_HASH")):
+            error_msg = "Server token is not configured. Set the token using: uv run generate-new-token"
+            logger.error(error_msg)
+            raise HTTPException(
+                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
+                detail=error_msg,
+            )
+        self.hashed_token = hashed_token
 
         self._setup_request_logging()
         self._setup_security_headers()
         self._setup_cors()
         self._setup_rate_limiting()
         self._setup_routes()
+        logger.info("Template server initialization complete.")
 
     @property
     def static_dir_exists(self) -> bool:
@@ -131,11 +141,22 @@ class TemplateServer(ABC):
     def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
         """Validate configuration data against the TemplateServerConfig model.
 
+        This method must be implemented by subclasses to validate the configuration data and return a class which
+        inherits from TemplateServerConfig.
+
         :param dict config_data: The configuration data to validate
         :return TemplateServerConfig: The validated configuration model
         :raise ValidationError: If the configuration data is invalid
         """
         return TemplateServerConfig.model_validate(config_data)
+
+    @abstractmethod
+    def setup_routes(self) -> None:
+        """Add custom API routes.
+
+        This method must be implemented by subclasses to define API endpoints using `add_route`.
+        """
+        pass
 
     def load_config(self, config_filepath: Path) -> TemplateServerConfig:
         """Load configuration from the specified json file.
@@ -307,68 +328,49 @@ class TemplateServer(ABC):
             logger.exception("Failed to start!")
             sys.exit(1)
 
-    def add_unauthenticated_route(
-        self,
-        endpoint: str,
-        handler_function: Callable,
-        response_model: type[BaseModel] | None,
-        methods: list[str],
-        limited: bool = True,  # noqa: FBT001, FBT002
-    ) -> None:
-        """Add an unauthenticated API route.
-
-        :param str endpoint: The API endpoint path
-        :param Callable handler_function: The handler function for the endpoint
-        :param BaseModel response_model: The Pydantic model for the response
-        :param list[str] methods: The HTTP methods for the endpoint
-        :param bool limited: Whether to apply rate limiting to this route
-        """
-        self.app.add_api_route(
-            endpoint,
-            self._limit_route(handler_function) if limited else handler_function,
-            methods=methods,
-            response_model=response_model,
-        )
-
-    def add_authenticated_route(
+    def add_route(
         self,
         endpoint: str,
         handler_function: Callable,
         response_model: type[BaseModel],
         methods: list[str],
         limited: bool = True,  # noqa: FBT001, FBT002
+        authentication_required: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
-        """Add an authenticated API route.
+        """Add an API route.
 
         :param str endpoint: The API endpoint path
         :param Callable handler_function: The handler function for the endpoint
         :param BaseModel response_model: The Pydantic model for the response
         :param list[str] methods: The HTTP methods for the endpoint
         :param bool limited: Whether to apply rate limiting to this route
+        :param bool authentication_required: Whether authentication is required for this route
         """
         self.app.add_api_route(
-            endpoint,
-            self._limit_route(handler_function) if limited else handler_function,
+            path=endpoint,
+            endpoint=self._limit_route(handler_function) if limited else handler_function,
             methods=methods,
             response_model=response_model,
-            dependencies=[Security(self._verify_api_key)],
+            dependencies=[Security(self._verify_api_key)] if authentication_required else None,
         )
 
     def _setup_routes(self) -> None:
         """Set up API routes."""
-        self.add_unauthenticated_route(
+        self.add_route(
             endpoint="/health",
             handler_function=self.get_health,
             response_model=GetHealthResponse,
             methods=["GET"],
             limited=False,
+            authentication_required=False,
         )
-        self.add_authenticated_route(
+        self.add_route(
             endpoint="/login",
             handler_function=self.get_login,
             response_model=GetLoginResponse,
             methods=["GET"],
             limited=True,
+            authentication_required=True,
         )
         self.setup_routes()
         if self.static_dir_exists:
@@ -384,15 +386,6 @@ class TemplateServer(ABC):
                         return FileResponse(not_found_page, status_code=ResponseCode.NOT_FOUND)
                 raise exc
 
-    @abstractmethod
-    def setup_routes(self) -> None:
-        """Add custom API routes.
-
-        This method must be implemented by subclasses to define API endpoints
-        using `add_unauthenticated_route` and `add_authenticated_route`.
-        """
-        pass
-
     async def get_health(self, request: Request) -> GetHealthResponse:
         """Get server health.
 
@@ -400,12 +393,6 @@ class TemplateServer(ABC):
         :return GetHealthResponse: Health status response
         :raise HTTPException: If the server token is not configured
         """
-        if not self.hashed_token:
-            raise HTTPException(
-                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
-                detail="Server token is not configured",
-            )
-
         return GetHealthResponse(message="Server is healthy")
 
     async def get_login(self, request: Request) -> GetLoginResponse:
@@ -415,11 +402,6 @@ class TemplateServer(ABC):
         :return GetLoginResponse: Login success response
         :raise HTTPException: If the server token is not configured
         """
-        if not self.hashed_token:
-            raise HTTPException(
-                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
-                detail="Server token is not configured",
-            )
-
-        logger.info("User login successful.")
-        return GetLoginResponse(message="Login successful.")
+        msg = "Login successful."
+        logger.info(msg)
+        return GetLoginResponse(message=msg)

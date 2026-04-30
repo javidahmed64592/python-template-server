@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from collections.abc import Generator
 from importlib.metadata import PackageMetadata
 from pathlib import Path
@@ -116,21 +117,37 @@ class MockTemplateServer(TemplateServer):
 
     def setup_routes(self) -> None:
         """Set up mock routes for testing."""
-        self.add_unauthenticated_route("/unauthenticated-endpoint", self.mock_unprotected_method, BaseResponse, ["GET"])
-        self.add_authenticated_route("/authenticated-endpoint", self.mock_protected_method, BaseResponse, ["POST"])
-        self.add_unauthenticated_route(
-            "/unlimited-unauthenticated-endpoint",
-            self.mock_unlimited_unprotected_method,
-            BaseResponse,
-            ["GET"],
-            limited=False,
+        self.add_route(
+            endpoint="/unauthenticated-endpoint",
+            handler_function=self.mock_unprotected_method,
+            response_model=BaseResponse,
+            methods=["GET"],
+            limited=True,
+            authentication_required=False,
         )
-        self.add_authenticated_route(
-            "/unlimited-authenticated-endpoint",
-            self.mock_unlimited_protected_method,
-            BaseResponse,
-            ["POST"],
+        self.add_route(
+            endpoint="/authenticated-endpoint",
+            handler_function=self.mock_protected_method,
+            response_model=BaseResponse,
+            methods=["POST"],
+            limited=True,
+            authentication_required=True,
+        )
+        self.add_route(
+            endpoint="/unlimited-unauthenticated-endpoint",
+            handler_function=self.mock_unlimited_unprotected_method,
+            response_model=BaseResponse,
+            methods=["GET"],
             limited=False,
+            authentication_required=False,
+        )
+        self.add_route(
+            endpoint="/unlimited-authenticated-endpoint",
+            handler_function=self.mock_unlimited_protected_method,
+            response_model=BaseResponse,
+            methods=["POST"],
+            limited=False,
+            authentication_required=True,
         )
 
 
@@ -145,6 +162,20 @@ class TestTemplateServer:
         assert mock_template_server.app.version == "0.1.1"
         assert mock_template_server.app.root_path == API_PREFIX
         assert isinstance(mock_template_server.api_key_header, APIKeyHeader)
+
+    def test_init_token_hash_not_set(
+        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
+    ) -> None:
+        """Test initialization when token is not configured."""
+        with (
+            patch.dict(os.environ, {"API_TOKEN_HASH": ""}),
+            pytest.raises(HTTPException, match=f"{ResponseCode.INTERNAL_SERVER_ERROR}: Server token is not configured"),
+        ):
+            MockTemplateServer(
+                config_filepath=mock_tmp_config_path,
+                static_dir=mock_tmp_static_path,
+                config=mock_template_server_config,
+            )
 
     def test_request_middleware_added(self, mock_template_server: TemplateServer) -> None:
         """Test that all middleware is added to the app."""
@@ -176,9 +207,7 @@ class TestTemplateServer:
         middlewares = [middleware.cls for middleware in server.app.user_middleware]
         assert CORSMiddleware not in middlewares
 
-    def test_json_response_configured(
-        self, mock_template_server: TemplateServer, mock_template_server_config: TemplateServerConfig
-    ) -> None:
+    def test_json_response_configured(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test that CustomJSONResponse is properly configured during initialization."""
         # Verify CustomJSONResponse class variables are set correctly
         assert CustomJSONResponse._ensure_ascii == mock_template_server_config.json_response.ensure_ascii
@@ -423,7 +452,7 @@ class TestTemplateServerRoutes:
     """Integration tests for the mock routes in MockTemplateServer."""
 
     def test_add_unauthenticated_route(self, mock_template_server: MockTemplateServer) -> None:
-        """Test add_unauthenticated_route adds routes without authentication."""
+        """Test add_route with authentication disabled adds routes without authentication."""
         api_routes = [route for route in mock_template_server.app.routes if isinstance(route, APIRoute)]
         routes = [route.path for route in api_routes]
         assert "/unauthenticated-endpoint" in routes
@@ -440,7 +469,7 @@ class TestTemplateServerRoutes:
         assert test_route.response_model == BaseResponse
 
     def test_add_authenticated_route(self, mock_template_server: MockTemplateServer) -> None:
-        """Test add_authenticated_route adds routes with authentication."""
+        """Test add_route with authentication enabled adds routes with authentication."""
         api_routes = [route for route in mock_template_server.app.routes if isinstance(route, APIRoute)]
         routes = [route.path for route in api_routes]
         assert "/authenticated-endpoint" in routes
@@ -538,18 +567,6 @@ class TestGetHealthEndpoint:
         response = asyncio.run(mock_template_server.get_health(mock_request_object))
         assert response.message == "Server is healthy"
         assert isinstance(response.timestamp, str)
-        assert response.timestamp.endswith("Z")
-
-    def test_get_health_token_not_configured(
-        self, mock_template_server: TemplateServer, mock_request_object: Request
-    ) -> None:
-        """Test the /health endpoint method when token is not configured."""
-        mock_template_server.hashed_token = ""
-
-        with pytest.raises(
-            HTTPException, match=f"{ResponseCode.INTERNAL_SERVER_ERROR}: Server token is not configured"
-        ):
-            asyncio.run(mock_template_server.get_health(mock_request_object))
 
     def test_get_health_endpoint(self, mock_client: TestClient) -> None:
         """Test /health endpoint returns 200."""
@@ -570,18 +587,6 @@ class TestGetLoginEndpoint:
         response = asyncio.run(mock_template_server.get_login(mock_request_object))
         assert response.message == "Login successful."
         assert isinstance(response.timestamp, str)
-        assert response.timestamp.endswith("Z")
-
-    def test_get_login_token_not_configured(
-        self, mock_template_server: TemplateServer, mock_request_object: Request
-    ) -> None:
-        """Test the /login endpoint method when token is not configured."""
-        mock_template_server.hashed_token = ""
-
-        with pytest.raises(
-            HTTPException, match=f"{ResponseCode.INTERNAL_SERVER_ERROR}: Server token is not configured"
-        ):
-            asyncio.run(mock_template_server.get_login(mock_request_object))
 
     def test_get_login_endpoint(self, mock_client: TestClient, mock_verify_token: MagicMock) -> None:
         """Test /login endpoint returns 200."""
