@@ -105,7 +105,15 @@ class TemplateServer(ABC):
 
         self.host = os.getenv("HOST", "localhost")
         self.port = int(os.getenv("PORT", "443"))
-        self.hashed_token = os.getenv("API_TOKEN_HASH", "")
+
+        if not (hashed_token := os.getenv("API_TOKEN_HASH", "")):
+            error_msg = "Server token is not configured. Please set the API_TOKEN_HASH environment variable."
+            logger.error(error_msg)
+            raise HTTPException(
+                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
+                detail=error_msg,
+            )
+        self.hashed_token = hashed_token
 
         self._setup_request_logging()
         self._setup_security_headers()
@@ -337,8 +345,8 @@ class TemplateServer(ABC):
         :param bool authentication_required: Whether authentication is required for this route
         """
         self.app.add_api_route(
-            endpoint,
-            self._limit_route(handler_function) if limited else handler_function,
+            path=endpoint,
+            endpoint=self._limit_route(handler_function) if limited else handler_function,
             methods=methods,
             response_model=response_model,
             dependencies=[Security(self._verify_api_key)] if authentication_required else None,
@@ -383,14 +391,6 @@ class TemplateServer(ABC):
         :return GetHealthResponse: Health status response
         :raise HTTPException: If the server token is not configured
         """
-        if not self.hashed_token:
-            error_msg = "Server token is not configured. Please set the API_TOKEN_HASH environment variable."
-            logger.error(error_msg)
-            raise HTTPException(
-                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
-                detail=error_msg,
-            )
-
         return GetHealthResponse(message="Server is healthy")
 
     async def get_login(self, request: Request) -> GetLoginResponse:
@@ -400,13 +400,6 @@ class TemplateServer(ABC):
         :return GetLoginResponse: Login success response
         :raise HTTPException: If the server token is not configured
         """
-        if not self.hashed_token:
-            error_msg = "Server token is not configured. Please set the API_TOKEN_HASH environment variable."
-            logger.error(error_msg)
-            raise HTTPException(
-                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
-                detail=error_msg,
-            )
-
-        logger.info("User login successful.")
-        return GetLoginResponse(message="Login successful.")
+        msg = "Login successful."
+        logger.info(msg)
+        return GetLoginResponse(message=msg)
