@@ -90,8 +90,8 @@ class TemplateServer(ABC):
         self.cert_handler = CertificateHandler(self.config.certificate)
         self.static_dir = static_dir
 
+        logger.info("Configuring FastAPI server...")
         CustomJSONResponse.configure(self.config.json_response)
-
         self.package_metadata = metadata(package_name)
         self.app = FastAPI(
             title=self.package_metadata["Name"],
@@ -103,11 +103,12 @@ class TemplateServer(ABC):
         )
         self.api_key_header = APIKeyHeader(name=self.api_key_header_name, auto_error=False)
 
+        logger.info("Loading environment variables...")
         self.host = os.getenv("HOST", "localhost")
         self.port = int(os.getenv("PORT", "443"))
 
-        if not (hashed_token := os.getenv("API_TOKEN_HASH", "")):
-            error_msg = "Server token is not configured. Please set the API_TOKEN_HASH environment variable."
+        if not (hashed_token := os.getenv("API_TOKEN_HASH")):
+            error_msg = "Server token is not configured. Set the token using: uv run generate-new-token"
             logger.error(error_msg)
             raise HTTPException(
                 status_code=ResponseCode.INTERNAL_SERVER_ERROR,
@@ -120,6 +121,7 @@ class TemplateServer(ABC):
         self._setup_cors()
         self._setup_rate_limiting()
         self._setup_routes()
+        logger.info("Template server initialization complete.")
 
     @property
     def static_dir_exists(self) -> bool:
