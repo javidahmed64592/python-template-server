@@ -159,7 +159,7 @@ class TestTemplateServer:
         assert isinstance(mock_template_server.app, FastAPI)
         assert mock_template_server.app.title == "python-template-server"
         assert mock_template_server.app.description == "A template FastAPI server with production-ready configuration."
-        assert mock_template_server.app.version == "0.1.1"
+        assert mock_template_server.app.version == "0.1.2"
         assert mock_template_server.app.root_path == API_PREFIX
         assert isinstance(mock_template_server.api_key_header, APIKeyHeader)
 
