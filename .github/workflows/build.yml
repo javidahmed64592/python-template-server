@@ -43,3 +43,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: javidahmed64592/actions-template-python/actions/build/verify-structure@main
+        with:
+          expected-directories: |
+            static
