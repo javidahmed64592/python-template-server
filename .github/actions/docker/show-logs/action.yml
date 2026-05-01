@@ -1,9 +1,0 @@
-name: Show Container Logs
-description: Shows logs from a Docker Compose container.
-
-runs:
-  using: composite
-  steps:
-    - name: Show container logs
-      run: docker compose logs ${{ github.event.repository.name }}
-      shell: bash
