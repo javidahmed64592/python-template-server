@@ -12,15 +12,15 @@ jobs:
   build-frontend:
     runs-on: ubuntu-latest
     outputs:
-      frontend-exists: ${{ steps.check-frontend.outputs.exists }}
+      frontend-exists: ${{ steps.check-frontend-exists.outputs.exists }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: javidahmed64592/actions-template-python/actions/setup/check-frontend-exists@main
-        id: check-frontend
+        id: check-frontend-exists
 
       - uses: javidahmed64592/actions-template-python/actions/build/build-frontend@main
-        if: steps.check-frontend.outputs.exists == 'true'
+        if: steps.check-frontend-exists.outputs.exists == 'true'
 
   build-wheel:
     runs-on: ubuntu-latest
@@ -43,8 +43,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: javidahmed64592/actions-template-python/actions/setup/check-frontend-exists@main
-        id: check-frontend
+        id: check-frontend-exists
 
       - uses: javidahmed64592/actions-template-python/actions/build/verify-structure@main
         with:
-          frontend-dir-exists: ${{ steps.check-frontend.outputs.exists }}
+          frontend-dir-exists: ${{ steps.check-frontend-exists.outputs.exists }}
