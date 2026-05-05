@@ -11,7 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 class BaseDatabaseManager(ABC):
-    """Manager class for database operations."""
+    """Manager class for database operations.
+
+    Subclasses must implement the `db_url` property to provide the correct database URL.
+    """
 
     def __init__(self, db_config: DatabaseConfig) -> None:
         """Initialize the database manager."""
@@ -25,4 +28,4 @@ class BaseDatabaseManager(ABC):
     @property
     @abstractmethod
     def db_url(self) -> str:
-        """Get the database URL."""
+        """Get the database URL using the `DatabaseConfig.db_url()` method."""
