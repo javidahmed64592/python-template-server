@@ -10,6 +10,7 @@ from python_template_server.models import (
     CertificateConfigModel,
     CORSConfigModel,
     CustomJSONResponse,
+    DatabaseConfig,
     GetHealthResponse,
     GetLoginResponse,
     JSONResponseConfigModel,
@@ -83,6 +84,20 @@ class TestJSONResponseConfigModel:
         assert mock_json_response_config.model_dump() == mock_json_response_config_dict
 
 
+class TestDatabaseConfig:
+    """Unit tests for the DatabaseConfig class."""
+
+    def test_model_dump(self, mock_db_config_dict: dict, mock_db_config: DatabaseConfig) -> None:
+        """Test the model_dump method."""
+        assert mock_db_config.model_dump() == mock_db_config_dict
+
+    def test_db_url_method(self, mock_db_config: DatabaseConfig) -> None:
+        """Test the db_url method."""
+        filename = "test.db"
+        expected_url = f"sqlite:///{mock_db_config.db_directory}/{filename}"
+        assert mock_db_config.db_url(filename) == expected_url
+
+
 class TestTemplateServerConfig:
     """Unit tests for the TemplateServerConfig class."""
 
@@ -94,6 +109,7 @@ class TestTemplateServerConfig:
         mock_rate_limit_config_dict: dict,
         mock_certificate_config_dict: dict,
         mock_json_response_config_dict: dict,
+        mock_db_config_dict: dict,
     ) -> None:
         """Test the model_dump method."""
         expected_dict = {
@@ -102,6 +118,7 @@ class TestTemplateServerConfig:
             "rate_limit": mock_rate_limit_config_dict,
             "certificate": mock_certificate_config_dict,
             "json_response": mock_json_response_config_dict,
+            "db": mock_db_config_dict,
         }
         assert mock_template_server_config.model_dump() == expected_dict
 

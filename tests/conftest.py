@@ -9,6 +9,7 @@ import pytest
 from python_template_server.models import (
     CertificateConfigModel,
     CORSConfigModel,
+    DatabaseConfig,
     JSONResponseConfigModel,
     RateLimitConfigModel,
     SecurityConfigModel,
@@ -62,6 +63,12 @@ def mock_tmp_config_path(tmp_path: Path) -> Path:
 def mock_tmp_static_path(tmp_path: Path) -> Path:
     """Provide a temporary static file path."""
     return tmp_path / "static"
+
+
+@pytest.fixture
+def mock_tmp_db_path(tmp_path: Path) -> Path:
+    """Provide a temporary database directory path."""
+    return tmp_path / "data"
 
 
 # Template Server Configuration Models
@@ -121,6 +128,14 @@ def mock_json_response_config_dict() -> dict:
 
 
 @pytest.fixture
+def mock_db_config_dict(mock_tmp_db_path: Path) -> dict:
+    """Provide a mock database configuration dictionary."""
+    return {
+        "db_directory": mock_tmp_db_path,
+    }
+
+
+@pytest.fixture
 def mock_security_config(mock_security_config_dict: dict) -> SecurityConfigModel:
     """Provide a mock SecurityConfigModel instance."""
     return SecurityConfigModel.model_validate(mock_security_config_dict)
@@ -151,12 +166,19 @@ def mock_json_response_config(mock_json_response_config_dict: dict) -> JSONRespo
 
 
 @pytest.fixture
+def mock_db_config(mock_db_config_dict: dict) -> DatabaseConfig:
+    """Provide a mock DatabaseConfig instance."""
+    return DatabaseConfig.model_validate(mock_db_config_dict)
+
+
+@pytest.fixture
 def mock_template_server_config(
     mock_security_config: SecurityConfigModel,
     mock_cors_config: CORSConfigModel,
     mock_rate_limit_config: RateLimitConfigModel,
     mock_certificate_config: CertificateConfigModel,
     mock_json_response_config: JSONResponseConfigModel,
+    mock_db_config: DatabaseConfig,
 ) -> TemplateServerConfig:
     """Provide a mock TemplateServerConfig instance."""
     return TemplateServerConfig(
@@ -165,4 +187,5 @@ def mock_template_server_config(
         rate_limit=mock_rate_limit_config,
         certificate=mock_certificate_config,
         json_response=mock_json_response_config,
+        db=mock_db_config,
     )
