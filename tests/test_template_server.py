@@ -32,7 +32,7 @@ from python_template_server.template_server import TemplateServer
 
 
 @pytest.fixture(autouse=True)
-def mock_package_metadata() -> Generator[MagicMock]:
+def mock_package_metadata() -> Generator[PackageMetadata]:
     """Mock importlib.metadata.metadata to return a mock PackageMetadata."""
     with patch("python_template_server.template_server.metadata") as mock_metadata:
         mock_pkg_metadata = MagicMock(spec=PackageMetadata)
@@ -61,7 +61,7 @@ MOCK_DIRECTORY_INDEX_CONTENT = "<html><body><h1>Directory Index</h1></body></htm
 @pytest.fixture
 def mock_template_server(
     mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
-) -> Generator[MockTemplateServer]:
+) -> Generator[TemplateServer]:
     """Provide a MockTemplateServer instance for testing."""
     with (
         patch("python_template_server.template_server.CertificateHandler", return_value=MagicMock(), autospec=True),
