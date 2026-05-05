@@ -5,7 +5,7 @@ from collections.abc import Generator
 import pytest
 from sqlalchemy import Engine
 
-from python_template_server.db.base_database_manager import BaseDatabaseManager
+from python_template_server.db import BaseDatabaseManager
 from python_template_server.models import DatabaseConfig
 
 MOCK_DB_FILENAME = "test.db"
