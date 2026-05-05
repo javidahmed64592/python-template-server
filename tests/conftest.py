@@ -178,7 +178,6 @@ def mock_template_server_config(
     mock_rate_limit_config: RateLimitConfigModel,
     mock_certificate_config: CertificateConfigModel,
     mock_json_response_config: JSONResponseConfigModel,
-    mock_db_config: DatabaseConfig,
 ) -> TemplateServerConfig:
     """Provide a mock TemplateServerConfig instance."""
     return TemplateServerConfig(
@@ -187,5 +186,4 @@ def mock_template_server_config(
         rate_limit=mock_rate_limit_config,
         certificate=mock_certificate_config,
         json_response=mock_json_response_config,
-        db=mock_db_config,
     )

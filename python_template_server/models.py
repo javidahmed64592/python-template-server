@@ -96,7 +96,6 @@ class TemplateServerConfig(BaseModel):
     rate_limit: RateLimitConfigModel = Field(default_factory=RateLimitConfigModel)
     certificate: CertificateConfigModel = Field(default_factory=CertificateConfigModel)
     json_response: JSONResponseConfigModel = Field(default_factory=JSONResponseConfigModel)
-    db: DatabaseConfig = Field(default_factory=DatabaseConfig, description="Database configuration")
 
     def save_to_file(self, filepath: Path) -> None:
         """Save the configuration to a JSON file.
