@@ -8,6 +8,8 @@ from sqlalchemy import Engine
 from python_template_server.db.base_database_manager import BaseDatabaseManager
 from python_template_server.models import DatabaseConfig
 
+MOCK_DB_FILENAME = "test.db"
+
 
 class MockDatabaseManager(BaseDatabaseManager):
     """Mock implementation of BaseDatabaseManager for testing."""
@@ -15,7 +17,7 @@ class MockDatabaseManager(BaseDatabaseManager):
     @property
     def db_url(self) -> str:
         """Return a mock database URL."""
-        return self.db_config.db_url("test.db")
+        return self.db_config.db_url(MOCK_DB_FILENAME)
 
 
 @pytest.fixture
@@ -36,5 +38,5 @@ class TestBaseDatabaseManager:
 
     def test_db_url_property(self, mock_database_manager: BaseDatabaseManager) -> None:
         """Test that the db_url property returns the correct URL."""
-        expected_url = mock_database_manager.db_config.db_url("test.db")
+        expected_url = mock_database_manager.db_config.db_url(MOCK_DB_FILENAME)
         assert mock_database_manager.db_url == expected_url
