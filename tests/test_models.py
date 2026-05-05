@@ -109,7 +109,6 @@ class TestTemplateServerConfig:
         mock_rate_limit_config_dict: dict,
         mock_certificate_config_dict: dict,
         mock_json_response_config_dict: dict,
-        mock_db_config_dict: dict,
     ) -> None:
         """Test the model_dump method."""
         expected_dict = {
@@ -118,7 +117,6 @@ class TestTemplateServerConfig:
             "rate_limit": mock_rate_limit_config_dict,
             "certificate": mock_certificate_config_dict,
             "json_response": mock_json_response_config_dict,
-            "db": mock_db_config_dict,
         }
         assert mock_template_server_config.model_dump() == expected_dict
 
