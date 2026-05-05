@@ -76,6 +76,18 @@ class JSONResponseConfigModel(BaseModel):
     media_type: str = Field(default="application/json; charset=utf-8", description="Media type for JSON responses")
 
 
+class DatabaseConfig(BaseModel):
+    """Configuration for the database."""
+
+    db_directory: Path = Field(
+        default=Path("data"), description="The directory where the SQLite database files will be stored."
+    )
+
+    def db_url(self, filename: str) -> str:
+        """Construct the database URL for SQLAlchemy."""
+        return f"sqlite:///{self.db_directory}/{filename}"
+
+
 class TemplateServerConfig(BaseModel):
     """Template server configuration."""
 
@@ -84,6 +96,7 @@ class TemplateServerConfig(BaseModel):
     rate_limit: RateLimitConfigModel = Field(default_factory=RateLimitConfigModel)
     certificate: CertificateConfigModel = Field(default_factory=CertificateConfigModel)
     json_response: JSONResponseConfigModel = Field(default_factory=JSONResponseConfigModel)
+    db: DatabaseConfig = Field(default_factory=DatabaseConfig, description="Database configuration")
 
     def save_to_file(self, filepath: Path) -> None:
         """Save the configuration to a JSON file.
