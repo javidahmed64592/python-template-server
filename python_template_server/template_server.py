@@ -139,14 +139,6 @@ class TemplateServer(ABC):
         return self.static_dir.exists() and (self.static_dir / "index.html").exists()
 
     @property
-    def _routers(self) -> list[BaseRouter]:
-        """Get the list of API routers to include in the server.
-
-        :return list[BaseRouter]: List of API routers
-        """
-        return [TEMPLATE_SERVER_ROUTER, *self.routers]
-
-    @property
     @abstractmethod
     def routers(self) -> list[BaseRouter]:
         """List of BaseRouter instances to include in the server.
@@ -280,7 +272,7 @@ class TemplateServer(ABC):
 
     def _setup_routes(self) -> None:
         """Set up API routes."""
-        for router in self._routers:
+        for router in [TEMPLATE_SERVER_ROUTER, *self.routers]:
             router.configure(self.hashed_token, self.limiter, self.config.rate_limit.rate_limit)
             router.setup_routes()
             self.app.include_router(router.router)
