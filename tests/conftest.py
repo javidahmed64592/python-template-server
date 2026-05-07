@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from slowapi import Limiter
 
 from python_template_server.models import (
     CertificateConfigModel,
@@ -15,6 +16,8 @@ from python_template_server.models import (
     SecurityConfigModel,
     TemplateServerConfig,
 )
+from python_template_server.routers.template_server_router import TemplateServerRouter
+from python_template_server.template_server import TEMPLATE_SERVER_ROUTER
 
 
 # General fixtures
@@ -187,3 +190,18 @@ def mock_template_server_config(
         certificate=mock_certificate_config,
         json_response=mock_json_response_config,
     )
+
+
+# Server fixtures
+@pytest.fixture
+def mock_template_server_router() -> TemplateServerRouter:
+    """Provide a TemplateServerRouter instance for testing."""
+    mock_limiter = MagicMock(spec=Limiter)
+    mock_limiter.limit.return_value = MagicMock(return_value=MagicMock())
+    TEMPLATE_SERVER_ROUTER.configure(
+        hashed_token="hashed_value",  # noqa: S106
+        limiter=mock_limiter,
+        rate_limit="10/minute",
+    )
+    TEMPLATE_SERVER_ROUTER.setup_routes()
+    return TEMPLATE_SERVER_ROUTER
