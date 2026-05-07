@@ -117,6 +117,7 @@ class TemplateServer(ABC):
             )
         self.hashed_token = hashed_token
 
+        logger.info("Setting up server features...")
         self._setup_request_logging()
         self._setup_security_headers()
         self._setup_cors()
