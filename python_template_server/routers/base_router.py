@@ -92,9 +92,13 @@ class BaseRouter(ABC):
         :param bool authentication_required: Whether authentication is required for this route
         """
         try:
+            limited_method = None
+            if limited and self.limiter is not None:
+                limited_method = self.limiter.limit(self.rate_limit)(handler_function)
+
             self.router.add_api_route(
                 path=endpoint,
-                endpoint=self.limiter.limit(self.rate_limit)(handler_function) if limited else handler_function,  # type: ignore[union-attr]
+                endpoint=limited_method or handler_function,
                 methods=methods,
                 response_model=response_model,
                 dependencies=[Security(self._verify_api_key)] if authentication_required else None,
