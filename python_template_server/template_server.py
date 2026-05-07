@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from abc import ABC, abstractmethod
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from importlib.metadata import metadata
 from pathlib import Path
@@ -13,12 +13,11 @@ from typing import Any
 
 import dotenv
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request, Security
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.security import APIKeyHeader
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 from pydantic_core import ValidationError
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
@@ -26,7 +25,6 @@ from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from template_python.logging_setup import add_file_handler, setup_default_logging
 
-from python_template_server.authentication_handler import verify_token
 from python_template_server.certificate_handler import CertificateHandler
 from python_template_server.constants import (
     API_KEY_HEADER_NAME,
@@ -38,15 +36,15 @@ from python_template_server.constants import (
     LOGGING_MAX_BYTES_MB,
     MB_TO_BYTES,
     STATIC_DIR,
+    TOKEN_ENV_VAR_NAME,
 )
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
     CustomJSONResponse,
-    GetHealthResponse,
-    GetLoginResponse,
     ResponseCode,
     TemplateServerConfig,
 )
+from python_template_server.routers import BaseRouter, TemplateServerRouter
 
 dotenv.load_dotenv(ENV_FILE_PATH)
 setup_default_logging()
@@ -58,13 +56,16 @@ add_file_handler(
 logger = logging.getLogger(__name__)
 
 
+TEMPLATE_SERVER_ROUTER = TemplateServerRouter(prefix="")
+
+
 class TemplateServer(ABC):
     """Template FastAPI server.
 
     This class provides a template for building FastAPI servers with common features
     such as request logging, security headers and rate limiting.
 
-    Ensure you implement the `setup_routes` and `validate_config` methods in subclasses.
+    Ensure you implement the `routers` property and `validate_config` method in subclasses.
     """
 
     def __init__(
@@ -107,7 +108,7 @@ class TemplateServer(ABC):
         self.host = os.getenv("HOST", "localhost")
         self.port = int(os.getenv("PORT", "443"))
 
-        if not (hashed_token := os.getenv("API_TOKEN_HASH")):
+        if not (hashed_token := os.getenv(TOKEN_ENV_VAR_NAME)):
             error_msg = "Server token is not configured. Set the token using: uv run generate-new-token"
             logger.error(error_msg)
             raise HTTPException(
@@ -123,6 +124,12 @@ class TemplateServer(ABC):
         self._setup_routes()
         logger.info("Template server initialization complete.")
 
+    @staticmethod
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+        """Handle application lifespan events."""
+        yield
+
     @property
     def static_dir_exists(self) -> bool:
         """Check if the static directory exists.
@@ -131,32 +138,32 @@ class TemplateServer(ABC):
         """
         return self.static_dir.exists() and (self.static_dir / "index.html").exists()
 
-    @staticmethod
-    @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-        """Handle application lifespan events."""
-        yield
+    @property
+    def _routers(self) -> list[BaseRouter]:
+        """Get the list of API routers to include in the server.
+
+        :return list[BaseRouter]: List of API routers
+        """
+        return [TEMPLATE_SERVER_ROUTER, *self.routers]
+
+    @property
+    @abstractmethod
+    def routers(self) -> list[BaseRouter]:
+        """List of BaseRouter instances to include in the server.
+
+        :return list[BaseRouter]: List of BaseRouter instances
+        """
+        return []
 
     @abstractmethod
     def validate_config(self, config_data: dict[str, Any]) -> TemplateServerConfig:
         """Validate configuration data against the TemplateServerConfig model.
-
-        This method must be implemented by subclasses to validate the configuration data and return a class which
-        inherits from TemplateServerConfig.
 
         :param dict config_data: The configuration data to validate
         :return TemplateServerConfig: The validated configuration model
         :raise ValidationError: If the configuration data is invalid
         """
         return TemplateServerConfig.model_validate(config_data)
-
-    @abstractmethod
-    def setup_routes(self) -> None:
-        """Add custom API routes.
-
-        This method must be implemented by subclasses to define API endpoints using `add_route`.
-        """
-        pass
 
     def load_config(self, config_filepath: Path) -> TemplateServerConfig:
         """Load configuration from the specified json file.
@@ -184,36 +191,6 @@ class TemplateServer(ABC):
             sys.exit(1)
         else:
             return config
-
-    async def _verify_api_key(
-        self, api_key: str | None = Security(APIKeyHeader(name=API_KEY_HEADER_NAME, auto_error=False))
-    ) -> None:
-        """Verify the API key from the request header.
-
-        :param str | None api_key: The API key from the X-API-Key header
-        :raise HTTPException: If the API key is missing or invalid
-        """
-        if api_key is None:
-            logger.warning("Missing API key in request!")
-            raise HTTPException(
-                status_code=ResponseCode.UNAUTHORIZED,
-                detail="Missing API key",
-            )
-
-        try:
-            if not verify_token(api_key, self.hashed_token):
-                logger.warning("Invalid API key attempt!")
-                raise HTTPException(
-                    status_code=ResponseCode.UNAUTHORIZED,
-                    detail="Invalid API key",
-                )
-            logger.debug("API key validated successfully.")
-        except ValueError as e:
-            logger.exception("Error verifying API key!")
-            raise HTTPException(
-                status_code=ResponseCode.UNAUTHORIZED,
-                detail=str(e),
-            ) from e
 
     def _setup_request_logging(self) -> None:
         """Set up request logging middleware."""
@@ -293,15 +270,25 @@ class TemplateServer(ABC):
             self.config.rate_limit.storage_uri or "in-memory",
         )
 
-    def _limit_route(self, route_function: Callable[..., Any]) -> Callable[..., Any]:
-        """Apply rate limiting to a route function if enabled.
+    async def _custom_404_handler(self, request: Request, exc: StarletteHTTPException) -> Response:
+        """Handle 404 errors by serving custom 404.html if available."""
+        if exc.status_code == ResponseCode.NOT_FOUND and self.static_dir_exists:
+            not_found_page = self.static_dir / "404.html"
+            if not_found_page.is_file():
+                return FileResponse(not_found_page, status_code=ResponseCode.NOT_FOUND)
+        raise exc
 
-        :param Callable route_function: The route handler function
-        :return Callable: The potentially rate-limited route handler
-        """
-        if self.limiter is not None:
-            return self.limiter.limit(self.config.rate_limit.rate_limit)(route_function)  # type: ignore[no-any-return]
-        return route_function
+    def _setup_routes(self) -> None:
+        """Set up API routes."""
+        for router in self._routers:
+            router.configure(self.hashed_token, self.limiter, self.config.rate_limit.rate_limit)
+            router.setup_routes()
+            self.app.include_router(router.router)
+
+        if self.static_dir_exists:
+            logger.info("Mounting static directory: %s", self.static_dir)
+            self.app.mount("/", StaticFiles(directory=str(self.static_dir), html=True), name="static")
+            self.app.add_exception_handler(StarletteHTTPException, self._custom_404_handler)  # type: ignore[arg-type]
 
     def run(self) -> None:
         """Run the server using uvicorn."""
@@ -327,81 +314,3 @@ class TemplateServer(ABC):
         except Exception:
             logger.exception("Failed to start!")
             sys.exit(1)
-
-    def add_route(
-        self,
-        endpoint: str,
-        handler_function: Callable,
-        response_model: type[BaseModel],
-        methods: list[str],
-        limited: bool = True,  # noqa: FBT001, FBT002
-        authentication_required: bool = True,  # noqa: FBT001, FBT002
-    ) -> None:
-        """Add an API route.
-
-        :param str endpoint: The API endpoint path
-        :param Callable handler_function: The handler function for the endpoint
-        :param BaseModel response_model: The Pydantic model for the response
-        :param list[str] methods: The HTTP methods for the endpoint
-        :param bool limited: Whether to apply rate limiting to this route
-        :param bool authentication_required: Whether authentication is required for this route
-        """
-        self.app.add_api_route(
-            path=endpoint,
-            endpoint=self._limit_route(handler_function) if limited else handler_function,
-            methods=methods,
-            response_model=response_model,
-            dependencies=[Security(self._verify_api_key)] if authentication_required else None,
-        )
-
-    def _setup_routes(self) -> None:
-        """Set up API routes."""
-        self.add_route(
-            endpoint="/health",
-            handler_function=self.get_health,
-            response_model=GetHealthResponse,
-            methods=["GET"],
-            limited=False,
-            authentication_required=False,
-        )
-        self.add_route(
-            endpoint="/login",
-            handler_function=self.get_login,
-            response_model=GetLoginResponse,
-            methods=["GET"],
-            limited=True,
-            authentication_required=True,
-        )
-        self.setup_routes()
-        if self.static_dir_exists:
-            logger.info("Mounting static directory: %s", self.static_dir)
-            self.app.mount("/", StaticFiles(directory=str(self.static_dir), html=True), name="static")
-
-            @self.app.exception_handler(StarletteHTTPException)
-            async def custom_404_handler(request: Request, exc: StarletteHTTPException) -> FileResponse:
-                """Handle 404 errors by serving custom 404.html if available."""
-                if exc.status_code == ResponseCode.NOT_FOUND and self.static_dir_exists:
-                    not_found_page = self.static_dir / "404.html"
-                    if not_found_page.is_file():
-                        return FileResponse(not_found_page, status_code=ResponseCode.NOT_FOUND)
-                raise exc
-
-    async def get_health(self, request: Request) -> GetHealthResponse:
-        """Get server health.
-
-        :param Request request: The incoming HTTP request
-        :return GetHealthResponse: Health status response
-        :raise HTTPException: If the server token is not configured
-        """
-        return GetHealthResponse(message="Server is healthy")
-
-    async def get_login(self, request: Request) -> GetLoginResponse:
-        """Handle user login and return a success response.
-
-        :param Request request: The incoming HTTP request
-        :return GetLoginResponse: Login success response
-        :raise HTTPException: If the server token is not configured
-        """
-        msg = "Login successful."
-        logger.info(msg)
-        return GetLoginResponse(message=msg)

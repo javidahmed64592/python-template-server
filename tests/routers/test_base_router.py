@@ -143,15 +143,9 @@ class TestConfigure:
 
     def test_configure(self, mock_router: BaseRouter) -> None:
         """Test that configure sets the hashed_token, limiter, and rate_limit correctly."""
-        mock_token = "hashed_value"  # noqa: S105
-        mock_limiter = MagicMock()
-        mock_rate_limit = MOCK_RATE_LIMIT
-
-        mock_router.configure(hashed_token=mock_token, limiter=mock_limiter, rate_limit=mock_rate_limit)
-
-        assert mock_router.hashed_token == mock_token
-        assert mock_router.limiter == mock_limiter
-        assert mock_router.rate_limit == mock_rate_limit
+        assert mock_router.hashed_token == MOCK_TOKEN
+        assert isinstance(mock_router.limiter, Limiter)
+        assert mock_router.rate_limit == MOCK_RATE_LIMIT
 
 
 class TestAddRoutes:

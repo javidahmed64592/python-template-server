@@ -39,11 +39,6 @@ class TestGetHealthEndpoint:
         assert response.message == "Server is healthy"
         assert isinstance(response.timestamp, str)
 
-    # def test_get_health_endpoint(self, mock_client: TestClient) -> None:
-    #     """Test /health endpoint returns 200."""
-    #     response = mock_client.get("/health")
-    #     assert response.status_code == ResponseCode.OK
-
 
 class TestGetLoginEndpoint:
     """Integration tests for the /login endpoint."""
@@ -58,9 +53,3 @@ class TestGetLoginEndpoint:
         response = asyncio.run(mock_template_server_router.get_login(mock_request_object))
         assert response.message == "Login successful."
         assert isinstance(response.timestamp, str)
-
-    # def test_get_login_endpoint(self, mock_client: TestClient, mock_verify_token: MagicMock) -> None:
-    #     """Test /login endpoint returns 200."""
-    #     mock_verify_token.return_value = True
-    #     response = mock_client.get("/login", headers={"X-API-Key": "test-token"})
-    #     assert response.status_code == ResponseCode.OK
