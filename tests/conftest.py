@@ -193,7 +193,7 @@ def mock_template_server_config(
 
 
 # Server fixtures
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_template_server_router() -> TemplateServerRouter:
     """Provide a TemplateServerRouter instance for testing."""
     mock_limiter = MagicMock(spec=Limiter)
