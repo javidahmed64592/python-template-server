@@ -189,5 +189,6 @@ class TestAddRoutes:
 
     def test_limited_parameter_with_rate_limiting_enabled(self, mock_router: BaseRouter) -> None:
         """Test that limited=True applies rate limiting when limiter is enabled."""
-        assert mock_router.limiter.limit.call_count == 2  # noqa: PLR2004
-        mock_router.limiter.limit.assert_any_call(MOCK_RATE_LIMIT)
+        assert isinstance(mock_router.limiter, Limiter)
+        assert mock_router.limiter.limit.call_count == 2  # type: ignore[attr-defined] # noqa: PLR2004
+        mock_router.limiter.limit.assert_any_call(MOCK_RATE_LIMIT)  # type: ignore[attr-defined]
