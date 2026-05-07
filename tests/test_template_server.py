@@ -58,7 +58,6 @@ def mock_template_server(
     """Provide a ExampleServer instance for testing."""
     with (
         patch("python_template_server.template_server.CertificateHandler", return_value=MagicMock(), autospec=True),
-        patch("python_template_server.template_server.TemplateServer.static_dir_exists", return_value=True),
     ):
         mock_tmp_static_path.mkdir(parents=True, exist_ok=True)
         (mock_tmp_static_path / "index.html").write_text(MOCK_INDEX_CONTENT)

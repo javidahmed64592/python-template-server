@@ -117,12 +117,13 @@ class TemplateServer(ABC):
             )
         self.hashed_token = hashed_token
 
+        logger.info("Setting up server features...")
         self._setup_request_logging()
         self._setup_security_headers()
         self._setup_cors()
         self._setup_rate_limiting()
         self._setup_routes()
-        logger.info("Template server initialization complete.")
+        logger.info("Template server initialization complete!")
 
     @staticmethod
     @asynccontextmanager
@@ -169,6 +170,7 @@ class TemplateServer(ABC):
             sys.exit(1)
 
         try:
+            logger.info("Loading configuration from: %s", config_filepath)
             config_data = json.loads(config_filepath.read_text(encoding="utf-8"))
             config = self.validate_config(config_data)
             config.save_to_file(config_filepath)
@@ -187,7 +189,7 @@ class TemplateServer(ABC):
     def _setup_request_logging(self) -> None:
         """Set up request logging middleware."""
         self.app.add_middleware(RequestLoggingMiddleware)
-        logger.info("Request logging enabled")
+        logger.info("Request logging: ENABLED")
 
     def _setup_security_headers(self) -> None:
         """Set up security headers middleware."""
@@ -198,7 +200,7 @@ class TemplateServer(ABC):
         )
 
         logger.info(
-            "Security headers enabled: HSTS max-age=%s, CSP=%s",
+            "Security headers: ENABLED | HSTS max-age=%s, CSP=%s",
             self.config.security.hsts_max_age,
             self.config.security.content_security_policy,
         )
@@ -206,7 +208,7 @@ class TemplateServer(ABC):
     def _setup_cors(self) -> None:
         """Set up CORS middleware."""
         if not self.config.cors.enabled:
-            logger.info("CORS is disabled")
+            logger.info("CORS: DISABLED")
             return
 
         self.app.add_middleware(
@@ -220,7 +222,7 @@ class TemplateServer(ABC):
         )
 
         logger.info(
-            "CORS enabled: origins=%s, credentials=%s, methods=%s, headers=%s",
+            "CORS: ENABLED | origins=%s, credentials=%s, methods=%s, headers=%s",
             self.config.cors.allow_origins,
             self.config.cors.allow_credentials,
             self.config.cors.allow_methods,
@@ -234,7 +236,7 @@ class TemplateServer(ABC):
         :param RateLimitExceeded exc: The rate limit exceeded exception
         :return JSONResponse: HTTP 429 JSON response
         """
-        logger.warning("Rate limit exceeded for %s", request.url.path)
+        logger.warning("Rate limit exceeded for: %s", request.url.path)
         return CustomJSONResponse(
             status_code=429,
             content={"detail": "Rate limit exceeded"},
@@ -244,7 +246,7 @@ class TemplateServer(ABC):
     def _setup_rate_limiting(self) -> None:
         """Set up rate limiting middleware."""
         if not self.config.rate_limit.enabled:
-            logger.info("Rate limiting is disabled")
+            logger.info("Rate limiting: DISABLED")
             self.limiter = None
             return
 
@@ -257,7 +259,7 @@ class TemplateServer(ABC):
         self.app.add_exception_handler(RateLimitExceeded, self._rate_limit_exception_handler)  # type: ignore[arg-type]
 
         logger.info(
-            "Rate limiting enabled: rate=%s, storage=%s",
+            "Rate limiting: ENABLED | rate=%s, storage=%s",
             self.config.rate_limit.rate_limit,
             self.config.rate_limit.storage_uri or "in-memory",
         )
@@ -265,21 +267,21 @@ class TemplateServer(ABC):
     async def _custom_404_handler(self, request: Request, exc: StarletteHTTPException) -> Response:
         """Handle 404 errors by serving custom 404.html if available."""
         if exc.status_code == ResponseCode.NOT_FOUND and self.static_dir_exists:
-            not_found_page = self.static_dir / "404.html"
-            if not_found_page.is_file():
+            if (not_found_page := self.static_dir / "404.html").is_file():
                 return FileResponse(not_found_page, status_code=ResponseCode.NOT_FOUND)
         raise exc
 
     def _setup_routes(self) -> None:
         """Set up API routes."""
-        for router in [TEMPLATE_SERVER_ROUTER, *self.routers]:
+        routers: list[BaseRouter] = [TEMPLATE_SERVER_ROUTER, *self.routers]
+        for router in routers:
             router.configure(self.hashed_token, self.limiter, self.config.rate_limit.rate_limit)
             router.setup_routes()
             self.app.include_router(router.router)
 
         if self.static_dir_exists:
             logger.info("Mounting static directory: %s", self.static_dir)
-            self.app.mount("/", StaticFiles(directory=str(self.static_dir), html=True), name="static")
+            self.app.mount("/", StaticFiles(directory=self.static_dir, html=True), name="static")
             self.app.add_exception_handler(StarletteHTTPException, self._custom_404_handler)  # type: ignore[arg-type]
 
     def run(self) -> None:
