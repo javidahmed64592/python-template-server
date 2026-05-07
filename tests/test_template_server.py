@@ -36,7 +36,7 @@ def mock_package_metadata() -> Generator[PackageMetadata]:
         mock_pkg_metadata = MagicMock(spec=PackageMetadata)
         metadata_dict = {
             "Name": "python-template-server",
-            "Version": "0.1.2",
+            "Version": "0.1.3",
             "Summary": "A template FastAPI server with production-ready configuration.",
         }
         mock_pkg_metadata.__getitem__.side_effect = lambda key: metadata_dict[key]
