@@ -24,7 +24,7 @@ class BaseRouter(ABC):
 
     def __init__(self, prefix: str) -> None:
         """Initialize the base router."""
-        logger.info("Initializing router with prefix: %s", prefix)
+        logger.info("Initializing router with prefix: %s", prefix or "/")
         self.router = APIRouter(prefix=prefix)
 
         self.hashed_token: str = ""

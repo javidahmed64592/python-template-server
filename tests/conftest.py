@@ -194,10 +194,16 @@ def mock_template_server_config(
 
 # Server fixtures
 @pytest.fixture(autouse=True)
-def mock_template_server_router() -> TemplateServerRouter:
-    """Provide a TemplateServerRouter instance for testing."""
+def mock_limiter() -> Limiter:
+    """Provide a mock Limiter instance for testing."""
     mock_limiter = MagicMock(spec=Limiter)
     mock_limiter.limit.return_value = MagicMock(return_value=MagicMock())
+    return mock_limiter
+
+
+@pytest.fixture
+def mock_template_server_router(mock_limiter: Limiter) -> TemplateServerRouter:
+    """Provide a TemplateServerRouter instance for testing."""
     TEMPLATE_SERVER_ROUTER.configure(
         hashed_token="hashed_value",  # noqa: S106
         limiter=mock_limiter,
