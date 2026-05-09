@@ -23,7 +23,8 @@ class MockDatabaseManager(BaseDatabaseManager):
 @pytest.fixture
 def mock_database_manager(mock_db_config: DatabaseConfig) -> Generator[BaseDatabaseManager]:
     """Fixture for creating a mock database manager."""
-    db_manager = MockDatabaseManager(db_config=mock_db_config)
+    db_manager = MockDatabaseManager()
+    db_manager.configure(mock_db_config)
     yield db_manager
     db_manager.engine.dispose()
 
@@ -31,8 +32,8 @@ def mock_database_manager(mock_db_config: DatabaseConfig) -> Generator[BaseDatab
 class TestBaseDatabaseManager:
     """Unit tests for the BaseDatabaseManager class."""
 
-    def test_initialization(self, mock_database_manager: BaseDatabaseManager) -> None:
-        """Test that the database manager initializes correctly."""
+    def test_configuration(self, mock_database_manager: BaseDatabaseManager) -> None:
+        """Test that the database manager is configured correctly."""
         assert isinstance(mock_database_manager.db_config, DatabaseConfig)
         assert isinstance(mock_database_manager.engine, Engine)
 
