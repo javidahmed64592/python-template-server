@@ -11,7 +11,7 @@ from python_template_server.routers import TemplateServerRouter
 
 
 class TestRoutes:
-    """Integration tests for the mock routes in ExampleServer."""
+    """Unit tests for route setup in TemplateServerRouter."""
 
     def test_setup_routes(self, mock_template_server_router: TemplateServerRouter) -> None:
         """Test that routes are set up correctly."""
