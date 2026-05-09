@@ -26,6 +26,7 @@ from python_template_server.models import (
     ResponseCode,
     TemplateServerConfig,
 )
+from python_template_server.routers.template_server_router import TemplateServerRouter
 from python_template_server.template_server import TemplateServer
 
 
@@ -54,10 +55,16 @@ def mock_template_server(
     mock_template_server_config: TemplateServerConfig,
     mock_tmp_config_path: Path,
     mock_tmp_static_path: Path,
+    mock_template_server_router: TemplateServerRouter,
 ) -> Generator[TemplateServer]:
     """Provide a ExampleServer instance for testing."""
     with (
         patch("python_template_server.template_server.CertificateHandler", return_value=MagicMock(), autospec=True),
+        patch(
+            "python_template_server.template_server.TemplateServerRouter",
+            return_value=mock_template_server_router,
+            autospec=True,
+        ),
     ):
         mock_tmp_static_path.mkdir(parents=True, exist_ok=True)
         (mock_tmp_static_path / "index.html").write_text(MOCK_INDEX_CONTENT)
@@ -79,7 +86,9 @@ def mock_client(mock_template_server: TemplateServer) -> TestClient:
 class TestTemplateServer:
     """Unit tests for the TemplateServer class."""
 
-    def test_init(self, mock_template_server: TemplateServer) -> None:
+    def test_init(
+        self, mock_template_server: TemplateServer, mock_template_server_router: TemplateServerRouter
+    ) -> None:
         """Test TemplateServer initialization."""
         assert isinstance(mock_template_server.app, FastAPI)
         assert mock_template_server.app.title == mock_template_server.package_metadata["Name"]
@@ -87,6 +96,8 @@ class TestTemplateServer:
         assert mock_template_server.app.version == mock_template_server.package_metadata["Version"]
         assert mock_template_server.app.root_path == API_PREFIX
         assert isinstance(mock_template_server.api_key_header, APIKeyHeader)
+        for route in mock_template_server_router.router.routes:
+            assert route in mock_template_server.app.routes
 
     def test_init_token_hash_not_set(
         self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
