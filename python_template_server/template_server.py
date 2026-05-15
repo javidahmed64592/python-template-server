@@ -284,6 +284,10 @@ class TemplateServer(ABC):
             self.app.mount("/", StaticFiles(directory=self.static_dir, html=True), name="static")
             self.app.add_exception_handler(StarletteHTTPException, self._custom_404_handler)  # type: ignore[arg-type]
 
+        for router in routers:
+            routes = [route.path for route in router.router.routes]  # type: ignore[attr-defined]
+            logger.info("Configured routes for %s: %s", router.__class__.__name__, routes)
+
     def run(self) -> None:
         """Run the server using uvicorn."""
         try:

@@ -23,11 +23,11 @@ dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.2",
-    "python-multipart>=0.0.27",
+    "python-multipart>=0.0.28",
     "slowapi>=0.1.9",
     "sqlmodel>=0.0.38",
     "template-python @ git+https://github.com/javidahmed64592/template-python.git",
-    "uvicorn[standard]>=0.46.0",
+    "uvicorn[standard]>=0.47.0",
 ]
 
 [project.optional-dependencies]
