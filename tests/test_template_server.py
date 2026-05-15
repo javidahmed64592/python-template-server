@@ -18,7 +18,6 @@ from fastapi.testclient import TestClient
 from slowapi.errors import RateLimitExceeded
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
-from python_template_server.constants import API_PREFIX
 from python_template_server.main import ExampleServer
 from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 from python_template_server.models import (
@@ -55,17 +54,9 @@ def mock_template_server(
     mock_template_server_config: TemplateServerConfig,
     mock_tmp_config_path: Path,
     mock_tmp_static_path: Path,
-    mock_template_server_router: TemplateServerRouter,
 ) -> Generator[TemplateServer]:
     """Provide a ExampleServer instance for testing."""
-    with (
-        patch("python_template_server.template_server.CertificateHandler", return_value=MagicMock(), autospec=True),
-        patch(
-            "python_template_server.template_server.TemplateServerRouter",
-            return_value=mock_template_server_router,
-            autospec=True,
-        ),
-    ):
+    with patch("python_template_server.template_server.CertificateHandler", return_value=MagicMock(), autospec=True):
         mock_tmp_static_path.mkdir(parents=True, exist_ok=True)
         (mock_tmp_static_path / "index.html").write_text(MOCK_INDEX_CONTENT)
         (mock_tmp_static_path / "404.html").write_text(MOCK_NOT_FOUND_CONTENT)
@@ -94,10 +85,12 @@ class TestTemplateServer:
         assert mock_template_server.app.title == mock_template_server.package_metadata["Name"]
         assert mock_template_server.app.description == mock_template_server.package_metadata["Summary"]
         assert mock_template_server.app.version == mock_template_server.package_metadata["Version"]
-        assert mock_template_server.app.root_path == API_PREFIX
+        assert mock_template_server.app.root_path == mock_template_server.api_prefix
         assert isinstance(mock_template_server.api_key_header, APIKeyHeader)
+
+        app_route_paths = [route.path for route in mock_template_server.app.routes]
         for route in mock_template_server_router.router.routes:
-            assert route in mock_template_server.app.routes
+            assert f"{mock_template_server.api_prefix}{route.path}" in app_route_paths
 
     def test_init_token_hash_not_set(
         self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path

@@ -17,7 +17,6 @@ from python_template_server.models import (
     TemplateServerConfig,
 )
 from python_template_server.routers.template_server_router import TemplateServerRouter
-from python_template_server.template_server import TEMPLATE_SERVER_ROUTER
 
 
 # General fixtures
@@ -204,10 +203,11 @@ def mock_limiter() -> Limiter:
 @pytest.fixture
 def mock_template_server_router(mock_limiter: Limiter) -> TemplateServerRouter:
     """Provide a TemplateServerRouter instance for testing."""
-    TEMPLATE_SERVER_ROUTER.configure(
+    router = TemplateServerRouter(prefix="")
+    router.configure(
         hashed_token="hashed_value",  # noqa: S106
         limiter=mock_limiter,
         rate_limit="10/minute",
     )
-    TEMPLATE_SERVER_ROUTER.setup_routes()
-    return TEMPLATE_SERVER_ROUTER
+    router.setup_routes()
+    return router

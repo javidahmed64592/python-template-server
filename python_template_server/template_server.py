@@ -277,7 +277,7 @@ class TemplateServer(ABC):
         for router in routers:
             router.configure(self.hashed_token, self.limiter, self.config.rate_limit.rate_limit)
             router.setup_routes()
-            self.app.include_router(router.router)
+            self.app.include_router(router.router, prefix=self.api_prefix)
 
         if self.static_dir_exists:
             logger.info("Mounting static directory: %s", self.static_dir)
