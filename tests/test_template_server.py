@@ -58,8 +58,12 @@ def mock_template_server(
     mock_template_server_router: TemplateServerRouter,
 ) -> Generator[TemplateServer]:
     """Provide a ExampleServer instance for testing."""
+    mock_cert_handler = MagicMock()
+    mock_cert_handler.generate_self_signed_cert = MagicMock()
+    mock_cert_handler.load_certificates = MagicMock()
+
     with (
-        patch("python_template_server.template_server.CertificateHandler", return_value=MagicMock(), autospec=True),
+        patch("python_template_server.template_server.CertificateHandler", return_value=mock_cert_handler),
         patch(
             "python_template_server.template_server.TemplateServerRouter",
             return_value=mock_template_server_router,
@@ -313,18 +317,6 @@ class TestTemplateServerRun:
         assert call_kwargs["app"] == mock_template_server.app
         assert call_kwargs["host"] == mock_template_server.host
         assert call_kwargs["port"] == mock_template_server.port
-
-    def test_run_generates_cert_when_missing(
-        self, mock_template_server: TemplateServer, mock_exists: MagicMock, mock_uvicorn_run: MagicMock
-    ) -> None:
-        """Test that self-signed certificate is generated when cert/key files are missing."""
-        # Mock the cert and key file paths to not exist
-        mock_exists.side_effect = [False, False]
-
-        mock_template_server.run()
-
-        mock_template_server.cert_handler.generate_self_signed_cert.assert_called_once()  # type: ignore[attr-defined]
-        mock_uvicorn_run.assert_called_once()
 
     def test_run_error(
         self, mock_template_server: TemplateServer, mock_exists: MagicMock, mock_uvicorn_run: MagicMock

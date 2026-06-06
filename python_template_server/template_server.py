@@ -16,6 +16,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
+from fastapi.routing import APIRoute
 from fastapi.security import APIKeyHeader
 from fastapi.staticfiles import StaticFiles
 from pydantic_core import ValidationError
@@ -229,11 +230,11 @@ class TemplateServer(ABC):
             self.config.cors.allow_headers,
         )
 
-    async def _rate_limit_exception_handler(self, request: Request, exc: RateLimitExceeded) -> CustomJSONResponse:
+    async def _rate_limit_exception_handler(self, request: Request, exc: Exception) -> CustomJSONResponse:
         """Handle rate limit exceeded exceptions.
 
         :param Request request: The incoming HTTP request
-        :param RateLimitExceeded exc: The rate limit exceeded exception
+        :param Exception exc: The rate limit exceeded exception
         :return JSONResponse: HTTP 429 JSON response
         """
         logger.warning("Rate limit exceeded for: %s", request.url.path)
@@ -256,7 +257,7 @@ class TemplateServer(ABC):
         )
 
         self.app.state.limiter = self.limiter
-        self.app.add_exception_handler(RateLimitExceeded, self._rate_limit_exception_handler)  # type: ignore[arg-type]
+        self.app.add_exception_handler(RateLimitExceeded, self._rate_limit_exception_handler)
 
         logger.info(
             "Rate limiting: ENABLED | rate=%s, storage=%s",
@@ -264,9 +265,13 @@ class TemplateServer(ABC):
             self.config.rate_limit.storage_uri or "in-memory",
         )
 
-    async def _custom_404_handler(self, request: Request, exc: StarletteHTTPException) -> Response:
+    async def _custom_404_handler(self, request: Request, exc: Exception) -> Response:
         """Handle 404 errors by serving custom 404.html if available."""
-        if exc.status_code == ResponseCode.NOT_FOUND and self.static_dir_exists:
+        if (
+            isinstance(exc, StarletteHTTPException)
+            and exc.status_code == ResponseCode.NOT_FOUND
+            and self.static_dir_exists
+        ):
             if (not_found_page := self.static_dir / "404.html").is_file():
                 return FileResponse(not_found_page, status_code=ResponseCode.NOT_FOUND)
         raise exc
@@ -282,10 +287,10 @@ class TemplateServer(ABC):
         if self.static_dir_exists:
             logger.info("Mounting static directory: %s", self.static_dir)
             self.app.mount("/", StaticFiles(directory=self.static_dir, html=True), name="static")
-            self.app.add_exception_handler(StarletteHTTPException, self._custom_404_handler)  # type: ignore[arg-type]
+            self.app.add_exception_handler(StarletteHTTPException, self._custom_404_handler)
 
         for router in routers:
-            routes = {route.path for route in router.router.routes}  # type: ignore[attr-defined]
+            routes = {route.path for route in router.router.routes if isinstance(route, APIRoute)}
             logger.info("Configured routes for %s: %s", router.__class__.__name__, routes)
 
     def run(self) -> None:
