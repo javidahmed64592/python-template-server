@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import Generator
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -38,7 +39,7 @@ class MockRouter(BaseRouter):
     def setup_routes(self) -> None:
         """Set up mock routes for testing."""
         mock_limiter = MagicMock(spec=Limiter)
-        mock_limiter.limit.return_value = MagicMock(return_value=MagicMock())
+        mock_limiter.limit = MagicMock(return_value=lambda f: f)
 
         self.configure(hashed_token=MOCK_TOKEN, limiter=mock_limiter, rate_limit=MOCK_RATE_LIMIT)
         self.add_route(
@@ -190,5 +191,6 @@ class TestAddRoutes:
     def test_limited_parameter_with_rate_limiting_enabled(self, mock_router: BaseRouter) -> None:
         """Test that limited=True applies rate limiting when limiter is enabled."""
         assert isinstance(mock_router.limiter, Limiter)
-        assert mock_router.limiter.limit.call_count == 2  # type: ignore[attr-defined] # noqa: PLR2004
-        mock_router.limiter.limit.assert_any_call(MOCK_RATE_LIMIT)  # type: ignore[attr-defined]
+        mock_limiter = cast(Any, mock_router.limiter)
+        assert mock_limiter.limit.call_count == 1 + 1
+        mock_limiter.limit.assert_any_call(MOCK_RATE_LIMIT)

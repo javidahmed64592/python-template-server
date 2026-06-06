@@ -18,9 +18,9 @@ Backend (Python)
    :target: https://github.com/astral-sh/ruff
    :alt: Ruff
 
-.. image:: https://img.shields.io/badge/mypy-Latest-2A6DB2?style=flat-square
-   :target: https://mypy.readthedocs.io/
-   :alt: Mypy
+.. image:: https://img.shields.io/badge/ty-Latest-2A6DB2?style=flat-square
+   :target: https://astral.sh/blog/ty
+   :alt: Ty
 
 .. image:: https://img.shields.io/badge/Sphinx-Latest-000000?style=flat-square&logo=sphinx&logoColor=white
    :target: https://www.sphinx-doc.org/
@@ -122,7 +122,7 @@ Testing, Linting, and Type Checking
    uv run ruff format .
 
    # Type check
-   uv run mypy .
+   uv run ty check .
 
    # Run tests
    uv run pytest
