@@ -78,7 +78,7 @@ class BaseRouter(ABC):
         self,
         endpoint: str,
         handler_function: Callable,
-        response_model: type[BaseModel],
+        response_model: type[BaseModel] | None,
         methods: list[str],
         limited: bool,  # noqa: FBT001
         authentication_required: bool,  # noqa: FBT001
@@ -87,7 +87,7 @@ class BaseRouter(ABC):
 
         :param str endpoint: The API endpoint path
         :param Callable handler_function: The handler function for the endpoint
-        :param BaseModel response_model: The Pydantic model for the response
+        :param BaseModel | None response_model: The Pydantic model for the response
         :param list[str] methods: The HTTP methods for the endpoint
         :param bool limited: Whether to apply rate limiting to this route
         :param bool authentication_required: Whether authentication is required for this route
