@@ -90,9 +90,7 @@ def mock_client(mock_template_server: TemplateServer) -> TestClient:
 class TestTemplateServer:
     """Unit tests for the TemplateServer class."""
 
-    def test_init(
-        self, mock_template_server: TemplateServer, mock_template_server_router: TemplateServerRouter
-    ) -> None:
+    def test_init(self, mock_template_server: TemplateServer) -> None:
         """Test TemplateServer initialization."""
         assert isinstance(mock_template_server.app, FastAPI)
         assert mock_template_server.app.title == mock_template_server.package_metadata["Name"]
@@ -100,8 +98,6 @@ class TestTemplateServer:
         assert mock_template_server.app.version == mock_template_server.package_metadata["Version"]
         assert mock_template_server.app.root_path == API_PREFIX
         assert isinstance(mock_template_server.api_key_header, APIKeyHeader)
-        for route in mock_template_server_router.router.routes:
-            assert route in mock_template_server.app.routes
 
     def test_init_token_hash_not_set(
         self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
@@ -162,6 +158,12 @@ class TestTemplateServer:
         # With ensure_ascii=False, emojis should be preserved
         assert "👋".encode() in rendered
         assert b'"test":"data"' in rendered  # Compact format (no spaces)
+
+    def test_routers_property(
+        self, mock_template_server: TemplateServer, mock_template_server_router: TemplateServerRouter
+    ) -> None:
+        """Test that the routers property returns the expected list of routers."""
+        assert mock_template_server_router in mock_template_server._routers
 
 
 class TestLoadConfig:
