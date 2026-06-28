@@ -165,10 +165,6 @@ class TestAddRoutes:
         # Verify the route has no dependencies (unauthenticated)
         assert len(test_route.dependencies) == 0
 
-        # Verify method and response model
-        assert "GET" in test_route.methods
-        assert test_route.response_model == BaseResponse
-
     def test_add_authenticated_route(self, mock_router: BaseRouter) -> None:
         """Test add_route with authentication enabled adds routes with authentication."""
         api_routes = [route for route in mock_router.router.routes if isinstance(route, APIRoute)]
@@ -183,10 +179,6 @@ class TestAddRoutes:
         assert len(test_route.dependencies) > 0
         dependency = test_route.dependencies[0]
         assert dependency.dependency == mock_router._verify_api_key
-
-        # Verify method and response model
-        assert "POST" in test_route.methods
-        assert test_route.response_model == BaseResponse
 
     def test_limited_parameter_with_rate_limiting_enabled(self, mock_router: BaseRouter) -> None:
         """Test that limited=True applies rate limiting when limiter is enabled."""

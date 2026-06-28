@@ -141,6 +141,14 @@ class TemplateServer(ABC):
         return self.static_dir.exists() and (self.static_dir / "index.html").exists()
 
     @property
+    def _routers(self) -> list[BaseRouter]:
+        """List of routers to include in the server, including the TemplateServerRouter.
+
+        :return list[BaseRouter]: List of BaseRouter instances
+        """
+        return [TEMPLATE_SERVER_ROUTER, *self.routers]
+
+    @property
     @abstractmethod
     def routers(self) -> list[BaseRouter]:
         """List of BaseRouter instances to include in the server.
@@ -278,20 +286,17 @@ class TemplateServer(ABC):
 
     def _setup_routes(self) -> None:
         """Set up API routes."""
-        routers: list[BaseRouter] = [TEMPLATE_SERVER_ROUTER, *self.routers]
-        for router in routers:
+        for router in self._routers:
             router.configure(self.hashed_token, self.limiter, self.config.rate_limit.rate_limit)
             router.setup_routes()
             self.app.include_router(router.router)
+            routes = {route.path for route in router.router.routes if isinstance(route, APIRoute)}
+            logger.info("Configured routes for %s: %s", router.__class__.__name__, routes)
 
         if self.static_dir_exists:
             logger.info("Mounting static directory: %s", self.static_dir)
             self.app.mount("/", StaticFiles(directory=self.static_dir, html=True), name="static")
             self.app.add_exception_handler(StarletteHTTPException, self._custom_404_handler)
-
-        for router in routers:
-            routes = {route.path for route in router.router.routes if isinstance(route, APIRoute)}
-            logger.info("Configured routes for %s: %s", router.__class__.__name__, routes)
 
     def run(self) -> None:
         """Run the server using uvicorn."""
