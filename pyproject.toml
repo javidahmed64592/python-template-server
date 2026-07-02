@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "cryptography>=49.0.0",
-    "fastapi>=0.138.1",
+    "fastapi>=0.139.0",
     "httpx>=0.28.1",
     "python-dotenv>=1.2.2",
     "python-multipart>=0.0.32",
