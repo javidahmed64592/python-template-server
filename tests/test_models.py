@@ -11,6 +11,7 @@ from python_template_server.models import (
     CORSConfigModel,
     CustomJSONResponse,
     DatabaseConfig,
+    GetConfigResponse,
     GetHealthResponse,
     GetLoginResponse,
     JSONResponseConfigModel,
@@ -237,6 +238,22 @@ class TestGetHealthResponse:
             "timestamp": timestamp,
         }
         response = GetHealthResponse(**config_dict)
+        assert response.model_dump() == config_dict
+
+
+class TestGetConfigResponse:
+    """Unit tests for the GetConfigResponse class."""
+
+    def test_model_dump(self, mock_template_server_config: TemplateServerConfig) -> None:
+        """Test the model_dump method."""
+        timestamp = GetConfigResponse.current_timestamp()
+        config_dict: dict = {
+            "message": "Configuration retrieved successfully.",
+            "timestamp": timestamp,
+            "config": mock_template_server_config.model_dump(),
+            "version": "1.0.0",
+        }
+        response = GetConfigResponse(**config_dict)
         assert response.model_dump() == config_dict
 
 

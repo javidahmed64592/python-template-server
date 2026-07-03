@@ -168,5 +168,12 @@ class GetHealthResponse(BaseResponse):
     """Response model for the health endpoint."""
 
 
+class GetConfigResponse(BaseResponse):
+    """Response model for API config endpoint."""
+
+    config: TemplateServerConfig = Field(..., description="Current configuration of the template server")
+    version: str = Field(..., description="Version of the server")
+
+
 class GetLoginResponse(BaseResponse):
     """Response model for login endpoint."""

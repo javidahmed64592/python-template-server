@@ -146,6 +146,7 @@ class TemplateServer(ABC):
 
         :return list[BaseRouter]: List of BaseRouter instances
         """
+        TEMPLATE_SERVER_ROUTER.configure_router(config=self.config, version=self.package_metadata["Version"])
         return [TEMPLATE_SERVER_ROUTER, *self.routers]
 
     @property
@@ -287,7 +288,9 @@ class TemplateServer(ABC):
     def _setup_routes(self) -> None:
         """Set up API routes."""
         for router in self._routers:
-            router.configure(self.hashed_token, self.limiter, self.config.rate_limit.rate_limit)
+            router.configure(
+                hashed_token=self.hashed_token, limiter=self.limiter, rate_limit=self.config.rate_limit.rate_limit
+            )
             router.setup_routes()
             self.app.include_router(router.router)
             routes = {route.path for route in router.router.routes if isinstance(route, APIRoute)}
