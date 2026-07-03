@@ -202,7 +202,9 @@ def mock_limiter() -> Limiter:
 
 
 @pytest.fixture
-def mock_template_server_router(mock_limiter: Limiter) -> TemplateServerRouter:
+def mock_template_server_router(
+    mock_limiter: Limiter, mock_template_server_config: TemplateServerConfig
+) -> TemplateServerRouter:
     """Provide a TemplateServerRouter instance for testing."""
     TEMPLATE_SERVER_ROUTER.configure(
         hashed_token="hashed_value",  # noqa: S106
@@ -210,4 +212,8 @@ def mock_template_server_router(mock_limiter: Limiter) -> TemplateServerRouter:
         rate_limit="10/minute",
     )
     TEMPLATE_SERVER_ROUTER.setup_routes()
+    TEMPLATE_SERVER_ROUTER.configure_router(
+        config=mock_template_server_config,
+        version="1.0.0",
+    )
     return TEMPLATE_SERVER_ROUTER
