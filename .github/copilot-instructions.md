@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-FastAPI-based template server providing reusable infrastructure for building secure HTTPS applications.
+FastAPI-based template server providing reusable infrastructure for building secure HTTP applications.
 Implements authentication, rate limiting, security headers, and observability foundations via a base `TemplateServer` class.
 Developers extend `TemplateServer` to create application-specific servers (see `ExampleServer` in `main.py`).
 
@@ -75,7 +75,7 @@ uv sync                          # Install dependencies
 uv run generate-new-token        # Generate API key, save hash to .env
 
 # Development
-uv run python-template-server    # Start server (https://localhost:443/api)
+uv run python-template-server    # Start server (http://localhost:8000/api)
 uv run -m pytest                 # Run tests with coverage
 uv run -m ty check .             # Type checking
 uv run -m ruff check .           # Linting
@@ -100,7 +100,7 @@ docker compose down              # Stop and remove containers
 - **Stage 2 (runtime)**: Installs wheel, copies configuration from host, copies static files and `.here` from installed package to /app
 - **Startup Script**: Created inline in Dockerfile as `/app/start.sh`, generates token if missing, starts server with host/port from environment variables
 - **Config Selection**: Uses `config.json` copied from host configuration directory
-- **Environment Variables**: `HOST` (default: 0.0.0.0), `PORT` (default: 443), `API_TOKEN_HASH` (auto-generated if not set)
+- **Environment Variables**: `HOST` (default: 0.0.0.0), `PORT` (default: 8000), `API_TOKEN_HASH` (auto-generated if not set)
 - **Health Check**: Python urllib request to `/api/health` with unverified SSL context (no auth required)
 - **Note**: No user switching - runs as root (could be security improvement)
 
@@ -108,7 +108,7 @@ docker compose down              # Stop and remove containers
 
 ### Code Organization
 
-- **Handlers**: Separate modules for auth (`authentication_handler.py`), certs (`certificate_handler.py`)
+- **Handlers**: Module for auth (`authentication_handler.py`)
 - **Middleware**: Dedicated package `middleware/` with base classes extending `BaseHTTPMiddleware`
 - **Constants**: All magic strings/numbers in `constants.py` (ports, file names, log config, static directory)
 - **Models**: Pydantic models for config + API responses, use `@property` for derived values
@@ -117,9 +117,8 @@ docker compose down              # Stop and remove containers
 ### Security Patterns
 
 - **Never log secrets**: Print tokens via `print()`, not `logger` (see `generate_new_token()`)
-- **Path validation**: Use Pydantic validators, Path objects for cert paths
+- **Path validation**: Use Pydantic validators
 - **Security headers**: HSTS, CSP, X-Frame-Options via `SecurityHeadersMiddleware`
-- **Cert generation**: RSA-4096, SHA-256, 365-day validity, SANs for localhost
 
 ### API Design
 
@@ -172,7 +171,6 @@ All PRs must pass:
 - `template_server.py` - Base TemplateServer class with middleware/auth setup
 - `main.py` - ExampleServer implementation showing how to extend TemplateServer
 - `authentication_handler.py` - Token generation, hashing, verification
-- `certificate_handler.py` - Self-signed SSL certificate generation and loading
 - `logging_setup.py` - Logging configuration (executed on import)
 - `models.py` - All Pydantic models (config + responses)
 - `constants.py` - Project constants, logging config
@@ -180,13 +178,13 @@ All PRs must pass:
 
 ### Environment Variables
 
-- `HOST` - Server host address (default: localhost)
-- `PORT` - Server port (default: 443)
+- `HOST` - Server host address (default: 127.0.0.1)
+- `PORT` - Server port (default: 8000)
 - `API_TOKEN_HASH` - SHA-256 hash of API token (auto-generated if not provided)
 
 ### Configuration Files
 
-- `configuration/config.json` - Server configuration (rate limiting, security, CORS, certificate, etc.)
+- `configuration/config.json` - Server configuration (rate limiting, security, CORS, etc.)
 - `.env.example` - Template for environment variables (HOST, PORT, API_TOKEN_HASH)
 - `.env` - Environment variables including host, port, and API token hash (auto-created by generate-new-token or Docker startup script)
 - **Docker**: Startup script auto-generates token if .env doesn't exist or API_TOKEN_HASH is empty
