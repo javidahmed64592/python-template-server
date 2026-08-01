@@ -3,11 +3,9 @@
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
 from python_template_server.models import (
     BaseResponse,
-    CertificateConfigModel,
     CORSConfigModel,
     CustomJSONResponse,
     DatabaseConfig,
@@ -47,34 +45,6 @@ class TestRateLimitConfigModel:
         assert mock_rate_limit_config.model_dump() == mock_rate_limit_config_dict
 
 
-class TestCertificateConfigModel:
-    """Unit tests for the CertificateConfigModel class."""
-
-    def test_model_dump(
-        self, mock_certificate_config_dict: dict, mock_certificate_config: CertificateConfigModel
-    ) -> None:
-        """Test the model_dump method."""
-        assert mock_certificate_config.model_dump() == mock_certificate_config_dict
-
-    def test_ssl_key_file_path_property(self, mock_certificate_config: CertificateConfigModel) -> None:
-        """Test the ssl_key_file_path property."""
-        assert mock_certificate_config.ssl_key_file_path == Path("/path/to/certs/key.pem")
-
-    def test_ssl_cert_file_path_property(self, mock_certificate_config: CertificateConfigModel) -> None:
-        """Test the ssl_cert_file_path property."""
-        assert mock_certificate_config.ssl_cert_file_path == Path("/path/to/certs/cert.pem")
-
-    def test_days_valid_field(
-        self, mock_certificate_config_dict: dict, mock_certificate_config: CertificateConfigModel
-    ) -> None:
-        """Test the days_valid field."""
-        invalid_config_data = mock_certificate_config_dict.copy()
-        invalid_config_data["days_valid"] = -10  # Invalid value
-
-        with pytest.raises(ValidationError):
-            CertificateConfigModel(**invalid_config_data)
-
-
 class TestJSONResponseConfigModel:
     """Unit tests for the JSONResponseConfigModel class."""
 
@@ -108,7 +78,6 @@ class TestTemplateServerConfig:
         mock_security_config_dict: dict,
         mock_cors_config_dict: dict,
         mock_rate_limit_config_dict: dict,
-        mock_certificate_config_dict: dict,
         mock_json_response_config_dict: dict,
     ) -> None:
         """Test the model_dump method."""
@@ -116,7 +85,6 @@ class TestTemplateServerConfig:
             "security": mock_security_config_dict,
             "cors": mock_cors_config_dict,
             "rate_limit": mock_rate_limit_config_dict,
-            "certificate": mock_certificate_config_dict,
             "json_response": mock_json_response_config_dict,
         }
         assert mock_template_server_config.model_dump() == expected_dict

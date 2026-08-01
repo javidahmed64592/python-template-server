@@ -35,7 +35,6 @@ All API responses include security headers to protect against common web vulnera
 
 **Headers Included:**
 
-- ``Strict-Transport-Security``: Forces HTTPS connections (HSTS)
 - ``X-Content-Type-Options``: Prevents MIME-type sniffing
 - ``X-Frame-Options``: Prevents clickjacking attacks
 - ``Content-Security-Policy``: Controls which resources can be loaded
@@ -85,7 +84,7 @@ FastAPI automatically generates interactive API documentation, providing two dif
 
 **Swagger UI**
 
-- **URL**: ``https://localhost:443/api/docs``
+- **URL**: ``http://localhost:8000/api/docs``
 - **Purpose**: Interactive API documentation with "Try it out" functionality
 
 **Features**:
@@ -98,7 +97,7 @@ FastAPI automatically generates interactive API documentation, providing two dif
 
 **ReDoc**
 
-- **URL**: ``https://localhost:443/api/redoc``
+- **URL**: ``http://localhost:8000/api/redoc``
 - **Purpose**: Alternative API documentation with a clean, three-panel layout
 
 **Features**:

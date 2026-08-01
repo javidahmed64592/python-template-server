@@ -74,7 +74,7 @@ class BaseRouter(ABC):
         self.limiter = limiter
         self.rate_limit = rate_limit
 
-    def add_route(
+    def add_route(  # noqa: PLR0917
         self,
         endpoint: str,
         handler_function: Callable,

@@ -26,7 +26,6 @@ from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from template_python.logging_setup import add_file_handler, setup_default_logging
 
-from python_template_server.certificate_handler import CertificateHandler
 from python_template_server.constants import (
     API_KEY_HEADER_NAME,
     API_PREFIX,
@@ -69,7 +68,7 @@ class TemplateServer(ABC):
     Ensure you implement the `routers` property and `validate_config` method in subclasses.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         package_name: str = "python-template-server",
         api_prefix: str = API_PREFIX,
@@ -89,7 +88,6 @@ class TemplateServer(ABC):
         self.api_key_header_name = api_key_header_name
         self.config_filepath = config_filepath
         self.config = config or self.load_config(self.config_filepath)
-        self.cert_handler = CertificateHandler(self.config.certificate)
         self.static_dir = static_dir
 
         logger.info("Configuring FastAPI server...")
@@ -106,8 +104,8 @@ class TemplateServer(ABC):
         self.api_key_header = APIKeyHeader(name=self.api_key_header_name, auto_error=False)
 
         logger.info("Loading environment variables...")
-        self.host = os.getenv("HOST", "localhost")
-        self.port = int(os.getenv("PORT", "443"))
+        self.host = os.getenv("HOST", "127.0.0.1")
+        self.port = int(os.getenv("PORT", "8000"))
 
         if not (hashed_token := os.getenv(TOKEN_ENV_VAR_NAME)):
             error_msg = "Server token is not configured. Set the token using: uv run generate-new-token"
@@ -304,20 +302,11 @@ class TemplateServer(ABC):
     def run(self) -> None:
         """Run the server using uvicorn."""
         try:
-            cert_file = self.config.certificate.ssl_cert_file_path
-            key_file = self.config.certificate.ssl_key_file_path
-
-            if not (cert_file.exists() and key_file.exists()):
-                logger.warning("SSL certificate or key file not found, generating self-signed certificate...")
-                self.cert_handler.generate_self_signed_cert()
-
-            logger.info("Starting server: https://%s:%s%s", self.host, self.port, self.api_prefix)
+            logger.info("Starting server: http://%s:%s%s", self.host, self.port, self.api_prefix)
             uvicorn.run(
                 app=self.app,
                 host=self.host,
                 port=self.port,
-                ssl_keyfile=str(key_file),
-                ssl_certfile=str(cert_file),
                 log_level="warning",
                 access_log=False,
             )

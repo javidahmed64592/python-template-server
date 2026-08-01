@@ -30,7 +30,7 @@ This repository provides a solid foundation for building secure, observable Fast
 - **CORS Support**: Configurable cross-origin resource sharing for frontend integration
 - **Static File Serving**: FastAPI's StaticFiles mounting with custom 404.html support
 - **Docker Support**: Multi-stage builds with docker-compose orchestration
-- **Production Patterns**: Token generation, SSL certificate handling, health checks
+- **Production Patterns**: Token generation, health checks
 
 ## Architecture
 
@@ -56,8 +56,8 @@ Download the latest release from [GitHub Releases](https://github.com/javidahmed
 
 Rename `.env.example` to `.env` and edit it to configure the server.
 
-- `HOST`: Server host address (default: localhost)
-- `PORT`: Server port (default: 443)
+- `HOST`: Server host address (default: 0.0.0.0)
+- `PORT`: Server port (default: 8000)
 - `API_TOKEN_HASH`: Leave blank to auto-generate on first run, or provide your own token hash
 
 ### Managing the Container
