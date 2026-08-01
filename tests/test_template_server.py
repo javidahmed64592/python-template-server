@@ -58,12 +58,7 @@ def mock_template_server(
     mock_template_server_router: TemplateServerRouter,
 ) -> Generator[TemplateServer]:
     """Provide a ExampleServer instance for testing."""
-    mock_cert_handler = MagicMock()
-    mock_cert_handler.generate_self_signed_cert = MagicMock()
-    mock_cert_handler.load_certificates = MagicMock()
-
     with (
-        patch("python_template_server.template_server.CertificateHandler", return_value=mock_cert_handler),
         patch(
             "python_template_server.template_server.TemplateServerRouter",
             return_value=mock_template_server_router,

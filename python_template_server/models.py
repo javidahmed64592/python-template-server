@@ -48,25 +48,6 @@ class RateLimitConfigModel(BaseModel):
     storage_uri: str = Field(default="", description="Storage URI for rate limit data (empty string for in-memory)")
 
 
-class CertificateConfigModel(BaseModel):
-    """Certificate configuration model."""
-
-    directory: str = Field(default="certs", description="Directory where SSL certificate and key files are stored")
-    ssl_keyfile: str = Field(default="key.pem", description="Filename of the SSL key file")
-    ssl_certfile: str = Field(default="cert.pem", description="Filename of the SSL certificate file")
-    days_valid: int = Field(default=365, ge=1, description="Number of days the certificate is valid")
-
-    @property
-    def ssl_key_file_path(self) -> Path:
-        """Get the full path to the SSL key file."""
-        return Path(self.directory) / self.ssl_keyfile
-
-    @property
-    def ssl_cert_file_path(self) -> Path:
-        """Get the full path to the SSL certificate file."""
-        return Path(self.directory) / self.ssl_certfile
-
-
 class JSONResponseConfigModel(BaseModel):
     """JSON response rendering configuration model."""
 
@@ -94,7 +75,6 @@ class TemplateServerConfig(BaseModel):
     security: SecurityConfigModel = Field(default_factory=SecurityConfigModel)
     cors: CORSConfigModel = Field(default_factory=CORSConfigModel)
     rate_limit: RateLimitConfigModel = Field(default_factory=RateLimitConfigModel)
-    certificate: CertificateConfigModel = Field(default_factory=CertificateConfigModel)
     json_response: JSONResponseConfigModel = Field(default_factory=JSONResponseConfigModel)
 
     def save_to_file(self, filepath: Path) -> None:

@@ -8,7 +8,6 @@ import pytest
 from slowapi import Limiter
 
 from python_template_server.models import (
-    CertificateConfigModel,
     CORSConfigModel,
     DatabaseConfig,
     JSONResponseConfigModel,
@@ -109,17 +108,6 @@ def mock_rate_limit_config_dict() -> dict:
 
 
 @pytest.fixture
-def mock_certificate_config_dict() -> dict:
-    """Provide a mock certificate configuration dictionary."""
-    return {
-        "directory": "/path/to/certs",
-        "ssl_keyfile": "key.pem",
-        "ssl_certfile": "cert.pem",
-        "days_valid": 365,
-    }
-
-
-@pytest.fixture
 def mock_json_response_config_dict() -> dict:
     """Provide a mock JSON response configuration dictionary."""
     return {
@@ -157,12 +145,6 @@ def mock_rate_limit_config(mock_rate_limit_config_dict: dict) -> RateLimitConfig
 
 
 @pytest.fixture
-def mock_certificate_config(mock_certificate_config_dict: dict) -> CertificateConfigModel:
-    """Provide a mock CertificateConfigModel instance."""
-    return CertificateConfigModel.model_validate(mock_certificate_config_dict)
-
-
-@pytest.fixture
 def mock_json_response_config(mock_json_response_config_dict: dict) -> JSONResponseConfigModel:
     """Provide a mock JSONResponseConfigModel instance."""
     return JSONResponseConfigModel.model_validate(mock_json_response_config_dict)
@@ -179,7 +161,6 @@ def mock_template_server_config(
     mock_security_config: SecurityConfigModel,
     mock_cors_config: CORSConfigModel,
     mock_rate_limit_config: RateLimitConfigModel,
-    mock_certificate_config: CertificateConfigModel,
     mock_json_response_config: JSONResponseConfigModel,
 ) -> TemplateServerConfig:
     """Provide a mock TemplateServerConfig instance."""
@@ -187,7 +168,6 @@ def mock_template_server_config(
         security=mock_security_config,
         cors=mock_cors_config,
         rate_limit=mock_rate_limit_config,
-        certificate=mock_certificate_config,
         json_response=mock_json_response_config,
     )
 
