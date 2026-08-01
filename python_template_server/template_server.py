@@ -68,7 +68,7 @@ class TemplateServer(ABC):
     Ensure you implement the `routers` property and `validate_config` method in subclasses.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         package_name: str = "python-template-server",
         api_prefix: str = API_PREFIX,
