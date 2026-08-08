@@ -22,10 +22,5 @@
     "allow_nan": false,
     "indent": null,
     "media_type": "application/json; charset=utf-8"
-  },
-  "nginx_proxy_redirect": {
-    "enabled": true,
-    "app_name": "template-server",
-    "domain": ".lab.home.arpa"
   }
 }
