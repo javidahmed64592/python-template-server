@@ -16,9 +16,17 @@ def mock_app() -> FastAPI:
 def mock_request() -> Request:
     """Provide a mock Request."""
     request = MagicMock(spec=Request)
+
+    url = MagicMock()
+    url.path = "/test"
+    url.query = "param=value"
+
+    client = MagicMock()
+    client.host = "127.0.0.1"
+
     request.method = "GET"
-    request.url.path = "/test"
-    request.client.host = "127.0.0.1"
+    request.url = url
+    request.client = client
     return request
 
 

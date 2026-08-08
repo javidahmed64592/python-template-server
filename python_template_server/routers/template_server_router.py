@@ -1,13 +1,18 @@
-"""Template server router with health and login endpoints."""
+"""Template server router."""
 
 from fastapi import Request
 
-from python_template_server.models import GetConfigResponse, GetHealthResponse, GetLoginResponse, TemplateServerConfig
+from python_template_server.models import (
+    GetAuthEnabledResponse,
+    GetConfigResponse,
+    GetHealthResponse,
+    TemplateServerConfig,
+)
 from python_template_server.routers import BaseRouter
 
 
 class TemplateServerRouter(BaseRouter):
-    """Router for the template server with health and login endpoints."""
+    """Router for the template server."""
 
     def configure_router(self, config: TemplateServerConfig, version: str) -> None:
         """Configure the router with server configuration and version.
@@ -26,23 +31,20 @@ class TemplateServerRouter(BaseRouter):
             response_model=GetHealthResponse,
             methods=["GET"],
             limited=False,
-            authentication_required=False,
         )
         self.add_route(
             endpoint="/config",
             handler_function=self.get_config,
             response_model=GetConfigResponse,
             methods=["GET"],
-            limited=False,
-            authentication_required=False,
+            limited=True,
         )
         self.add_route(
-            endpoint="/login",
-            handler_function=self.get_login,
-            response_model=GetLoginResponse,
+            endpoint="/auth_enabled",
+            handler_function=self.get_auth_enabled,
+            response_model=GetAuthEnabledResponse,
             methods=["GET"],
             limited=True,
-            authentication_required=True,
         )
 
     async def get_health(self, request: Request) -> GetHealthResponse:
@@ -50,7 +52,6 @@ class TemplateServerRouter(BaseRouter):
 
         :param Request request: The incoming HTTP request
         :return GetHealthResponse: Health status response
-        :raise HTTPException: If the server token is not configured
         """
         return GetHealthResponse(message="Server is healthy")
 
@@ -59,7 +60,6 @@ class TemplateServerRouter(BaseRouter):
 
         :param Request request: The incoming HTTP request
         :return GetConfigResponse: Configuration response
-        :raise HTTPException: If the server token is not configured
         """
         return GetConfigResponse(
             message="Configuration retrieved successfully.",
@@ -67,11 +67,13 @@ class TemplateServerRouter(BaseRouter):
             version=self.version,
         )
 
-    async def get_login(self, request: Request) -> GetLoginResponse:
-        """Handle user login and return a success response.
+    async def get_auth_enabled(self, request: Request) -> GetAuthEnabledResponse:
+        """Get authentication enabled status.
 
         :param Request request: The incoming HTTP request
-        :return GetLoginResponse: Login success response
-        :raise HTTPException: If the server token is not configured
+        :return GetAuthEnabledResponse: Authentication enabled status response
         """
-        return GetLoginResponse(message="Login successful.")
+        return GetAuthEnabledResponse(
+            message="Authentication enabled status retrieved successfully.",
+            auth_enabled=self.config.nginx_proxy_redirect.enabled,
+        )

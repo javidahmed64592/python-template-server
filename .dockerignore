@@ -1,6 +1,3 @@
-# Static
-static/
-
 # Python
 __pycache__/
 *.py[cod]

@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 from collections.abc import Generator
 from importlib.metadata import PackageMetadata
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyHeader
 from fastapi.testclient import TestClient
 from slowapi.errors import RateLimitExceeded
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
@@ -92,21 +90,6 @@ class TestTemplateServer:
         assert mock_template_server.app.description == mock_template_server.package_metadata["Summary"]
         assert mock_template_server.app.version == mock_template_server.package_metadata["Version"]
         assert mock_template_server.app.root_path == API_PREFIX
-        assert isinstance(mock_template_server.api_key_header, APIKeyHeader)
-
-    def test_init_token_hash_not_set(
-        self, mock_template_server_config: TemplateServerConfig, mock_tmp_config_path: Path, mock_tmp_static_path: Path
-    ) -> None:
-        """Test initialization when token is not configured."""
-        with (
-            patch.dict(os.environ, {"API_TOKEN_HASH": ""}),
-            pytest.raises(HTTPException, match=f"{ResponseCode.INTERNAL_SERVER_ERROR}: Server token is not configured"),
-        ):
-            ExampleServer(
-                config_filepath=mock_tmp_config_path,
-                static_dir=mock_tmp_static_path,
-                config=mock_template_server_config,
-            )
 
     def test_request_middleware_added(self, mock_template_server: TemplateServer) -> None:
         """Test that all middleware is added to the app."""

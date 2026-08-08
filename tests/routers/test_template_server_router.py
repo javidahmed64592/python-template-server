@@ -19,9 +19,9 @@ class TestRoutes:
         api_routes = [route for route in mock_template_server_router.router.routes if isinstance(route, APIRoute)]
         routes = [route.path for route in api_routes]
         expected_endpoints = [
-            "/health",
+            "/auth_enabled",
             "/config",
-            "/login",
+            "/health",
         ]
         for endpoint in expected_endpoints:
             assert endpoint in routes
@@ -58,16 +58,18 @@ class TestGetConfigEndpoint:
         assert isinstance(response.timestamp, str)
 
 
-class TestGetLoginEndpoint:
-    """Integration tests for the /login endpoint."""
+class TestGetAuthEnabledEndpoint:
+    """Integration tests for the /auth_enabled endpoint."""
 
     @pytest.fixture
     def mock_request_object(self) -> Request:
         """Provide a mock Request object."""
         return MagicMock(spec=Request)
 
-    def test_get_login(self, mock_template_server_router: TemplateServerRouter, mock_request_object: Request) -> None:
-        """Test the /login endpoint method."""
-        response = asyncio.run(mock_template_server_router.get_login(mock_request_object))
-        assert response.message == "Login successful."
+    def test_get_auth_enabled(
+        self, mock_template_server_router: TemplateServerRouter, mock_request_object: Request
+    ) -> None:
+        """Test the /auth_enabled endpoint method."""
+        response = asyncio.run(mock_template_server_router.get_auth_enabled(mock_request_object))
+        assert isinstance(response.auth_enabled, bool)
         assert isinstance(response.timestamp, str)

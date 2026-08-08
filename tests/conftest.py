@@ -11,6 +11,7 @@ from python_template_server.models import (
     CORSConfigModel,
     DatabaseConfig,
     JSONResponseConfigModel,
+    NginxProxyRedirectConfigModel,
     RateLimitConfigModel,
     SecurityConfigModel,
     TemplateServerConfig,
@@ -28,31 +29,10 @@ def mock_exists() -> Generator[MagicMock]:
 
 
 @pytest.fixture
-def mock_mkdir() -> Generator[MagicMock]:
-    """Mock Path.mkdir method."""
-    with patch("pathlib.Path.mkdir") as mock_mkdir:
-        yield mock_mkdir
-
-
-@pytest.fixture
-def mock_touch() -> Generator[MagicMock]:
-    """Mock the Path.touch() method."""
-    with patch("pathlib.Path.touch") as mock_touch:
-        yield mock_touch
-
-
-@pytest.fixture
 def mock_read_text() -> Generator[MagicMock]:
     """Mock the Path.read_text() method."""
     with patch("pathlib.Path.read_text") as mock_read:
         yield mock_read
-
-
-@pytest.fixture
-def mock_write_text() -> Generator[MagicMock]:
-    """Mock the Path.write_text() method."""
-    with patch("pathlib.Path.write_text") as mock_write:
-        yield mock_write
 
 
 @pytest.fixture
@@ -119,6 +99,12 @@ def mock_json_response_config_dict() -> dict:
 
 
 @pytest.fixture
+def mock_nginx_config_dict() -> dict:
+    """Provide a mock Nginx configuration dictionary."""
+    return {"enabled": False, "app_name": "template-server", "domain": ".lab.home.arpa"}
+
+
+@pytest.fixture
 def mock_db_config_dict(mock_tmp_db_path: Path) -> dict:
     """Provide a mock database configuration dictionary."""
     return {
@@ -151,6 +137,12 @@ def mock_json_response_config(mock_json_response_config_dict: dict) -> JSONRespo
 
 
 @pytest.fixture
+def mock_nginx_config(mock_nginx_config_dict: dict) -> NginxProxyRedirectConfigModel:
+    """Provide a mock NginxProxyRedirectConfigModel instance."""
+    return NginxProxyRedirectConfigModel.model_validate(mock_nginx_config_dict)
+
+
+@pytest.fixture
 def mock_db_config(mock_db_config_dict: dict) -> DatabaseConfig:
     """Provide a mock DatabaseConfig instance."""
     return DatabaseConfig.model_validate(mock_db_config_dict)
@@ -162,6 +154,7 @@ def mock_template_server_config(
     mock_cors_config: CORSConfigModel,
     mock_rate_limit_config: RateLimitConfigModel,
     mock_json_response_config: JSONResponseConfigModel,
+    mock_nginx_config: NginxProxyRedirectConfigModel,
 ) -> TemplateServerConfig:
     """Provide a mock TemplateServerConfig instance."""
     return TemplateServerConfig(
@@ -169,6 +162,7 @@ def mock_template_server_config(
         cors=mock_cors_config,
         rate_limit=mock_rate_limit_config,
         json_response=mock_json_response_config,
+        nginx_proxy_redirect=mock_nginx_config,
     )
 
 
@@ -187,7 +181,6 @@ def mock_template_server_router(
 ) -> TemplateServerRouter:
     """Provide a TemplateServerRouter instance for testing."""
     TEMPLATE_SERVER_ROUTER.configure(
-        hashed_token="hashed_value",  # noqa: S106
         limiter=mock_limiter,
         rate_limit="10/minute",
     )

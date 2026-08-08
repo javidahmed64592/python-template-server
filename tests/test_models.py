@@ -9,10 +9,11 @@ from python_template_server.models import (
     CORSConfigModel,
     CustomJSONResponse,
     DatabaseConfig,
+    GetAuthEnabledResponse,
     GetConfigResponse,
     GetHealthResponse,
-    GetLoginResponse,
     JSONResponseConfigModel,
+    NginxProxyRedirectConfigModel,
     RateLimitConfigModel,
     ResponseCode,
     SecurityConfigModel,
@@ -55,6 +56,14 @@ class TestJSONResponseConfigModel:
         assert mock_json_response_config.model_dump() == mock_json_response_config_dict
 
 
+class TestNginxProxyRedirectConfigModel:
+    """Unit tests for the NginxProxyRedirectConfigModel class."""
+
+    def test_model_dump(self, mock_nginx_config_dict: dict, mock_nginx_config: NginxProxyRedirectConfigModel) -> None:
+        """Test the model_dump method."""
+        assert mock_nginx_config.model_dump() == mock_nginx_config_dict
+
+
 class TestDatabaseConfig:
     """Unit tests for the DatabaseConfig class."""
 
@@ -72,13 +81,14 @@ class TestDatabaseConfig:
 class TestTemplateServerConfig:
     """Unit tests for the TemplateServerConfig class."""
 
-    def test_model_dump(
+    def test_model_dump(  # noqa: PLR0917
         self,
         mock_template_server_config: TemplateServerConfig,
         mock_security_config_dict: dict,
         mock_cors_config_dict: dict,
         mock_rate_limit_config_dict: dict,
         mock_json_response_config_dict: dict,
+        mock_nginx_config_dict: dict,
     ) -> None:
         """Test the model_dump method."""
         expected_dict = {
@@ -86,6 +96,7 @@ class TestTemplateServerConfig:
             "cors": mock_cors_config_dict,
             "rate_limit": mock_rate_limit_config_dict,
             "json_response": mock_json_response_config_dict,
+            "nginx_proxy_redirect": mock_nginx_config_dict,
         }
         assert mock_template_server_config.model_dump() == expected_dict
 
@@ -225,15 +236,16 @@ class TestGetConfigResponse:
         assert response.model_dump() == config_dict
 
 
-class TestGetLoginResponse:
-    """Unit tests for the GetLoginResponse class."""
+class TestGetAuthEnabledResponse:
+    """Unit tests for the GetAuthEnabledResponse class."""
 
-    def test_model_dump(self) -> None:
+    def test_model_dump(self, mock_template_server_config: TemplateServerConfig) -> None:
         """Test the model_dump method."""
-        timestamp = GetLoginResponse.current_timestamp()
+        timestamp = GetAuthEnabledResponse.current_timestamp()
         config_dict: dict = {
-            "message": "Login successful",
+            "message": "Authentication enabled status retrieved successfully.",
             "timestamp": timestamp,
+            "auth_enabled": mock_template_server_config.nginx_proxy_redirect.enabled,
         }
-        response = GetLoginResponse(**config_dict)
+        response = GetAuthEnabledResponse(**config_dict)
         assert response.model_dump() == config_dict

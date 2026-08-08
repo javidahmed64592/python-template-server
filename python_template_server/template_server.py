@@ -13,21 +13,17 @@ from typing import Any
 
 import dotenv
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
 from fastapi.routing import APIRoute
-from fastapi.security import APIKeyHeader
 from fastapi.staticfiles import StaticFiles
 from pydantic_core import ValidationError
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from template_python.logging_setup import add_file_handler, setup_default_logging
 
 from python_template_server.constants import (
-    API_KEY_HEADER_NAME,
     API_PREFIX,
     CONFIG_FILE_PATH,
     ENV_FILE_PATH,
@@ -36,14 +32,13 @@ from python_template_server.constants import (
     LOGGING_MAX_BYTES_MB,
     MB_TO_BYTES,
     STATIC_DIR,
-    TOKEN_ENV_VAR_NAME,
 )
-from python_template_server.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
-from python_template_server.models import (
-    CustomJSONResponse,
-    ResponseCode,
-    TemplateServerConfig,
+from python_template_server.middleware import (
+    NginxProxyRedirectMiddleware,
+    RequestLoggingMiddleware,
+    SecurityHeadersMiddleware,
 )
+from python_template_server.models import CustomJSONResponse, TemplateServerConfig
 from python_template_server.routers import BaseRouter, TemplateServerRouter
 
 dotenv.load_dotenv(ENV_FILE_PATH)
@@ -68,11 +63,10 @@ class TemplateServer(ABC):
     Ensure you implement the `routers` property and `validate_config` method in subclasses.
     """
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         package_name: str = "python-template-server",
         api_prefix: str = API_PREFIX,
-        api_key_header_name: str = API_KEY_HEADER_NAME,
         config_filepath: Path = CONFIG_FILE_PATH,
         config: TemplateServerConfig | None = None,
         static_dir: Path = STATIC_DIR,
@@ -80,12 +74,10 @@ class TemplateServer(ABC):
         """Initialize the TemplateServer.
 
         :param str api_prefix: The API prefix for the server
-        :param str api_key_header_name: The API key header name
         :param Path config_filepath: Path to the configuration file
         :param TemplateServerConfig | None config: Optional pre-loaded configuration
         """
         self.api_prefix = api_prefix
-        self.api_key_header_name = api_key_header_name
         self.config_filepath = config_filepath
         self.config = config or self.load_config(self.config_filepath)
         self.static_dir = static_dir
@@ -101,23 +93,14 @@ class TemplateServer(ABC):
             lifespan=self.lifespan,
             default_response_class=CustomJSONResponse,
         )
-        self.api_key_header = APIKeyHeader(name=self.api_key_header_name, auto_error=False)
 
         logger.info("Loading environment variables...")
         self.host = os.getenv("HOST", "127.0.0.1")
         self.port = int(os.getenv("PORT", "8000"))
 
-        if not (hashed_token := os.getenv(TOKEN_ENV_VAR_NAME)):
-            error_msg = "Server token is not configured. Set the token using: uv run generate-new-token"
-            logger.error(error_msg)
-            raise HTTPException(
-                status_code=ResponseCode.INTERNAL_SERVER_ERROR,
-                detail=error_msg,
-            )
-        self.hashed_token = hashed_token
-
         logger.info("Setting up server features...")
         self._setup_request_logging()
+        self._setup_nginx_proxy_redirect()
         self._setup_security_headers()
         self._setup_cors()
         self._setup_rate_limiting()
@@ -199,6 +182,27 @@ class TemplateServer(ABC):
         self.app.add_middleware(RequestLoggingMiddleware)
         logger.info("Request logging: ENABLED")
 
+    def _setup_nginx_proxy_redirect(self) -> None:
+        """Set up nginx proxy redirect middleware."""
+        if not self.config.nginx_proxy_redirect.enabled:
+            logger.info("Nginx proxy redirect: DISABLED")
+            return
+
+        if not self.config.nginx_proxy_redirect.app_name or not self.config.nginx_proxy_redirect.domain:
+            logger.warning("Nginx proxy redirect is enabled but app_name or domain is not configured - skipping")
+            return
+
+        self.app.add_middleware(
+            NginxProxyRedirectMiddleware,
+            config=self.config.nginx_proxy_redirect,
+        )
+
+        logger.info(
+            "Nginx proxy redirect: ENABLED | URL=https://%s%s",
+            self.config.nginx_proxy_redirect.app_name,
+            self.config.nginx_proxy_redirect.domain,
+        )
+
     def _setup_security_headers(self) -> None:
         """Set up security headers middleware."""
         self.app.add_middleware(
@@ -272,23 +276,10 @@ class TemplateServer(ABC):
             self.config.rate_limit.storage_uri or "in-memory",
         )
 
-    async def _custom_404_handler(self, request: Request, exc: Exception) -> Response:
-        """Handle 404 errors by serving custom 404.html if available."""
-        if (
-            isinstance(exc, StarletteHTTPException)
-            and exc.status_code == ResponseCode.NOT_FOUND
-            and self.static_dir_exists
-        ):
-            if (not_found_page := self.static_dir / "404.html").is_file():
-                return FileResponse(not_found_page, status_code=ResponseCode.NOT_FOUND)
-        raise exc
-
     def _setup_routes(self) -> None:
         """Set up API routes."""
         for router in self._routers:
-            router.configure(
-                hashed_token=self.hashed_token, limiter=self.limiter, rate_limit=self.config.rate_limit.rate_limit
-            )
+            router.configure(limiter=self.limiter, rate_limit=self.config.rate_limit.rate_limit)
             router.setup_routes()
             self.app.include_router(router.router)
             routes = {route.path for route in router.router.routes if isinstance(route, APIRoute)}
@@ -297,7 +288,6 @@ class TemplateServer(ABC):
         if self.static_dir_exists:
             logger.info("Mounting static directory: %s", self.static_dir)
             self.app.mount("/", StaticFiles(directory=self.static_dir, html=True), name="static")
-            self.app.add_exception_handler(StarletteHTTPException, self._custom_404_handler)
 
     def run(self) -> None:
         """Run the server using uvicorn."""
