@@ -30,7 +30,6 @@ This repository provides a solid foundation for building secure, observable Fast
 - **CORS Support**: Configurable cross-origin resource sharing for frontend integration
 - **Static File Serving**: FastAPI's StaticFiles mounting with custom 404.html support
 - **Docker Support**: Multi-stage builds with docker-compose orchestration
-- **Production Patterns**: Token generation, health checks
 
 ## Architecture
 
@@ -38,7 +37,6 @@ This project uses a **`TemplateServer` base class** that encapsulates cross-cutt
 
 - **Request Logging**: All requests/responses logged with client IP tracking
 - **Security Headers**: HSTS/CSP/X-Frame-Options automatically applied
-- **API Key Verification**: SHA-256 hashed tokens with secure validation
 - **Rate Limiting**: Configurable limits using `slowapi` (in-memory/Redis/Memcached)
 - **CORS Middleware**: Optional cross-origin support for frontend applications
 - **Static File Serving**: Serve SPAs or static assets using FastAPI's StaticFiles mounting
@@ -58,7 +56,6 @@ Rename `.env.example` to `.env` and edit it to configure the server.
 
 - `HOST`: Server host address (default: 0.0.0.0)
 - `PORT`: Server port (default: 8000)
-- `API_TOKEN_HASH`: Leave blank to auto-generate on first run, or provide your own token hash
 
 ### Managing the Container
 

@@ -12,7 +12,7 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 
 - Entry: `main.py:run()` → instantiates `ExampleServer` (subclass of `TemplateServer`) → calls `.run()`
 - `TemplateServer.__init__()` sets up middleware, rate limiting, and calls `setup_routes()`
-- **Critical**: Middleware order matters - request logging → security headers → CORS → rate limiting
+- **Critical**: Middleware order matters - request logging → nginx proxy redirect → security headers → CORS → rate limiting
 - **Extensibility**: Subclasses implement `setup_routes()` to add custom endpoints and `validate_config()` for config validation
 
 ### Configuration System
@@ -21,18 +21,9 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 - Validated using Pydantic models in `models.py` (TemplateServerConfig hierarchy)
 - Subclasses override `validate_config()` to provide custom config models
 - Logging configured automatically on `logging_setup.py` import with rotating file handler
-- Environment variables stored in `.env` (HOST, PORT, API_TOKEN_HASH)
+- Environment variables stored in `.env` (HOST, PORT)
 - CORS configuration: Enable cross-origin requests via `config.cors` settings
 - Static files: Served from `static/` directory using FastAPI's `StaticFiles` mounting with custom 404 handler
-
-### Authentication Architecture
-
-- **Token Generation**: `uv run generate-new-token` creates secure token + SHA-256 hash
-- **Hash Storage**: Only hash stored in `.env` (API_TOKEN_HASH), raw token shown once
-- **Token Loading**: `load_hashed_token()` loads hash from .env on server startup, stored in `TemplateServer.hashed_token`
-- **Verification Flow**: Request → `_verify_api_key()` dependency → `verify_token()` → hash comparison
-- **Health Endpoint**: `/api/health` does NOT require authentication, reports unhealthy if token not configured
-- Header: `X-API-Key` (defined in `constants.API_KEY_HEADER_NAME`)
 
 ### CORS Middleware
 
@@ -41,6 +32,16 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 - Configurable origins, methods, headers, credentials, and preflight cache duration
 - When enabled, logs configuration details (origins, credentials, methods, headers)
 - Typical use: Allow frontend applications on different domains to access the API
+
+### Nginx Proxy Redirect Middleware
+
+- Optional middleware to redirect direct access to the nginx-proxied URL
+- Controlled by `config.nginx_proxy_redirect.enabled` flag (disabled by default)
+- Checks for `X-Forwarded-Proto` header (set by nginx) - if missing, request is direct
+- Redirects to `https://{app_name}{domain}{path}?{query}` where nginx handles authentication
+- Use case: Force all access through nginx reverse proxy
+- Configuration: `app_name` (subdomain like "template-server") + `domain` (like ".lab.home.arpa")
+- Example: Direct access to `http://192.168.1.100:8000/dashboard` redirects to `https://template-server.lab.home.arpa/dashboard`, nginx then handles auth flow
 
 ### Rate Limiting
 
@@ -53,9 +54,8 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 
 - Serves static files from `static/` directory using FastAPI's `StaticFiles` class (configurable via `STATIC_DIR` constant)
 - Automatically mounts `StaticFiles` at root (`/`) when `static_dir_exists=True` with `html=True` parameter
-- **Custom 404 Handler**: Exception handler intercepts 404 errors to serve custom `404.html` if present
-- **Routing Logic**: StaticFiles handles exact files and directory index.html → 404 exception handler serves 404.html → HTTP 404 error
-- **No Authentication**: Static files served without API key verification
+- **Nginx Error Handling**: When behind nginx reverse proxy with `proxy_intercept_errors on`, nginx handles 404s by redirecting to auth server's error page
+- **No Authentication**: Static files served without API key verification (authentication handled by nginx auth_request)
 - **No Rate Limiting**: Static file mounting excludes rate limiting for performance
 - **Implementation**: `app.mount("/", StaticFiles(directory=str(self.static_dir), html=True), name="static")`
 - Use case: Serve Single Page Applications (SPAs) alongside the API
@@ -72,7 +72,6 @@ Developers extend `TemplateServer` to create application-specific servers (see `
 ```powershell
 # Setup (first time)
 uv sync                          # Install dependencies
-uv run generate-new-token        # Generate API key, save hash to .env
 
 # Development
 uv run python-template-server    # Start server (http://localhost:8000/api)
@@ -98,9 +97,8 @@ docker compose down              # Stop and remove containers
 
 - **Stage 1 (backend-builder)**: Uses `uv` to build wheel with pyproject.toml, source code, and metadata files
 - **Stage 2 (runtime)**: Installs wheel, copies configuration from host, copies static files and `.here` from installed package to /app
-- **Startup Script**: Created inline in Dockerfile as `/app/start.sh`, generates token if missing, starts server with host/port from environment variables
 - **Config Selection**: Uses `config.json` copied from host configuration directory
-- **Environment Variables**: `HOST` (default: 0.0.0.0), `PORT` (default: 8000), `API_TOKEN_HASH` (auto-generated if not set)
+- **Environment Variables**: `HOST` (default: 0.0.0.0), `PORT` (default: 8000)
 - **Health Check**: Python urllib request to `/api/health` with unverified SSL context (no auth required)
 - **Note**: No user switching - runs as root (could be security improvement)
 
@@ -116,7 +114,6 @@ docker compose down              # Stop and remove containers
 
 ### Security Patterns
 
-- **Never log secrets**: Print tokens via `print()`, not `logger` (see `generate_new_token()`)
 - **Path validation**: Use Pydantic validators
 - **Security headers**: HSTS, CSP, X-Frame-Options via `SecurityHeadersMiddleware`
 
@@ -125,7 +122,6 @@ docker compose down              # Stop and remove containers
 - **Prefix**: All routes under `/api` (API_PREFIX constant)
 - **Authentication**: Applied via `dependencies=[Security(self._verify_api_key)]` in route registration
 - **Response Models**: All endpoints return `BaseResponse` subclasses with code/message/timestamp
-- **Health Status**: `/health` includes `status` field (HEALTHY/DEGRADED/UNHEALTHY), reports unhealthy if no token configured
 
 ### Logging Format
 
@@ -170,7 +166,6 @@ All PRs must pass:
 
 - `template_server.py` - Base TemplateServer class with middleware/auth setup
 - `main.py` - ExampleServer implementation showing how to extend TemplateServer
-- `authentication_handler.py` - Token generation, hashing, verification
 - `logging_setup.py` - Logging configuration (executed on import)
 - `models.py` - All Pydantic models (config + responses)
 - `constants.py` - Project constants, logging config
@@ -180,11 +175,8 @@ All PRs must pass:
 
 - `HOST` - Server host address (default: 127.0.0.1)
 - `PORT` - Server port (default: 8000)
-- `API_TOKEN_HASH` - SHA-256 hash of API token (auto-generated if not provided)
 
 ### Configuration Files
 
 - `configuration/config.json` - Server configuration (rate limiting, security, CORS, etc.)
-- `.env.example` - Template for environment variables (HOST, PORT, API_TOKEN_HASH)
-- `.env` - Environment variables including host, port, and API token hash (auto-created by generate-new-token or Docker startup script)
-- **Docker**: Startup script auto-generates token if .env doesn't exist or API_TOKEN_HASH is empty
+- `.env.example` - Template for environment variables (HOST, PORT)
