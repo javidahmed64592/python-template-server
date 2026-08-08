@@ -64,6 +64,9 @@ addopts = [
     "--cov-report",
     "term-missing",
 ]
+env = [
+    "NGINX_PROXY_URL=",
+]
 
 [tool.coverage.run]
 branch = true

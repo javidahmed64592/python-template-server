@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI, Request, Response
 
 from python_template_server.middleware import NginxProxyRedirectMiddleware
-from python_template_server.models import NginxProxyRedirectConfigModel, ResponseCode
+from python_template_server.models import ResponseCode
 
 
 class TestNginxProxyRedirectMiddleware:
@@ -14,18 +14,16 @@ class TestNginxProxyRedirectMiddleware:
 
     def test_init(self, mock_app: FastAPI) -> None:
         """Test middleware initialization."""
-        config = NginxProxyRedirectConfigModel(app_name="testapp", domain=".example.com")
-        middleware = NginxProxyRedirectMiddleware(mock_app, config)
+        proxy_url = "https://testapp.example.com"
+        middleware = NginxProxyRedirectMiddleware(mock_app, proxy_url)
         assert middleware.logger is not None
-        assert middleware.config == config
+        assert middleware.proxy_url == proxy_url
 
     @pytest.mark.asyncio
-    async def test_dispatch_redirects_direct_access(
-        self, mock_app: FastAPI, mock_request: Request, mock_nginx_config: NginxProxyRedirectConfigModel
-    ) -> None:
+    async def test_dispatch_redirects_direct_access(self, mock_app: FastAPI, mock_request: Request) -> None:
         """Test that dispatch redirects direct access to the nginx proxy URL."""
-        mock_nginx_config.enabled = True
-        middleware = NginxProxyRedirectMiddleware(mock_app, mock_nginx_config)
+        proxy_url = "https://testapp.example.com"
+        middleware = NginxProxyRedirectMiddleware(mock_app, proxy_url)
 
         # Create a request without the X-Forwarded-Proto header and not from localhost
         mock_request.client = MagicMock(host="192.168.1.1")  # ty: ignore[invalid-assignment]
@@ -39,18 +37,16 @@ class TestNginxProxyRedirectMiddleware:
 
         result = await middleware.dispatch(mock_request, call_next)
 
-        expected_redirect_url = f"https://{mock_nginx_config.app_name}{mock_nginx_config.domain}{mock_request.url.path}?{f'{mock_request.url.query}'}"
+        expected_redirect_url = f"{proxy_url}{mock_request.url.path}?{f'{mock_request.url.query}'}"
         assert isinstance(result, Response)
         assert result.status_code == ResponseCode.REDIRECT
         assert result.headers["location"] == expected_redirect_url
 
     @pytest.mark.asyncio
-    async def test_dispatch_allows_nginx_access(
-        self, mock_app: FastAPI, mock_request: Request, mock_nginx_config: NginxProxyRedirectConfigModel
-    ) -> None:
+    async def test_dispatch_allows_nginx_access(self, mock_app: FastAPI, mock_request: Request) -> None:
         """Test that dispatch allows access when coming from nginx proxy."""
-        mock_nginx_config.enabled = True
-        middleware = NginxProxyRedirectMiddleware(mock_app, mock_nginx_config)
+        proxy_url = "https://testapp.example.com"
+        middleware = NginxProxyRedirectMiddleware(mock_app, proxy_url)
 
         # Create a request with the X-Forwarded-Proto header
         mock_request.headers = {"x-forwarded-proto": "https"}  # ty: ignore[invalid-assignment]
@@ -64,12 +60,10 @@ class TestNginxProxyRedirectMiddleware:
         assert result == mock_response
 
     @pytest.mark.asyncio
-    async def test_dispatch_allows_localhost_access(
-        self, mock_app: FastAPI, mock_request: Request, mock_nginx_config: NginxProxyRedirectConfigModel
-    ) -> None:
+    async def test_dispatch_allows_localhost_access(self, mock_app: FastAPI, mock_request: Request) -> None:
         """Test that dispatch allows access when coming from localhost."""
-        mock_nginx_config.enabled = True
-        middleware = NginxProxyRedirectMiddleware(mock_app, mock_nginx_config)
+        proxy_url = "https://testapp.example.com"
+        middleware = NginxProxyRedirectMiddleware(mock_app, proxy_url)
 
         # Mock the call_next function
         mock_response = MagicMock(spec=Response)

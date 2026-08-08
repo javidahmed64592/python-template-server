@@ -97,6 +97,7 @@ class TemplateServer(ABC):
         logger.info("Loading environment variables...")
         self.host = os.getenv("HOST", "127.0.0.1")
         self.port = int(os.getenv("PORT", "8000"))
+        self.nginx_proxy_url = os.getenv("NGINX_PROXY_URL", "")
 
         logger.info("Setting up server features...")
         self._setup_request_logging()
@@ -127,7 +128,9 @@ class TemplateServer(ABC):
 
         :return list[BaseRouter]: List of BaseRouter instances
         """
-        TEMPLATE_SERVER_ROUTER.configure_router(config=self.config, version=self.package_metadata["Version"])
+        TEMPLATE_SERVER_ROUTER.configure_router(
+            config=self.config, version=self.package_metadata["Version"], proxy_url=self.nginx_proxy_url
+        )
         return [TEMPLATE_SERVER_ROUTER, *self.routers]
 
     @property
@@ -184,23 +187,18 @@ class TemplateServer(ABC):
 
     def _setup_nginx_proxy_redirect(self) -> None:
         """Set up nginx proxy redirect middleware."""
-        if not self.config.nginx_proxy_redirect.enabled:
+        if not self.nginx_proxy_url:
             logger.info("Nginx proxy redirect: DISABLED")
-            return
-
-        if not self.config.nginx_proxy_redirect.app_name or not self.config.nginx_proxy_redirect.domain:
-            logger.warning("Nginx proxy redirect is enabled but app_name or domain is not configured - skipping")
             return
 
         self.app.add_middleware(
             NginxProxyRedirectMiddleware,
-            config=self.config.nginx_proxy_redirect,
+            proxy_url=self.nginx_proxy_url,
         )
 
         logger.info(
-            "Nginx proxy redirect: ENABLED | URL=https://%s%s",
-            self.config.nginx_proxy_redirect.app_name,
-            self.config.nginx_proxy_redirect.domain,
+            "Nginx proxy redirect: ENABLED | URL=%s",
+            self.nginx_proxy_url,
         )
 
     def _setup_security_headers(self) -> None:
