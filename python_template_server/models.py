@@ -57,6 +57,14 @@ class JSONResponseConfigModel(BaseModel):
     media_type: str = Field(default="application/json; charset=utf-8", description="Media type for JSON responses")
 
 
+class NginxProxyRedirectConfigModel(BaseModel):
+    """Nginx proxy redirect configuration model."""
+
+    enabled: bool = Field(default=False, description="Whether to redirect direct access to nginx proxy")
+    app_name: str = Field(default="", description="Application subdomain name", examples=["template-server"])
+    domain: str = Field(default="", description="Domain including leading dot)", examples=[".lab.home.arpa"])
+
+
 class DatabaseConfig(BaseModel):
     """Configuration for the database."""
 
@@ -76,6 +84,7 @@ class TemplateServerConfig(BaseModel):
     cors: CORSConfigModel = Field(default_factory=CORSConfigModel)
     rate_limit: RateLimitConfigModel = Field(default_factory=RateLimitConfigModel)
     json_response: JSONResponseConfigModel = Field(default_factory=JSONResponseConfigModel)
+    nginx_proxy_redirect: NginxProxyRedirectConfigModel = Field(default_factory=NginxProxyRedirectConfigModel)
 
     def save_to_file(self, filepath: Path) -> None:
         """Save the configuration to a JSON file.
@@ -153,7 +162,3 @@ class GetConfigResponse(BaseResponse):
 
     config: TemplateServerConfig = Field(..., description="Current configuration of the template server")
     version: str = Field(..., description="Version of the server")
-
-
-class GetLoginResponse(BaseResponse):
-    """Response model for login endpoint."""
