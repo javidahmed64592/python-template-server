@@ -11,7 +11,6 @@ from python_template_server.models import (
     CORSConfigModel,
     DatabaseConfig,
     JSONResponseConfigModel,
-    NginxProxyRedirectConfigModel,
     RateLimitConfigModel,
     SecurityConfigModel,
     TemplateServerConfig,
@@ -137,12 +136,6 @@ def mock_json_response_config(mock_json_response_config_dict: dict) -> JSONRespo
 
 
 @pytest.fixture
-def mock_nginx_config(mock_nginx_config_dict: dict) -> NginxProxyRedirectConfigModel:
-    """Provide a mock NginxProxyRedirectConfigModel instance."""
-    return NginxProxyRedirectConfigModel.model_validate(mock_nginx_config_dict)
-
-
-@pytest.fixture
 def mock_db_config(mock_db_config_dict: dict) -> DatabaseConfig:
     """Provide a mock DatabaseConfig instance."""
     return DatabaseConfig.model_validate(mock_db_config_dict)
@@ -154,7 +147,6 @@ def mock_template_server_config(
     mock_cors_config: CORSConfigModel,
     mock_rate_limit_config: RateLimitConfigModel,
     mock_json_response_config: JSONResponseConfigModel,
-    mock_nginx_config: NginxProxyRedirectConfigModel,
 ) -> TemplateServerConfig:
     """Provide a mock TemplateServerConfig instance."""
     return TemplateServerConfig(
@@ -162,7 +154,6 @@ def mock_template_server_config(
         cors=mock_cors_config,
         rate_limit=mock_rate_limit_config,
         json_response=mock_json_response_config,
-        nginx_proxy_redirect=mock_nginx_config,
     )
 
 
@@ -188,5 +179,6 @@ def mock_template_server_router(
     TEMPLATE_SERVER_ROUTER.configure_router(
         config=mock_template_server_config,
         version="1.0.0",
+        proxy_url="",
     )
     return TEMPLATE_SERVER_ROUTER

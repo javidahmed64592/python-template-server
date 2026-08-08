@@ -14,14 +14,16 @@ from python_template_server.routers import BaseRouter
 class TemplateServerRouter(BaseRouter):
     """Router for the template server."""
 
-    def configure_router(self, config: TemplateServerConfig, version: str) -> None:
+    def configure_router(self, config: TemplateServerConfig, version: str, proxy_url: str) -> None:
         """Configure the router with server configuration and version.
 
         :param TemplateServerConfig config: The server configuration
         :param str version: The server version
+        :param str proxy_url: The proxy URL
         """
         self.config = config
         self.version = version
+        self.proxy_url = proxy_url
 
     def setup_routes(self) -> None:
         """Set up the API routes for the template server."""
@@ -75,5 +77,5 @@ class TemplateServerRouter(BaseRouter):
         """
         return GetAuthEnabledResponse(
             message="Authentication enabled status retrieved successfully.",
-            auth_enabled=self.config.nginx_proxy_redirect.enabled,
+            auth_enabled=self.proxy_url is not None,
         )
