@@ -1,13 +1,13 @@
-"""Template server router with health and login endpoints."""
+"""Template server router."""
 
 from fastapi import Request
 
-from python_template_server.models import GetConfigResponse, GetHealthResponse, GetLoginResponse, TemplateServerConfig
+from python_template_server.models import GetConfigResponse, GetHealthResponse, TemplateServerConfig
 from python_template_server.routers import BaseRouter
 
 
 class TemplateServerRouter(BaseRouter):
-    """Router for the template server with health and login endpoints."""
+    """Router for the template server."""
 
     def configure_router(self, config: TemplateServerConfig, version: str) -> None:
         """Configure the router with server configuration and version.
@@ -26,7 +26,6 @@ class TemplateServerRouter(BaseRouter):
             response_model=GetHealthResponse,
             methods=["GET"],
             limited=False,
-            authentication_required=False,
         )
         self.add_route(
             endpoint="/config",
@@ -34,15 +33,6 @@ class TemplateServerRouter(BaseRouter):
             response_model=GetConfigResponse,
             methods=["GET"],
             limited=False,
-            authentication_required=False,
-        )
-        self.add_route(
-            endpoint="/login",
-            handler_function=self.get_login,
-            response_model=GetLoginResponse,
-            methods=["GET"],
-            limited=True,
-            authentication_required=True,
         )
 
     async def get_health(self, request: Request) -> GetHealthResponse:
@@ -50,7 +40,6 @@ class TemplateServerRouter(BaseRouter):
 
         :param Request request: The incoming HTTP request
         :return GetHealthResponse: Health status response
-        :raise HTTPException: If the server token is not configured
         """
         return GetHealthResponse(message="Server is healthy")
 
@@ -59,19 +48,9 @@ class TemplateServerRouter(BaseRouter):
 
         :param Request request: The incoming HTTP request
         :return GetConfigResponse: Configuration response
-        :raise HTTPException: If the server token is not configured
         """
         return GetConfigResponse(
             message="Configuration retrieved successfully.",
             config=self.config,
             version=self.version,
         )
-
-    async def get_login(self, request: Request) -> GetLoginResponse:
-        """Handle user login and return a success response.
-
-        :param Request request: The incoming HTTP request
-        :return GetLoginResponse: Login success response
-        :raise HTTPException: If the server token is not configured
-        """
-        return GetLoginResponse(message="Login successful.")
