@@ -14,6 +14,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY python_template_server/ ./python_template_server/
 COPY pyproject.toml .here LICENSE README.md ./
 
+# Copy static files
+COPY static/ ./static/
+
 # Build the wheel
 RUN uv build --wheel
 
@@ -43,25 +46,8 @@ RUN mkdir -p /app/logs
 
 # Copy included files from installed wheel to app directory
 RUN SITE_PACKAGES_DIR=$(find /usr/local/lib -name "site-packages" -type d | head -1) && \
+    cp -r "${SITE_PACKAGES_DIR}/static" /app/static && \
     cp "${SITE_PACKAGES_DIR}/.here" /app/.here
-
-# Create startup script
-RUN echo '#!/bin/sh\n\
-    set -e\n\
-    \n\
-    cd /app\n\
-    \n\
-    # Generate API token if needed (only if not provided AND not already generated)\n\
-    if [ -z "$API_TOKEN_HASH" ]; then\n\
-    if [ ! -f .env ] || ! grep -q "API_TOKEN_HASH=." .env; then\n\
-    echo "Generating new token..."\n\
-    generate-new-token\n\
-    fi\n\
-    export $(grep -v "^#" .env | xargs)\n\
-    fi\n\
-    \n\
-    exec python-template-server' > /app/start.sh && \
-    chmod +x /app/start.sh
 
 # Expose server port
 EXPOSE $PORT
@@ -70,4 +56,4 @@ EXPOSE $PORT
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:$PORT/api/health', context=__import__('ssl')._create_unverified_context()).read()" || exit 1
 
-CMD ["/app/start.sh"]
+CMD ["python-template-server"]
