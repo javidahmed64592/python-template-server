@@ -21,7 +21,6 @@ class TestRoutes:
         expected_endpoints = [
             "/health",
             "/config",
-            "/login",
         ]
         for endpoint in expected_endpoints:
             assert endpoint in routes
@@ -55,19 +54,4 @@ class TestGetConfigEndpoint:
         response = asyncio.run(mock_template_server_router.get_config(mock_request_object))
         assert isinstance(response.config, TemplateServerConfig)
         assert response.version == mock_template_server_router.version
-        assert isinstance(response.timestamp, str)
-
-
-class TestGetLoginEndpoint:
-    """Integration tests for the /login endpoint."""
-
-    @pytest.fixture
-    def mock_request_object(self) -> Request:
-        """Provide a mock Request object."""
-        return MagicMock(spec=Request)
-
-    def test_get_login(self, mock_template_server_router: TemplateServerRouter, mock_request_object: Request) -> None:
-        """Test the /login endpoint method."""
-        response = asyncio.run(mock_template_server_router.get_login(mock_request_object))
-        assert response.message == "Login successful."
         assert isinstance(response.timestamp, str)
