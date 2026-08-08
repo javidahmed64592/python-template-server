@@ -2,7 +2,12 @@
 
 from fastapi import Request
 
-from python_template_server.models import GetConfigResponse, GetHealthResponse, TemplateServerConfig
+from python_template_server.models import (
+    GetAuthEnabledResponse,
+    GetConfigResponse,
+    GetHealthResponse,
+    TemplateServerConfig,
+)
 from python_template_server.routers import BaseRouter
 
 
@@ -32,7 +37,14 @@ class TemplateServerRouter(BaseRouter):
             handler_function=self.get_config,
             response_model=GetConfigResponse,
             methods=["GET"],
-            limited=False,
+            limited=True,
+        )
+        self.add_route(
+            endpoint="/auth_enabled",
+            handler_function=self.get_auth_enabled,
+            response_model=GetAuthEnabledResponse,
+            methods=["GET"],
+            limited=True,
         )
 
     async def get_health(self, request: Request) -> GetHealthResponse:
@@ -53,4 +65,15 @@ class TemplateServerRouter(BaseRouter):
             message="Configuration retrieved successfully.",
             config=self.config,
             version=self.version,
+        )
+
+    async def get_auth_enabled(self, request: Request) -> GetAuthEnabledResponse:
+        """Get authentication enabled status.
+
+        :param Request request: The incoming HTTP request
+        :return GetAuthEnabledResponse: Authentication enabled status response
+        """
+        return GetAuthEnabledResponse(
+            message="Authentication enabled status retrieved successfully.",
+            auth_enabled=self.config.nginx_proxy_redirect.enabled,
         )

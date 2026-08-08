@@ -163,3 +163,9 @@ class GetConfigResponse(BaseResponse):
 
     config: TemplateServerConfig = Field(..., description="Current configuration of the template server")
     version: str = Field(..., description="Version of the server")
+
+
+class GetAuthEnabledResponse(BaseResponse):
+    """Response model for API auth enabled endpoint."""
+
+    auth_enabled: bool = Field(..., description="Whether or not authentication is enabled")

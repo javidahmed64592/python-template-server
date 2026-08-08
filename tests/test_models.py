@@ -9,6 +9,7 @@ from python_template_server.models import (
     CORSConfigModel,
     CustomJSONResponse,
     DatabaseConfig,
+    GetAuthEnabledResponse,
     GetConfigResponse,
     GetHealthResponse,
     JSONResponseConfigModel,
@@ -232,4 +233,19 @@ class TestGetConfigResponse:
             "version": "1.0.0",
         }
         response = GetConfigResponse(**config_dict)
+        assert response.model_dump() == config_dict
+
+
+class TestGetAuthEnabledResponse:
+    """Unit tests for the GetAuthEnabledResponse class."""
+
+    def test_model_dump(self, mock_template_server_config: TemplateServerConfig) -> None:
+        """Test the model_dump method."""
+        timestamp = GetAuthEnabledResponse.current_timestamp()
+        config_dict: dict = {
+            "message": "Authentication enabled status retrieved successfully.",
+            "timestamp": timestamp,
+            "auth_enabled": mock_template_server_config.nginx_proxy_redirect.enabled,
+        }
+        response = GetAuthEnabledResponse(**config_dict)
         assert response.model_dump() == config_dict
