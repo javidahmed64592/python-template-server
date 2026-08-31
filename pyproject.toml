@@ -18,15 +18,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "cryptography>=50.0.0",
+    "cryptography>=50.0.1",
     "fastapi>=0.141.1",
     "httpx>=0.28.1",
-    "python-dotenv>=1.2.2",
+    "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "slowapi>=0.1.10",
-    "sqlmodel>=0.0.39",
+    "sqlmodel>=0.0.42",
     "template-python @ git+https://github.com/javidahmed64592/template-python.git",
-    "uvicorn>=0.52.1",
+    "uvicorn>=0.52.4",
 ]
 
 [project.optional-dependencies]
