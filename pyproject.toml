@@ -24,15 +24,15 @@ dependencies = [
     "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "slowapi>=0.1.10",
-    "sqlmodel>=0.0.42",
+    "sqlmodel>=0.0.44",
     "template-python @ git+https://github.com/javidahmed64592/template-python.git",
-    "uvicorn>=0.52.4",
+    "uvicorn>=0.53.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest-asyncio>=1.4.0",
-    "pytest-env>=1.7.0",
+    "pytest-env>=1.7.1",
     "template-python[dev] @ git+https://github.com/javidahmed64592/template-python.git",
 ]
 docs = [
