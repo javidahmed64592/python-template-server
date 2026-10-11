@@ -19,12 +19,12 @@ classifiers = [
 ]
 dependencies = [
     "cryptography>=50.0.2",
-    "fastapi>=0.142.2",
+    "fastapi>=0.143.0",
     "httpx>=0.28.1",
     "python-dotenv>=1.2.4",
     "python-multipart>=0.0.32",
     "slowapi>=0.1.10",
-    "sqlmodel>=0.0.47",
+    "sqlmodel>=0.0.48",
     "template-python @ git+https://github.com/javidahmed64592/template-python.git",
     "uvicorn>=0.54.0",
 ]
@@ -32,7 +32,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest-asyncio>=1.4.0",
-    "pytest-env>=1.7.1",
+    "pytest-env>=1.8.0",
     "template-python[dev] @ git+https://github.com/javidahmed64592/template-python.git",
 ]
 docs = [
